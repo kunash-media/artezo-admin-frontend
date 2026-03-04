@@ -1,0 +1,126 @@
+<!-- Login Modal -->
+<div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-2xl font-bold" style="color: #133F53;">Welcome Back</h3>
+            <button id="close-modal" class="text-gray-500 hover:text-gray-700">
+                <i class="fa-solid fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <!-- Login Form -->
+        <form id="login-form" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium mb-1" style="color: #133F53;">Email</label>
+                <input type="email" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D89F34]">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1" style="color: #133F53;">Password</label>
+                <input type="password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D89F34]">
+            </div>
+            <div class="flex items-center justify-between">
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" class="rounded border-gray-300">
+                    <span class="text-sm" style="color: #957A54;">Remember me</span>
+                </label>
+                <a href="#" class="text-sm hover:underline" style="color: #D89F34;">Forgot password?</a>
+            </div>
+            <button type="submit" class="w-full py-2 rounded-lg transition-colors" style="background-color: #D89F34; color: #133F53; font-weight: 500;">Sign In</button>
+        </form>
+
+        <!-- Signup Link -->
+        <p class="text-center mt-4 text-sm" style="color: #957A54;">
+            Don't have an account? 
+            <a href="#" id="show-signup" class="font-medium hover:underline" style="color: #D89F34;">Sign up</a>
+        </p>
+
+        <!-- Social Login -->
+        <div class="mt-6">
+            <div class="relative">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-300"></div>
+                </div>
+                <div class="relative flex justify-center text-sm">
+                    <span class="px-2 bg-white text-gray-500">Or continue with</span>
+                </div>
+            </div>
+            <div class="mt-4 grid grid-cols-2 gap-3">
+                <button class="flex items-center justify-center gap-2 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    <i class="fa-brands fa-google" style="color: #DB4437;"></i>
+                    <span class="text-sm">Google</span>
+                </button>
+                <button class="flex items-center justify-center gap-2 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    <i class="fa-brands fa-github" style="color: #333;"></i>
+                    <span class="text-sm">GitHub</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Signup Modal -->
+<div id="signup-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-2xl font-bold" style="color: #133F53;">Create Account</h3>
+            <button id="close-signup-modal" class="text-gray-500 hover:text-gray-700">
+                <i class="fa-solid fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <!-- Signup Form -->
+        <form id="signup-form" class="space-y-4">
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-sm font-medium mb-1" style="color: #133F53;">First Name</label>
+                    <input type="text" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D89F34]">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1" style="color: #133F53;">Last Name</label>
+                    <input type="text" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D89F34]">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1" style="color: #133F53;">Email</label>
+                <input type="email" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D89F34]">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1" style="color: #133F53;">Password</label>
+                <input type="password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D89F34]">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1" style="color: #133F53;">Confirm Password</label>
+                <input type="password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D89F34]">
+            </div>
+            <button type="submit" class="w-full py-2 rounded-lg transition-colors" style="background-color: #D89F34; color: #133F53; font-weight: 500;">Sign Up</button>
+        </form>
+
+        <!-- Login Link -->
+        <p class="text-center mt-4 text-sm" style="color: #957A54;">
+            Already have an account? 
+            <a href="#" id="show-login" class="font-medium hover:underline" style="color: #D89F34;">Sign in</a>
+        </p>
+    </div>
+</div>
+
+<!-- Logout Confirmation Modal -->
+<div id="logout-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-6 max-w-sm w-full mx-4">
+        <div class="text-center">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-arrow-right-from-bracket text-2xl text-red-600"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-2" style="color: #133F53;">Confirm Logout</h3>
+            <p class="text-sm mb-6" style="color: #957A54;">Are you sure you want to logout from your account?</p>
+            
+            <div class="flex gap-3">
+                <button id="cancel-logout" class="flex-1 py-2 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors" style="color: #133F53;">
+                    Cancel
+                </button>
+                <button id="confirm-logout" class="flex-1 py-2 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                    Yes, Logout
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

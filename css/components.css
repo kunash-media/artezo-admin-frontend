@@ -1,0 +1,341 @@
+:root {
+    --aside-bg: #F8F8EA;
+    --active-blue: #133F53;
+    --golden-btn: #D89F34;
+    --muted-brown: #957A54;
+}
+
+/* Sidebar Styles */
+.nav-link.active {
+    background-color: var(--active-blue) !important;
+    color: var(--aside-bg) !important;
+}
+
+.nav-link.active i {
+    color: var(--aside-bg) !important;
+}
+
+.nav-link.active:hover {
+    background-color: var(--active-blue) !important;
+    color: var(--aside-bg) !important;
+    cursor: default;
+}
+
+.nav-link:not(.active):hover {
+    background-color: #e5e0d1;
+}
+
+/* Collapsed Sidebar */
+.sidebar-collapsed {
+    width: 80px !important;
+}
+
+.sidebar-collapsed .nav-text,
+.sidebar-collapsed #brand-text,
+.sidebar-collapsed .user-info-text {
+    opacity: 0;
+    width: 0;
+    display: none;
+}
+
+.sidebar-collapsed .nav-link {
+    justify-content: center;
+    padding: 12px;
+}
+
+.sidebar-collapsed .nav-link i {
+    margin: 0;
+}
+
+.sidebar-collapsed .user-profile-text {
+    display: none;
+}
+
+/* Smooth transitions */
+#sidebar,
+.nav-text,
+#brand-text,
+.nav-link i {
+    transition: all 0.3s ease;
+}
+
+/* Main content adjustment */
+.main-content-expanded {
+    margin-left: 80px;
+}
+
+.main-content-normal {
+    margin-left: 288px;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 1024px) {
+    #sidebar {
+        transform: translateX(-100%);
+    }
+    
+    #sidebar.mobile-open {
+        transform: translateX(0);
+    }
+    
+    .main-content-normal,
+    .main-content-expanded {
+        margin-left: 0;
+    }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--muted-brown);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--active-blue);
+}
+
+/* Graph animations */
+.bg-\[--golden-btn\],
+.bg-\[--active-blue\],
+.bg-\[--muted-brown\] {
+    transition: height 0.3s ease;
+}
+
+/* Table styles */
+table th {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--active-blue);
+}
+
+table td {
+    font-size: 0.85rem;
+}
+
+/* Hover effects */
+.hover-shadow:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Status badges */
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.status-processing {
+    background-color: var(--golden-btn);
+    color: var(--active-blue);
+}
+
+.status-shipped {
+    background-color: var(--active-blue);
+    color: white;
+}
+
+.status-delivered {
+    background-color: var(--muted-brown);
+    color: white;
+}
+
+/* Dropdown Animations */
+#user-dropdown {
+    transform-origin: top right;
+    animation: dropdownFade 0.2s ease;
+}
+
+@keyframes dropdownFade {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Modal Animations */
+#login-modal, #signup-modal, #logout-modal {
+    animation: modalFadeIn 0.3s ease;
+}
+
+#logout-modal .bg-white {
+    animation: modalScaleIn 0.3s ease;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes modalScaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Notification Badge */
+.fa-bell {
+    position: relative;
+}
+
+.fa-bell span {
+    font-size: 10px;
+    padding: 2px 4px;
+}
+
+/* Dropdown Item Hover */
+.dropdown-item:hover i {
+    transform: translateX(2px);
+}
+
+.dropdown-item i {
+    transition: transform 0.2s ease;
+}
+
+/* Modal Input Focus */
+input:focus {
+    border-color: #D89F34;
+    box-shadow: 0 0 0 2px rgba(216, 159, 52, 0.1);
+}
+
+/* Loading State */
+.btn-loading {
+    position: relative;
+    color: transparent !important;
+}
+
+.btn-loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border: 2px solid #133F53;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spinner 0.6s linear infinite;
+}
+
+@keyframes spinner {
+    to { transform: rotate(360deg); }
+}
+
+/* Notification Animations */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+.animate-slideIn {
+    animation: slideIn 0.3s ease forwards;
+}
+
+.animate-slideOut {
+    animation: slideOut 0.3s ease forwards;
+}
+
+/* Logout Button Hover Effect */
+#logout-btn:hover {
+    background-color: #FEE2E2;
+}
+
+#logout-btn:hover i {
+    transform: translateX(2px);
+}
+
+/* Modal Button Styles */
+#cancel-logout:hover {
+    background-color: #F8F8EA;
+}
+
+#confirm-logout {
+    position: relative;
+    overflow: hidden;
+}
+
+#confirm-logout::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.3s, height 0.3s;
+}
+
+#confirm-logout:active::after {
+    width: 200px;
+    height: 200px;
+}
+
+/* Fix for active link hover - ensures it stays blue */
+.nav-link.active,
+.nav-link.active *,
+.nav-link.active:hover,
+.nav-link.active:hover * {
+    background-color: var(--active-blue) !important;
+    color: var(--aside-bg) !important;
+}
+
+/* Ensure the active link icon also stays white on hover */
+.nav-link.active:hover i {
+    color: var(--aside-bg) !important;
+}
+
+/* Remove any pointer events from active link to prevent accidental hovers */
+.nav-link.active {
+    cursor: default;
+    pointer-events: none;
+}
+
+/* But keep pointer events for children if needed */
+.nav-link.active * {
+    pointer-events: none;
+}

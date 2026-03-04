@@ -1,0 +1,47 @@
+<header class="bg-[#F8F8EA] shadow-sm py-4 px-8 flex items-center justify-between border-b border-[#dbd5c4] w-full">
+    <div class="flex items-center gap-4">
+        <button id="mobile-toggle" class="lg:hidden p-2 rounded-lg hover:bg-[#e5e0d1] transition-colors">
+            <i class="fa-solid fa-bars text-xl" style="color: #957A54;"></i>
+        </button>
+        <h2 class="text-xl font-semibold" style="color: #133F53;" id="page-title">Dashboard / Overview</h2>
+    </div>
+    <div class="flex items-center gap-5 relative">
+        <i class="fa-regular fa-bell text-xl cursor-pointer hover:opacity-70 transition-colors relative" style="color: #133F53;">
+            <span class="absolute -top-1 -right-1 bg-[#D89F34] text-[#133F53] text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span>
+        </i>
+        
+        <!-- User Dropdown -->
+        <div class="relative" id="user-dropdown-container">
+            <button id="user-menu-button" class="flex items-center gap-2 focus:outline-none">
+                <div class="w-8 h-8 rounded-full bg-[#D89F34] flex items-center justify-center text-[#133F53] font-bold text-sm">AC</div>
+                <span class="text-sm hidden md:inline" style="color: #957A54;">Alex Carter</span>
+                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-200" style="color: #957A54;" id="dropdown-arrow"></i>
+            </button>
+
+            <!-- Dropdown Menu -->
+            <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden z-50 border border-gray-100">
+                <div class="px-4 py-2 border-b border-gray-100">
+                    <p class="text-sm font-semibold" style="color: #133F53;">Alex Carter</p>
+                    <p class="text-xs" style="color: #957A54;">alex.carter@email.com</p>
+                </div>
+                <a href="#" class="dropdown-item flex items-center gap-3 px-4 py-2 text-sm hover:bg-[#F8F8EA] transition-colors" style="color: #133F53;">
+                    <i class="fa-regular fa-user" style="color: #957A54; width: 18px;"></i>
+                    Profile
+                </a>
+                <a href="#" class="dropdown-item flex items-center gap-3 px-4 py-2 text-sm hover:bg-[#F8F8EA] transition-colors" style="color: #133F53;">
+                    <i class="fa-regular fa-gear" style="color: #957A54; width: 18px;"></i>
+                    Settings
+                </a>
+                <div class="border-t border-gray-100 my-1"></div>
+                <a href="/auth.html" id="login-btn" class="dropdown-item flex items-center gap-3 px-4 py-2 text-sm hover:bg-[#F8F8EA] transition-colors" style="color: #133F53;">
+                    <i class="fa-regular fa-arrow-right-to-bracket" style="color: #957A54; width: 18px;"></i>
+                    Login / Signup
+                </a>
+                <a href="#" id="logout-btn" class="dropdown-item flex items-center gap-3 px-4 py-2 text-sm hover:bg-[#F8F8EA] transition-colors text-red-600">
+                    <i class="fa-regular fa-arrow-right-from-bracket" style="color: #dc2626; width: 18px;"></i>
+                    Logout
+                </a>
+            </div>
+        </div>
+    </div>
+</header>
