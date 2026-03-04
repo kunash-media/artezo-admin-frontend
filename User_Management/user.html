@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - Registered Users</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <style>
+        .user-card {
+            transition: all 0.2s ease;
+        }
+        .user-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        .user-row {
+            transition: background-color 0.2s ease;
+        }
+        .user-row:hover {
+            background-color: #F8F8EA;
+        }
+        .avatar-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .activity-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px;
+        }
+
+        /* Skeleton Loading Styles */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .skeleton-text {
+            height: 1rem;
+            border-radius: 0.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .skeleton-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+
+        .skeleton-button {
+            width: 80px;
+            height: 32px;
+            border-radius: 0.375rem;
+        }
+
+        .content-hidden {
+            display: none !important;
+        }
+
+        .content-visible {
+            display: block !important;
+        }
+
+        /* Search Loading Animation */
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .fa-circle-notch {
+            animation: spin 1s linear infinite;
+        }
+
+        /* Dropdown Styles */
+        #statusDropdown, #verifiedDropdown {
+            transform-origin: top;
+            animation: dropdownFade 0.2s ease;
+            max-height: 300px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #D89F34 #F8F8EA;
+        }
+
+        #statusDropdown::-webkit-scrollbar,
+        #verifiedDropdown::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        #statusDropdown::-webkit-scrollbar-track,
+        #verifiedDropdown::-webkit-scrollbar-track {
+            background: #F8F8EA;
+        }
+
+        #statusDropdown::-webkit-scrollbar-thumb,
+        #verifiedDropdown::-webkit-scrollbar-thumb {
+            background: #D89F34;
+            border-radius: 4px;
+        }
+
+        .status-item, .verified-item {
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .status-item:hover,
+        .verified-item:hover {
+            background-color: #F8F8EA;
+            padding-left: 20px;
+        }
+
+        .status-item i,
+        .verified-item i {
+            transition: transform 0.2s ease;
+            font-size: 14px;
+        }
+
+        .status-item:hover i,
+        .verified-item:hover i {
+            transform: scale(1.1);
+        }
+
+        @keyframes dropdownFade {
+            from {
+                opacity: 0;
+                transform: translateY(-10px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Modal Animations */
+        .modal-enter {
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            #statusDropdownButton,
+            #verifiedDropdownButton {
+                width: 100%;
+            }
+            #statusDropdown,
+            #verifiedDropdown {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body class="bg-[#F2F2E8]">
+
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar container -->
+        <div id="sidebar-container"></div>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Header container -->
+            <div id="header-container"></div>
+
+            <!-- User Management Content -->
+            <main class="flex-1 overflow-y-auto p-6">
+                <!-- Skeleton Loading -->
+                <div id="skeletonLoader" class="content-visible">
+                    <!-- Statistics Cards Skeleton -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <div class="skeleton skeleton-text w-24 h-4 mb-2"></div>
+                            <div class="skeleton skeleton-text w-16 h-8 mb-2"></div>
+                            <div class="skeleton skeleton-text w-32 h-3"></div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <div class="skeleton skeleton-text w-24 h-4 mb-2"></div>
+                            <div class="skeleton skeleton-text w-16 h-8 mb-2"></div>
+                            <div class="skeleton skeleton-text w-32 h-3"></div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <div class="skeleton skeleton-text w-24 h-4 mb-2"></div>
+                            <div class="skeleton skeleton-text w-16 h-8 mb-2"></div>
+                            <div class="skeleton skeleton-text w-32 h-3"></div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <div class="skeleton skeleton-text w-24 h-4 mb-2"></div>
+                            <div class="skeleton skeleton-text w-16 h-8 mb-2"></div>
+                            <div class="skeleton skeleton-text w-32 h-3"></div>
+                        </div>
+                    </div>
+
+                    <!-- Filters Skeleton -->
+                    <div class="bg-white p-4 rounded-lg shadow-sm mb-6">
+                        <div class="flex flex-wrap gap-4">
+                            <div class="skeleton skeleton-text w-96 h-10"></div>
+                            <div class="skeleton skeleton-text w-40 h-10"></div>
+                            <div class="skeleton skeleton-text w-44 h-10"></div>
+                            <div class="skeleton skeleton-text w-40 h-10"></div>
+                        </div>
+                    </div>
+
+                    <!-- Table Skeleton -->
+                    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                        <div class="p-4 space-y-2">
+                            <div class="skeleton skeleton-text w-full h-12"></div>
+                            <div class="skeleton skeleton-text w-full h-12"></div>
+                            <div class="skeleton skeleton-text w-full h-12"></div>
+                            <div class="skeleton skeleton-text w-full h-12"></div>
+                            <div class="skeleton skeleton-text w-full h-12"></div>
+                            <div class="skeleton skeleton-text w-full h-12"></div>
+                        </div>
+                    </div>
+
+                    <!-- Pagination Skeleton -->
+                    <div class="mt-4 flex justify-between items-center">
+                        <div class="skeleton skeleton-text w-48 h-8"></div>
+                        <div class="flex gap-2">
+                            <div class="skeleton skeleton-text w-8 h-8"></div>
+                            <div class="skeleton skeleton-text w-8 h-8"></div>
+                            <div class="skeleton skeleton-text w-8 h-8"></div>
+                            <div class="skeleton skeleton-text w-8 h-8"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actual Content -->
+                <div id="actualContent" class="content-hidden">
+                    <!-- Page Header -->
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                        <div>
+                            <h1 class="text-2xl font-bold" style="color: #133F53;">User Management</h1>
+                            <p class="text-sm" style="color: #957A54;">Manage registered customers and their accounts</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="px-4 py-2 rounded-lg text-sm flex items-center gap-2 border" style="border-color: #D89F34; color: #133F53;" onclick="exportUsers()">
+                                <i class="fa-solid fa-download"></i>
+                                Export
+                            </button>
+                            <!-- <button class="px-4 py-2 rounded-lg text-sm flex items-center gap-2" style="background-color: #D89F34; color: #133F53;" onclick="openCreateUserModal()">
+                                <i class="fa-solid fa-plus"></i>
+                                Add User
+                            </button> -->
+                        </div>
+                    </div>
+
+                    <!-- User Statistics Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        <!-- Total Users -->
+                        <div class="bg-white p-4 rounded-lg shadow-sm user-card">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs text-gray-500">Total Registered Users</p>
+                                    <p class="text-xl font-bold" style="color: #133F53;">2,847</p>
+                                </div>
+                                <div class="w-10 h-10 rounded-full bg-[#F8F8EA] flex items-center justify-center">
+                                    <i class="fa-solid fa-users" style="color: #D89F34;"></i>
+                                </div>
+                            </div>
+                            <div class="mt-2 flex items-center text-xs">
+                                <span class="text-green-600">↑ 156</span>
+                                <span class="text-gray-400 ml-2">this month</span>
+                            </div>
+                        </div>
+
+                        <!-- Active Users -->
+                        <div class="bg-white p-4 rounded-lg shadow-sm user-card">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs text-gray-500">Active Today</p>
+                                    <p class="text-xl font-bold" style="color: #133F53;">1,243</p>
+                                </div>
+                                <div class="w-10 h-10 rounded-full bg-[#F8F8EA] flex items-center justify-center">
+                                    <i class="fa-regular fa-circle-check" style="color: #10B981;"></i>
+                                </div>
+                            </div>
+                            <div class="mt-2 flex items-center text-xs">
+                                <span class="text-green-600">43%</span>
+                                <span class="text-gray-400 ml-2">of total</span>
+                            </div>
+                        </div>
+
+                        <!-- New Users -->
+                        <div class="bg-white p-4 rounded-lg shadow-sm user-card">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs text-gray-500">New This Week</p>
+                                    <p class="text-xl font-bold" style="color: #133F53;">128</p>
+                                </div>
+                                <div class="w-10 h-10 rounded-full bg-[#F8F8EA] flex items-center justify-center">
+                                    <i class="fa-regular fa-star" style="color: #D89F34;"></i>
+                                </div>
+                            </div>
+                            <div class="mt-2 flex items-center text-xs">
+                                <span class="text-green-600">↑ 12%</span>
+                                <span class="text-gray-400 ml-2">vs last week</span>
+                            </div>
+                        </div>
+
+                        <!-- Email Verified -->
+                        <div class="bg-white p-4 rounded-lg shadow-sm user-card">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs text-gray-500">Email Verified</p>
+                                    <p class="text-xl font-bold" style="color: #133F53;">2,534</p>
+                                </div>
+                                <div class="w-10 h-10 rounded-full bg-[#F8F8EA] flex items-center justify-center">
+                                    <i class="fa-regular fa-envelope" style="color: #D89F34;"></i>
+                                </div>
+                            </div>
+                            <div class="mt-2 flex items-center text-xs">
+                                <span class="text-green-600">89%</span>
+                                <span class="text-gray-400 ml-2">verified</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filters and Search -->
+                    <div class="bg-white p-4 rounded-lg shadow-sm mb-6">
+                        <div class="flex flex-col lg:flex-row gap-4 items-center justify-between">
+                            <!-- Search with Debounce -->
+                            <div class="relative w-full lg:w-96">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
+                                <input type="text" id="searchUser" placeholder="Search by name, email, or phone..." 
+                                       class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D89F34] text-sm"
+                                       onkeyup="debounceSearch()">
+                                <!-- Loading indicator for search -->
+                                <div id="searchLoading" class="absolute right-3 top-1/2 transform -translate-y-1/2 hidden">
+                                    <i class="fa-solid fa-circle-notch fa-spin text-[#D89F34]"></i>
+                                </div>
+                            </div>
+
+                            <!-- Filter Dropdowns -->
+                            <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+                                <!-- Status Filter Dropdown -->
+                                <div class="relative w-full sm:w-40">
+                                    <button id="statusDropdownButton" class="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm flex items-center justify-between bg-white hover:bg-[#F8F8EA] transition-colors" style="color: #133F53;" onclick="toggleStatusDropdown()">
+                                        <span id="selectedStatusText">All Status</span>
+                                        <i class="fa-solid fa-chevron-down text-xs transition-transform duration-200" id="statusDropdownArrow" style="color: #957A54;"></i>
+                                    </button>
+                                    
+                                    <!-- Status Dropdown -->
+                                    <div id="statusDropdown" class="absolute right-0 mt-1 w-full bg-white rounded-lg shadow-lg py-1 hidden z-50 border border-gray-100">
+                                        <button class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between" onclick="selectStatus('all', 'All Status')">
+                                            <span style="color: #133F53;">All Status</span>
+                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;" id="check-status-all"></i>
+                                        </button>
+                                        <button class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between" onclick="selectStatus('active', 'Active')">
+                                            <span style="color: #133F53;">Active</span>
+                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;" id="check-status-active"></i>
+                                        </button>
+                                        <button class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between" onclick="selectStatus('inactive', 'Inactive')">
+                                            <span style="color: #133F53;">Inactive</span>
+                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;" id="check-status-inactive"></i>
+                                        </button>
+                                        <button class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between" onclick="selectStatus('blocked', 'Blocked')">
+                                            <span style="color: #133F53;">Blocked</span>
+                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;" id="check-status-blocked"></i>
+                                        </button>
+                                        <button class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between" onclick="selectStatus('pending', 'Pending')">
+                                            <span style="color: #133F53;">Pending</span>
+                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;" id="check-status-pending"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Verification Filter Dropdown -->
+                                <div class="relative w-full sm:w-44">
+                                    <button id="verifiedDropdownButton" class="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm flex items-center justify-between bg-white hover:bg-[#F8F8EA] transition-colors" style="color: #133F53;" onclick="toggleVerifiedDropdown()">
+                                        <span id="selectedVerifiedText">All Users</span>
+                                        <i class="fa-solid fa-chevron-down text-xs transition-transform duration-200" id="verifiedDropdownArrow" style="color: #957A54;"></i>
+                                    </button>
+                                    
+                                    <!-- Verified Dropdown -->
+                                    <div id="verifiedDropdown" class="absolute right-0 mt-1 w-full bg-white rounded-lg shadow-lg py-1 hidden z-50 border border-gray-100">
+                                        <button class="verified-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between" onclick="selectVerified('all', 'All Users')">
+                                            <span style="color: #133F53;">All Users</span>
+                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;" id="check-verified-all"></i>
+                                        </button>
+                                        <button class="verified-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between" onclick="selectVerified('verified', 'Email Verified')">
+                                            <span style="color: #133F53;">Email Verified</span>
+                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;" id="check-verified-verified"></i>
+                                        </button>
+                                        <button class="verified-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between" onclick="selectVerified('unverified', 'Email Not Verified')">
+                                            <span style="color: #133F53;">Email Not Verified</span>
+                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;" id="check-verified-unverified"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Sort Dropdown -->
+                                <select id="sortUsers" class="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#D89F34] bg-white w-full sm:w-40" onchange="sortUsers()">
+                                    <option value="newest">Newest First</option>
+                                    <option value="oldest">Oldest First</option>
+                                    <option value="name-asc">Name A-Z</option>
+                                    <option value="name-desc">Name Z-A</option>
+                                    <option value="orders-high">Most Orders</option>
+                                    <option value="spent-high">Highest Spent</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Users Table -->
+                    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full" id="usersTable">
+                                <thead>
+                                    <tr class="border-b border-gray-200" style="background-color: #F8F8EA;">
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">
+                                            <input type="checkbox" id="selectAll" onclick="toggleAll()">
+                                        </th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">USER</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">CONTACT</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">VERIFIED</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">ORDERS</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">TOTAL SPENT</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">JOIN DATE</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">LAST ACTIVE</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">STATUS</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">ACTIONS</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody">
+                                    <!-- Users will be loaded here dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        <div class="px-4 py-3 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-3">
+                            <p class="text-sm" style="color: #957A54;" id="showingInfo">Showing 1-10 of 50 users</p>
+                            <div class="flex gap-2">
+                                <button class="w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA]" onclick="changePage('prev')">
+                                    <i class="fa-solid fa-chevron-left text-xs"></i>
+                                </button>
+                                <button class="w-8 h-8 rounded" style="background-color: #133F53; color: white;" id="page1">1</button>
+                                <button class="w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA]" id="page2" onclick="goToPage(2)">2</button>
+                                <button class="w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA]" id="page3" onclick="goToPage(3)">3</button>
+                                <button class="w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA]" id="page4" onclick="goToPage(4)">4</button>
+                                <button class="w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA]" onclick="changePage('next')">
+                                    <i class="fa-solid fa-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bulk Actions -->
+                    <div id="bulkActions" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-white rounded-lg shadow-lg p-3 hidden" style="z-index: 40;">
+                        <div class="flex items-center gap-4">
+                            <span class="text-sm font-medium" id="selectedCount" style="color: #133F53;">0 selected</span>
+                            <select class="px-3 py-1 border border-gray-200 rounded-lg text-sm" id="bulkStatus">
+                                <option value="">Change Status</option>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                                <option value="blocked">Blocked</option>
+                            </select>
+                            <button class="px-3 py-1 bg-red-600 text-white rounded-lg text-sm" onclick="bulkDelete()">
+                                <i class="fa-regular fa-trash-can"></i> Delete
+                            </button>
+                            <button class="px-3 py-1 border border-gray-200 rounded-lg text-sm" onclick="clearSelection()">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modals Container -->
+    <div id="modals-container"></div>
+
+    <!-- Create/Edit User Modal -->
+    <div id="userModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto modal-enter">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold" style="color: #133F53;" id="modalTitle">Add New User</h3>
+                <button onclick="closeUserModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            
+            <form id="userForm" class="space-y-4" onsubmit="saveUser(event)">
+                <input type="hidden" id="userId" value="">
+                
+                <!-- Personal Information -->
+                <div>
+                    <h4 class="font-medium mb-3" style="color: #133F53;">Personal Information</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium mb-1" style="color: #133F53;">First Name *</label>
+                            <input type="text" id="firstName" required class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#D89F34]">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1" style="color: #133F53;">Last Name *</label>
+                            <input type="text" id="lastName" required class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#D89F34]">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1" style="color: #133F53;">Email *</label>
+                            <input type="email" id="email" required class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#D89F34]">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1" style="color: #133F53;">Phone *</label>
+                            <input type="tel" id="phone" required class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#D89F34]">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1" style="color: #133F53;">Password</label>
+                            <input type="password" id="password" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#D89F34]" placeholder="Leave blank to keep current">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1" style="color: #133F53;">Confirm Password</label>
+                            <input type="password" id="confirmPassword" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#D89F34]">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Status -->
+                <div>
+                    <h4 class="font-medium mb-3" style="color: #133F53;">Account Status</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium mb-1" style="color: #133F53;">Status</label>
+                            <select id="userStatus" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#D89F34]">
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                                <option value="pending">Pending</option>
+                                <option value="blocked">Blocked</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1" style="color: #133F53;">Email Verified</label>
+                            <select id="emailVerified" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#D89F34]">
+                                <option value="true">Verified</option>
+                                <option value="false">Not Verified</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                    <button type="button" onclick="closeUserModal()" class="px-4 py-2 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">Cancel</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg text-sm" style="background-color: #D89F34; color: #133F53;">Save User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- View User Details Modal -->
+    <div id="viewUserModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 max-w-2xl w-full mx-4 modal-enter">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold" style="color: #133F53;">User Details</h3>
+                <button onclick="closeViewUserModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            
+            <div id="userDetails" class="space-y-4">
+                <!-- User details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 max-w-sm w-full mx-4 modal-enter">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fa-solid fa-trash-can text-2xl text-red-600"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-2" style="color: #133F53;">Delete User</h3>
+                <p class="text-sm mb-6" style="color: #957A54;">Are you sure you want to delete this user? This action cannot be undone.</p>
+                
+                <div class="flex gap-3">
+                    <button onclick="closeDeleteModal()" class="flex-1 py-2 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors" style="color: #133F53;">
+                        Cancel
+                    </button>
+                    <button onclick="confirmDelete()" class="flex-1 py-2 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Notification -->
+    <div id="notification" class="fixed top-4 right-4 px-4 py-2 rounded-lg shadow-lg z-50 hidden" style="min-width: 250px;">
+        <div class="flex items-center gap-2">
+            <i id="notificationIcon" class=""></i>
+            <span id="notificationMessage" class="text-sm"></span>
+        </div>
+    </div>
+
+    <script src="../js/components.js"></script>
+    <script>
+        // Sample registered users data
+        let users = [
+            {
+                id: 'USR001',
+                firstName: 'John',
+                lastName: 'Doe',
+                email: 'john.doe@email.com',
+                phone: '+1 234-567-8901',
+                password: 'hashed_password_1',
+                status: 'active',
+                emailVerified: true,
+                totalOrders: 45,
+                totalSpent: 3890.50,
+                joinDate: '2023-01-15',
+                lastActive: '2024-03-15T10:30:00',
+                lastLoginIP: '192.168.1.1'
+            },
+            {
+                id: 'USR002',
+                firstName: 'Jane',
+                lastName: 'Smith',
+                email: 'jane.smith@email.com',
+                phone: '+1 234-567-8902',
+                password: 'hashed_password_2',
+                status: 'active',
+                emailVerified: true,
+                totalOrders: 128,
+                totalSpent: 15670.75,
+                joinDate: '2022-06-10',
+                lastActive: '2024-03-15T14:20:00',
+                lastLoginIP: '192.168.1.2'
+            },
+            {
+                id: 'USR003',
+                firstName: 'Mike',
+                lastName: 'Johnson',
+                email: 'mike.j@email.com',
+                phone: '+1 234-567-8903',
+                password: 'hashed_password_3',
+                status: 'inactive',
+                emailVerified: true,
+                totalOrders: 12,
+                totalSpent: 890.25,
+                joinDate: '2023-09-20',
+                lastActive: '2024-02-28T09:15:00',
+                lastLoginIP: '192.168.1.3'
+            },
+            {
+                id: 'USR004',
+                firstName: 'Sarah',
+                lastName: 'Williams',
+                email: 'sarah.w@email.com',
+                phone: '+1 234-567-8904',
+                password: 'hashed_password_4',
+                status: 'active',
+                emailVerified: false,
+                totalOrders: 0,
+                totalSpent: 0,
+                joinDate: '2024-03-10',
+                lastActive: '2024-03-10T11:30:00',
+                lastLoginIP: '192.168.1.4'
+            },
+            {
+                id: 'USR005',
+                firstName: 'Robert',
+                lastName: 'Brown',
+                email: 'robert.b@email.com',
+                phone: '+1 234-567-8905',
+                password: 'hashed_password_5',
+                status: 'active',
+                emailVerified: true,
+                totalOrders: 234,
+                totalSpent: 28750.25,
+                joinDate: '2022-01-10',
+                lastActive: '2024-03-15T11:10:00',
+                lastLoginIP: '192.168.1.5'
+            },
+            {
+                id: 'USR006',
+                firstName: 'Emily',
+                lastName: 'Davis',
+                email: 'emily.d@email.com',
+                phone: '+1 234-567-8906',
+                password: 'hashed_password_6',
+                status: 'pending',
+                emailVerified: false,
+                totalOrders: 0,
+                totalSpent: 0,
+                joinDate: '2024-03-14',
+                lastActive: '2024-03-14T08:30:00',
+                lastLoginIP: '192.168.1.6'
+            },
+            {
+                id: 'USR007',
+                firstName: 'David',
+                lastName: 'Miller',
+                email: 'david.m@email.com',
+                phone: '+1 234-567-8907',
+                password: 'hashed_password_7',
+                status: 'blocked',
+                emailVerified: true,
+                totalOrders: 45,
+                totalSpent: 6780.50,
+                joinDate: '2023-04-18',
+                lastActive: '2024-02-10T13:20:00',
+                lastLoginIP: '192.168.1.7'
+            },
+            {
+                id: 'USR008',
+                firstName: 'Lisa',
+                lastName: 'Taylor',
+                email: 'lisa.t@email.com',
+                phone: '+1 234-567-8908',
+                password: 'hashed_password_8',
+                status: 'active',
+                emailVerified: true,
+                totalOrders: 67,
+                totalSpent: 8900.75,
+                joinDate: '2023-02-28',
+                lastActive: '2024-03-15T09:50:00',
+                lastLoginIP: '192.168.1.8'
+            }
+        ];
+
+        // State variables
+        let currentStatus = 'all';
+        let currentVerified = 'all';
+        let selectedUsers = new Set();
+        let currentPage = 1;
+        const itemsPerPage = 10;
+        let deleteId = null;
+        let currentEditId = null;
+        let isStatusDropdownOpen = false;
+        let isVerifiedDropdownOpen = false;
+        let searchTimeout = null;
+        const DEBOUNCE_DELAY = 500;
+
+        // ==================== PAGE LOAD OPTIMIZATION ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show skeleton, hide actual content
+            document.getElementById('skeletonLoader').classList.remove('content-hidden');
+            document.getElementById('skeletonLoader').classList.add('content-visible');
+            document.getElementById('actualContent').classList.remove('content-visible');
+            document.getElementById('actualContent').classList.add('content-hidden');
+
+            // Initialize dropdowns
+            currentStatus = 'all';
+            currentVerified = 'all';
+            document.getElementById('selectedStatusText').textContent = 'All Status';
+            document.getElementById('selectedVerifiedText').textContent = 'All Users';
+            updateStatusCheckmarks();
+            updateVerifiedCheckmarks();
+
+            // Load data
+            loadData();
+        });
+
+        async function loadData() {
+            try {
+                // Simulate loading time (remove in production)
+                await new Promise(resolve => setTimeout(resolve, 800));
+
+                // Render users
+                renderUsers();
+
+                // Hide skeleton, show actual content
+                document.getElementById('skeletonLoader').classList.remove('content-visible');
+                document.getElementById('skeletonLoader').classList.add('content-hidden');
+                document.getElementById('actualContent').classList.remove('content-hidden');
+                document.getElementById('actualContent').classList.add('content-visible');
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showNotification('Error loading users', 'error');
+            }
+        }
+
+        // ==================== RENDER FUNCTIONS ====================
+        function renderUsers() {
+            const tbody = document.getElementById('usersTableBody');
+            if (!tbody) return;
+
+            let filteredUsers = filterUsersByStatusAndVerified();
+            
+            // Apply search filter
+            const searchTerm = document.getElementById('searchUser')?.value.toLowerCase() || '';
+            if (searchTerm) {
+                filteredUsers = filteredUsers.filter(user => 
+                    user.firstName.toLowerCase().includes(searchTerm) ||
+                    user.lastName.toLowerCase().includes(searchTerm) ||
+                    user.email.toLowerCase().includes(searchTerm) ||
+                    user.phone.includes(searchTerm)
+                );
+            }
+
+            // Apply sorting
+            const sortBy = document.getElementById('sortUsers')?.value || 'newest';
+            filteredUsers = sortUsersData(filteredUsers, sortBy);
+
+            // Pagination
+            const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+            if (currentPage > totalPages) currentPage = 1;
+
+            const start = (currentPage - 1) * itemsPerPage;
+            const paginatedUsers = filteredUsers.slice(start, start + itemsPerPage);
+            
+            // Update showing info
+            document.getElementById('showingInfo').textContent = 
+                `Showing ${start + 1}-${Math.min(start + itemsPerPage, filteredUsers.length)} of ${filteredUsers.length} users`;
+
+            tbody.innerHTML = '';
+            paginatedUsers.forEach(user => {
+                const row = document.createElement('tr');
+                row.className = 'border-b border-gray-100 user-row';
+                row.innerHTML = `
+                    <td class="py-2 px-4">
+                        <input type="checkbox" class="user-checkbox" value="${user.id}" onchange="updateSelection(this)">
+                    </td>
+                    <td class="py-2 px-4">
+                        <div class="flex items-center gap-3">
+                            <div class="avatar-circle" style="background-color: ${getAvatarColor(user.id)}; color: white;">
+                                ${user.firstName.charAt(0)}${user.lastName.charAt(0)}
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium" style="color: #133F53;">${user.firstName} ${user.lastName}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-2 px-4">
+                        <p class="text-sm">${user.email}</p>
+                        <p class="text-xs" style="color: #957A54;">${user.phone}</p>
+                    </td>
+                    <td class="py-2 px-4">
+                        ${getVerifiedBadge(user.emailVerified)}
+                    </td>
+                    <td class="py-2 px-4 text-sm">${user.totalOrders}</td>
+                    <td class="py-2 px-4 text-sm font-medium" style="color: #133F53;">$${user.totalSpent.toFixed(2)}</td>
+                    <td class="py-2 px-4 text-sm">${formatDate(user.joinDate)}</td>
+                    <td class="py-2 px-4">
+                        <div>
+                            <p class="text-sm">${formatLastActive(user.lastActive)}</p>
+                            ${getActivityDot(user.lastActive)}
+                        </div>
+                    </td>
+                    <td class="py-2 px-4">${getStatusBadge(user.status)}</td>
+                    <td class="py-2 px-4">
+                        <div class="flex gap-2">
+                            <button onclick="viewUser('${user.id}')" class="text-[#957A54] hover:text-[#133F53]" title="View">
+                                <i class="fa-regular fa-eye"></i>
+                            </button>
+                            <button onclick="editUser('${user.id}')" class="text-[#957A54] hover:text-[#D89F34]" title="Edit">
+                                <i class="fa-regular fa-pen-to-square"></i>
+                            </button>
+                            <button onclick="openDeleteModal('${user.id}')" class="text-[#957A54] hover:text-red-600" title="Delete">
+                                <i class="fa-regular fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // Update select all checkbox
+            updatePaginationButtons(filteredUsers.length);
+            updateSelectAll();
+        }
+
+        // Get avatar color
+        function getAvatarColor(id) {
+            const colors = ['#133F53', '#D89F34', '#957A54', '#2C3E50', '#C0392B', '#16A085', '#8E44AD', '#2980B9'];
+            const index = parseInt(id.slice(-2)) % colors.length;
+            return colors[index];
+        }
+
+        // Get verified badge
+        function getVerifiedBadge(verified) {
+            return verified ? 
+                '<span class="status-badge" style="background-color: #D1FAE5; color: #065F46;"><i class="fa-regular fa-circle-check"></i> Verified</span>' :
+                '<span class="status-badge" style="background-color: #FEF3C7; color: #92400E;"><i class="fa-regular fa-clock"></i> Pending</span>';
+        }
+
+        // Get status badge
+        function getStatusBadge(status) {
+            const badges = {
+                active: '<span class="status-badge" style="background-color: #D1FAE5; color: #065F46;"><i class="fa-regular fa-circle-check"></i> Active</span>',
+                inactive: '<span class="status-badge" style="background-color: #F3F4F6; color: #4B5563;"><i class="fa-regular fa-circle-pause"></i> Inactive</span>',
+                pending: '<span class="status-badge" style="background-color: #FEF3C7; color: #92400E;"><i class="fa-regular fa-clock"></i> Pending</span>',
+                blocked: '<span class="status-badge" style="background-color: #FEE2E2; color: #991B1B;"><i class="fa-solid fa-ban"></i> Blocked</span>'
+            };
+            return badges[status] || badges.active;
+        }
+
+        // Get activity dot
+        function getActivityDot(lastActive) {
+            const lastActiveDate = new Date(lastActive);
+            const now = new Date();
+            const hoursDiff = (now - lastActiveDate) / (1000 * 60 * 60);
+            
+            if (hoursDiff < 1) {
+                return '<span class="activity-dot bg-green-500"></span><span class="text-xs text-green-600">Online now</span>';
+            } else if (hoursDiff < 24) {
+                return '<span class="activity-dot bg-yellow-500"></span><span class="text-xs text-yellow-600">Today</span>';
+            } else {
+                return '<span class="activity-dot bg-gray-400"></span><span class="text-xs text-gray-500">Away</span>';
+            }
+        }
+
+        // Format last active
+        function formatLastActive(dateStr) {
+            const date = new Date(dateStr);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / (1000 * 60));
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+            if (diffMins < 60) {
+                return `${diffMins}m ago`;
+            } else if (diffHours < 24) {
+                return `${diffHours}h ago`;
+            } else {
+                return `${diffDays}d ago`;
+            }
+        }
+
+        // Format date
+        function formatDate(dateStr) {
+            return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        // ==================== DROPDOWN FUNCTIONS ====================
+        function toggleStatusDropdown() {
+            const dropdown = document.getElementById('statusDropdown');
+            const arrow = document.getElementById('statusDropdownArrow');
+
+            isStatusDropdownOpen = !isStatusDropdownOpen;
+
+            if (isStatusDropdownOpen) {
+                dropdown.classList.remove('hidden');
+                arrow.style.transform = 'rotate(180deg)';
+                updateStatusCheckmarks();
+                
+                // Close verified dropdown if open
+                if (isVerifiedDropdownOpen) {
+                    toggleVerifiedDropdown();
+                }
+            } else {
+                dropdown.classList.add('hidden');
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function selectStatus(status, text) {
+            currentStatus = status;
+            document.getElementById('selectedStatusText').textContent = text;
+            toggleStatusDropdown();
+            updateStatusCheckmarks();
+            filterUsers();
+        }
+
+        function updateStatusCheckmarks() {
+            document.querySelectorAll('#statusDropdown .status-item i').forEach(icon => {
+                icon.style.display = 'none';
+            });
+
+            const checkId = `check-status-${currentStatus}`;
+            const checkIcon = document.getElementById(checkId);
+            if (checkIcon) {
+                checkIcon.style.display = 'inline-block';
+            }
+        }
+
+        function toggleVerifiedDropdown() {
+            const dropdown = document.getElementById('verifiedDropdown');
+            const arrow = document.getElementById('verifiedDropdownArrow');
+
+            isVerifiedDropdownOpen = !isVerifiedDropdownOpen;
+
+            if (isVerifiedDropdownOpen) {
+                dropdown.classList.remove('hidden');
+                arrow.style.transform = 'rotate(180deg)';
+                updateVerifiedCheckmarks();
+                
+                // Close status dropdown if open
+                if (isStatusDropdownOpen) {
+                    toggleStatusDropdown();
+                }
+            } else {
+                dropdown.classList.add('hidden');
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function selectVerified(verified, text) {
+            currentVerified = verified;
+            document.getElementById('selectedVerifiedText').textContent = text;
+            toggleVerifiedDropdown();
+            updateVerifiedCheckmarks();
+            filterUsers();
+        }
+
+        function updateVerifiedCheckmarks() {
+            document.querySelectorAll('#verifiedDropdown .verified-item i').forEach(icon => {
+                icon.style.display = 'none';
+            });
+
+            const checkId = `check-verified-${currentVerified}`;
+            const checkIcon = document.getElementById(checkId);
+            if (checkIcon) {
+                checkIcon.style.display = 'inline-block';
+            }
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(e) {
+            // Status dropdown
+            const statusDropdown = document.getElementById('statusDropdown');
+            const statusButton = document.getElementById('statusDropdownButton');
+            const statusArrow = document.getElementById('statusDropdownArrow');
+            
+            if (isStatusDropdownOpen && statusDropdown && statusButton &&
+                !statusButton.contains(e.target) && !statusDropdown.contains(e.target)) {
+                statusDropdown.classList.add('hidden');
+                statusArrow.style.transform = 'rotate(0deg)';
+                isStatusDropdownOpen = false;
+            }
+
+            // Verified dropdown
+            const verifiedDropdown = document.getElementById('verifiedDropdown');
+            const verifiedButton = document.getElementById('verifiedDropdownButton');
+            const verifiedArrow = document.getElementById('verifiedDropdownArrow');
+            
+            if (isVerifiedDropdownOpen && verifiedDropdown && verifiedButton &&
+                !verifiedButton.contains(e.target) && !verifiedDropdown.contains(e.target)) {
+                verifiedDropdown.classList.add('hidden');
+                verifiedArrow.style.transform = 'rotate(0deg)';
+                isVerifiedDropdownOpen = false;
+            }
+        });
+
+        // ==================== FILTER FUNCTIONS ====================
+        function filterUsersByStatusAndVerified() {
+            return users.filter(user => {
+                // Filter by status
+                if (currentStatus !== 'all' && user.status !== currentStatus) {
+                    return false;
+                }
+                
+                // Filter by email verified
+                if (currentVerified === 'verified' && !user.emailVerified) return false;
+                if (currentVerified === 'unverified' && user.emailVerified) return false;
+                
+                return true;
+            });
+        }
+
+        // Sort users data
+        function sortUsersData(usersArray, sortBy) {
+            const sorted = [...usersArray];
+            switch(sortBy) {
+                case 'newest':
+                    return sorted.sort((a, b) => new Date(b.joinDate) - new Date(a.joinDate));
+                case 'oldest':
+                    return sorted.sort((a, b) => new Date(a.joinDate) - new Date(b.joinDate));
+                case 'name-asc':
+                    return sorted.sort((a, b) => (a.firstName + a.lastName).localeCompare(b.firstName + b.lastName));
+                case 'name-desc':
+                    return sorted.sort((a, b) => (b.firstName + b.lastName).localeCompare(a.firstName + a.lastName));
+                case 'orders-high':
+                    return sorted.sort((a, b) => b.totalOrders - a.totalOrders);
+                case 'spent-high':
+                    return sorted.sort((a, b) => b.totalSpent - a.totalSpent);
+                default:
+                    return sorted;
+            }
+        }
+
+        // Filter users
+        function filterUsers() {
+            currentPage = 1;
+            renderUsers();
+        }
+
+        // Sort users
+        function sortUsers() {
+            renderUsers();
+        }
+
+        // ==================== DEBOUNCE SEARCH FUNCTIONS ====================
+        function debounceSearch() {
+            const loadingIndicator = document.getElementById('searchLoading');
+            if (loadingIndicator) {
+                loadingIndicator.classList.remove('hidden');
+            }
+
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+
+            searchTimeout = setTimeout(() => {
+                performSearch();
+            }, DEBOUNCE_DELAY);
+        }
+
+        function performSearch() {
+            const loadingIndicator = document.getElementById('searchLoading');
+            if (loadingIndicator) {
+                loadingIndicator.classList.add('hidden');
+            }
+
+            currentPage = 1;
+            renderUsers();
+        }
+
+        // ==================== CHECKBOX SELECTION FUNCTIONS ====================
+        function toggleAll() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.user-checkbox');
+            
+            checkboxes.forEach(cb => {
+                cb.checked = selectAll.checked;
+                if (selectAll.checked) {
+                    selectedUsers.add(cb.value);
+                } else {
+                    selectedUsers.delete(cb.value);
+                }
+            });
+            
+            updateBulkActions();
+            updateSelectAll();
+        }
+
+        function updateSelection(checkbox) {
+            if (checkbox.checked) {
+                selectedUsers.add(checkbox.value);
+            } else {
+                selectedUsers.delete(checkbox.value);
+            }
+            updateSelectAll();
+            updateBulkActions();
+        }
+
+        function updateSelectAll() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.user-checkbox');
+            
+            if (selectAll) {
+                selectAll.checked = checkboxes.length > 0 && 
+                    Array.from(checkboxes).every(cb => cb.checked);
+                selectAll.indeterminate = !selectAll.checked && 
+                    Array.from(checkboxes).some(cb => cb.checked);
+            }
+        }
+
+        function updateBulkActions() {
+            const bulkActions = document.getElementById('bulkActions');
+            const selectedCount = document.getElementById('selectedCount');
+            
+            if (selectedUsers.size > 0) {
+                bulkActions.classList.remove('hidden');
+                selectedCount.textContent = `${selectedUsers.size} selected`;
+            } else {
+                bulkActions.classList.add('hidden');
+            }
+        }
+
+        function clearSelection() {
+            selectedUsers.clear();
+            document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = false);
+            updateSelectAll();
+            updateBulkActions();
+        }
+
+        // Bulk actions
+        function bulkDelete() {
+            if (selectedUsers.size === 0) return;
+            
+            if (confirm(`Delete ${selectedUsers.size} selected users?`)) {
+                users = users.filter(user => !selectedUsers.has(user.id));
+                clearSelection();
+                renderUsers();
+                showNotification('Users deleted successfully', 'success');
+            }
+        }
+
+        // ==================== USER CRUD OPERATIONS ====================
+        function openCreateUserModal() {
+            currentEditId = null;
+            document.getElementById('modalTitle').textContent = 'Add New User';
+            document.getElementById('userId').value = '';
+            document.getElementById('userForm').reset();
+            document.getElementById('password').required = true;
+            document.getElementById('confirmPassword').required = true;
+            document.getElementById('userModal').classList.remove('hidden');
+            document.getElementById('userModal').classList.add('flex');
+        }
+
+        function editUser(id) {
+            const user = users.find(u => u.id === id);
+            if (!user) return;
+            
+            currentEditId = id;
+            document.getElementById('modalTitle').textContent = 'Edit User';
+            document.getElementById('password').required = false;
+            document.getElementById('confirmPassword').required = false;
+            
+            // Fill form with user data
+            document.getElementById('userId').value = user.id;
+            document.getElementById('firstName').value = user.firstName;
+            document.getElementById('lastName').value = user.lastName;
+            document.getElementById('email').value = user.email;
+            document.getElementById('phone').value = user.phone;
+            document.getElementById('password').value = '';
+            document.getElementById('confirmPassword').value = '';
+            document.getElementById('userStatus').value = user.status;
+            document.getElementById('emailVerified').value = user.emailVerified ? 'true' : 'false';
+            
+            document.getElementById('userModal').classList.remove('hidden');
+            document.getElementById('userModal').classList.add('flex');
+        }
+
+        function closeUserModal() {
+            document.getElementById('userModal').classList.add('hidden');
+            document.getElementById('userModal').classList.remove('flex');
+            document.getElementById('userForm').reset();
+        }
+
+        function saveUser(event) {
+            event.preventDefault();
+            
+            // Validate passwords match if provided
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (password !== confirmPassword) {
+                alert('Passwords do not match!');
+                return;
+            }
+
+            const userData = {
+                id: currentEditId || 'USR' + String(users.length + 1).padStart(3, '0'),
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                status: document.getElementById('userStatus').value,
+                emailVerified: document.getElementById('emailVerified').value === 'true',
+                totalOrders: currentEditId ? users.find(u => u.id === currentEditId)?.totalOrders || 0 : 0,
+                totalSpent: currentEditId ? users.find(u => u.id === currentEditId)?.totalSpent || 0 : 0,
+                joinDate: currentEditId ? users.find(u => u.id === currentEditId)?.joinDate : new Date().toISOString().split('T')[0],
+                lastActive: new Date().toISOString(),
+                lastLoginIP: currentEditId ? users.find(u => u.id === currentEditId)?.lastLoginIP : '127.0.0.1'
+            };
+
+            if (password) {
+                userData.password = `hashed_${password}`; // In real app, hash properly
+            } else if (currentEditId) {
+                userData.password = users.find(u => u.id === currentEditId).password;
+            }
+
+            if (currentEditId) {
+                // Update existing user
+                const index = users.findIndex(u => u.id === currentEditId);
+                if (index !== -1) {
+                    users[index] = { ...users[index], ...userData };
+                }
+                showNotification('User updated successfully!', 'success');
+            } else {
+                // Add new user
+                users.push(userData);
+                showNotification('User created successfully!', 'success');
+            }
+
+            closeUserModal();
+            renderUsers();
+        }
+
+        function viewUser(id) {
+            const user = users.find(u => u.id === id);
+            if (!user) return;
+            
+            const modal = document.getElementById('viewUserModal');
+            const details = document.getElementById('userDetails');
+            
+            details.innerHTML = `
+                <div class="space-y-4">
+                    <!-- Header -->
+                    <div class="flex items-center gap-4 pb-4 border-b">
+                        <div class="avatar-circle text-xl" style="background-color: ${getAvatarColor(user.id)}; width: 60px; height: 60px; font-size: 24px;">
+                            ${user.firstName.charAt(0)}${user.lastName.charAt(0)}
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-bold" style="color: #133F53;">${user.firstName} ${user.lastName}</h4>
+                            <div class="flex gap-2 mt-1">
+                                ${getStatusBadge(user.status)}
+                                ${getVerifiedBadge(user.emailVerified)}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div>
+                        <h5 class="font-medium mb-2" style="color: #133F53;">Contact Information</h5>
+                        <div class="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                                <p class="text-xs" style="color: #957A54;">Email</p>
+                                <p>${user.email}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs" style="color: #957A54;">Phone</p>
+                                <p>${user.phone}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Account Statistics -->
+                    <div>
+                        <h5 class="font-medium mb-2" style="color: #133F53;">Account Statistics</h5>
+                        <div class="grid grid-cols-3 gap-3">
+                            <div class="bg-[#F8F8EA] p-2 rounded text-center">
+                                <p class="text-xs" style="color: #957A54;">Total Orders</p>
+                                <p class="text-lg font-bold" style="color: #133F53;">${user.totalOrders}</p>
+                            </div>
+                            <div class="bg-[#F8F8EA] p-2 rounded text-center">
+                                <p class="text-xs" style="color: #957A54;">Total Spent</p>
+                                <p class="text-lg font-bold" style="color: #133F53;">$${user.totalSpent.toFixed(2)}</p>
+                            </div>
+                            <div class="bg-[#F8F8EA] p-2 rounded text-center">
+                                <p class="text-xs" style="color: #957A54;">Avg. Order</p>
+                                <p class="text-lg font-bold" style="color: #133F53;">$${(user.totalSpent / (user.totalOrders || 1)).toFixed(2)}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Account Info -->
+                    <div>
+                        <h5 class="font-medium mb-2" style="color: #133F53;">Account Information</h5>
+                        <div class="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                                <p class="text-xs" style="color: #957A54;">User ID</p>
+                                <p>${user.id}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs" style="color: #957A54;">Join Date</p>
+                                <p>${formatDate(user.joinDate)}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs" style="color: #957A54;">Last Active</p>
+                                <p>${formatLastActive(user.lastActive)}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs" style="color: #957A54;">Last Login IP</p>
+                                <p>${user.lastLoginIP || 'N/A'}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeViewUserModal() {
+            document.getElementById('viewUserModal').classList.add('hidden');
+            document.getElementById('viewUserModal').classList.remove('flex');
+        }
+
+        // ==================== DELETE FUNCTIONS ====================
+        function openDeleteModal(id) {
+            deleteId = id;
+            document.getElementById('deleteModal').classList.remove('hidden');
+            document.getElementById('deleteModal').classList.add('flex');
+        }
+
+        function closeDeleteModal() {
+            deleteId = null;
+            document.getElementById('deleteModal').classList.add('hidden');
+            document.getElementById('deleteModal').classList.remove('flex');
+        }
+
+        function confirmDelete() {
+            if (deleteId) {
+                users = users.filter(u => u.id !== deleteId);
+                renderUsers();
+                showNotification('User deleted successfully', 'success');
+            }
+            closeDeleteModal();
+        }
+
+        // ==================== PAGINATION FUNCTIONS ====================
+        function changePage(direction) {
+            const filteredUsers = filterUsersByStatusAndVerified();
+            const searchTerm = document.getElementById('searchUser')?.value.toLowerCase() || '';
+            const filtered = filteredUsers.filter(user => 
+                user.firstName.toLowerCase().includes(searchTerm) ||
+                user.lastName.toLowerCase().includes(searchTerm) ||
+                user.email.toLowerCase().includes(searchTerm) ||
+                user.phone.includes(searchTerm)
+            );
+            
+            const totalPages = Math.ceil(filtered.length / itemsPerPage);
+            
+            if (direction === 'prev' && currentPage > 1) {
+                currentPage--;
+            } else if (direction === 'next' && currentPage < totalPages) {
+                currentPage++;
+            }
+            renderUsers();
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            renderUsers();
+        }
+
+        function updatePaginationButtons(totalItems) {
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            
+            for (let i = 1; i <= 4; i++) {
+                const btn = document.getElementById(`page${i}`);
+                if (btn) {
+                    if (i <= totalPages) {
+                        btn.style.display = 'block';
+                        btn.textContent = i;
+                        btn.onclick = () => goToPage(i);
+                        btn.className = i === currentPage ? 
+                            'w-8 h-8 rounded bg-[#133F53] text-white' : 
+                            'w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA]';
+                    } else {
+                        btn.style.display = 'none';
+                    }
+                }
+            }
+        }
+
+        // ==================== EXPORT FUNCTIONS ====================
+        function exportUsers() {
+            // Create CSV
+            const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Status', 'Email Verified', 'Total Orders', 'Total Spent', 'Join Date', 'Last Active'];
+            const csvRows = [];
+            
+            csvRows.push(headers.join(','));
+            
+            users.forEach(user => {
+                const row = [
+                    user.firstName,
+                    user.lastName,
+                    user.email,
+                    user.phone,
+                    user.status,
+                    user.emailVerified ? 'Yes' : 'No',
+                    user.totalOrders,
+                    user.totalSpent.toFixed(2),
+                    user.joinDate,
+                    user.lastActive
+                ];
+                csvRows.push(row.join(','));
+            });
+            
+            const csv = csvRows.join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `registered_users_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            
+            showNotification('Users exported successfully', 'success');
+        }
+
+        // ==================== NOTIFICATION FUNCTION ====================
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            const icon = document.getElementById('notificationIcon');
+            const messageEl = document.getElementById('notificationMessage');
+
+            // Set colors and icon based on type
+            const colors = {
+                success: { bg: '#10B981', icon: 'fa-regular fa-circle-check' },
+                error: { bg: '#EF4444', icon: 'fa-solid fa-circle-exclamation' },
+                info: { bg: '#3B82F6', icon: 'fa-solid fa-circle-info' }
+            };
+
+            notification.style.backgroundColor = colors[type].bg;
+            notification.style.color = 'white';
+            icon.className = colors[type].icon;
+            messageEl.textContent = message;
+
+            notification.classList.remove('hidden');
+
+            setTimeout(() => {
+                notification.classList.add('hidden');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

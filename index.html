@@ -7,9 +7,59 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="/css/components.css">
+    <script src="/js/components.js"></script>
 </head>
+<style>
+   /* Barcode Loader CSS */
+.barcode-loader {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    height: 80px;
+    gap: 4px;
+}
+
+.bar {
+    width: 8px;
+    background: linear-gradient(180deg, #133F53 0%, #D89F34 70%, #957A54 100%);
+    border-radius: 4px 4px 0 0;
+    animation: scan-wave 1.2s ease-in-out infinite;
+    transform-origin: bottom;
+}
+
+@keyframes scan-wave {
+    0%, 100% {
+        transform: scaleY(1);
+        opacity: 0.8;
+        background: linear-gradient(180deg, #133F53 0%, #D89F34 70%, #957A54 100%);
+    }
+    50% {
+        transform: scaleY(1.4);
+        opacity: 1;
+        background: linear-gradient(180deg, #D89F34 0%, #133F53 70%, #957A54 100%);
+    }
+}
+</style>
 <body class="bg-[#F2F2E8]">
 
+ <!-- Page Loader - Add right after <body> tag -->
+<div id="page-loader" class="fixed inset-0 bg-[#F2F2E8] z-50 flex items-center justify-center transition-opacity duration-300" style="opacity: 1; visibility: visible;">
+    <div class="loader-container">
+        <div class="barcode-loader">
+            <div class="bar bar1"></div>
+            <div class="bar bar2"></div>
+            <div class="bar bar3"></div>
+            <div class="bar bar4"></div>
+            <div class="bar bar5"></div>
+            <div class="bar bar6"></div>
+            <div class="bar bar7"></div>
+            <div class="bar bar8"></div>
+            <div class="bar bar9"></div>
+            <div class="bar bar10"></div>
+        </div>
+        <p class="text-center mt-4 text-sm font-medium" style="color: #133F53;">Loading your dashboard...</p>
+    </div>
+</div>
     <div class="flex h-screen overflow-hidden">
         <!-- Sidebar will be loaded here -->
         <div id="sidebar-container"></div>
@@ -187,6 +237,6 @@
     <!-- Modals will be loaded here dynamically -->
     <div id="modals-container"></div>
 
-    <script src="/js/components.js"></script>
+    
 </body>
 </html>

@@ -1,9 +1,7 @@
 <aside id="sidebar" class="bg-[#F8F8EA] h-screen fixed left-0 top-0 transition-all duration-300 z-30 shadow-xl"
     style="width: 288px;">
     <!-- Logo Area -->
-    <!-- Logo Area -->
-    <div class="flex items-center justify-between px-6 py-4 border-b border-[#e2dccd]">
-
+    <div class="flex items-center justify-between px-6 py-3 border-b border-[#e2dccd]">
         <!-- Logo -->
         <img src="/assets/Artezo-logo.jpg" alt="Artezo Logo" class="h-10 w-auto">
 
@@ -11,59 +9,71 @@
         <button id="collapse-btn" class="p-2 rounded-lg hover:bg-[#e5e0d1] transition-colors">
             <i class="fa-solid fa-chevron-left text-[#957A54] transition-transform duration-300" id="collapse-icon"></i>
         </button>
-
     </div>
 
     <!-- Navigation Menu -->
     <nav class="px-4 py-8 space-y-1 overflow-y-auto h-[calc(100vh-60px)]">
+        <!-- Dashboard -->
         <a href="/" class="nav-link active flex items-center gap-4 px-4 py-3 rounded-lg transition-colors"
             data-active="true">
-            <i class="fa-solid fa-chart-pie w-5 text-center flex-shrink-0"></i>
+            <i class="fa-solid fa-chart-pie w-5 text-center flex-shrink-0" style="color: #957A54;"></i>
             <span class="nav-text whitespace-nowrap transition-opacity duration-300">Dashboard</span>
         </a>
-        <a href="#"
+
+        <!-- Product Management -->
+        <a href="/Product_Management/products.html"
             class="nav-link flex items-center gap-4 px-4 py-3 rounded-lg transition-colors text-[#1e2f3a] hover:bg-[#e5e0d1]">
-            <i class="fa-solid fa-box w-5 text-center flex-shrink-0" style="color: #957A54;"></i>
-            <span class="nav-text whitespace-nowrap transition-opacity duration-300">Product management</span>
+            <i class="fa-solid fa-cubes w-5 text-center flex-shrink-0" style="color: #957A54;"></i>
+            <span class="nav-text whitespace-nowrap transition-opacity duration-300">Product Management</span>
         </a>
-        <a href="#"
+
+        <!-- Inventory Management -->
+        <a href="/Inventory_Management/inventory.html"
             class="nav-link flex items-center gap-4 px-4 py-3 rounded-lg transition-colors text-[#1e2f3a] hover:bg-[#e5e0d1]">
-            <i class="fa-solid fa-truck w-5 text-center flex-shrink-0" style="color: #957A54;"></i>
+            <i class="fa-solid fa-warehouse w-5 text-center flex-shrink-0" style="color: #957A54;"></i>
             <span class="nav-text whitespace-nowrap transition-opacity duration-300">Inventory Management</span>
         </a>
-        <a href="/Order/orders.html"
+
+        <!-- Order Management -->
+        <a href="/Order_Management/orders.html"
             class="nav-link flex items-center gap-4 px-4 py-3 rounded-lg transition-colors text-[#1e2f3a] hover:bg-[#e5e0d1]">
-            <i class="fa-solid fa-users w-5 text-center flex-shrink-0" style="color: #957A54;"></i>
+            <i class="fa-solid fa-truck-fast w-5 text-center flex-shrink-0" style="color: #957A54;"></i>
             <span class="nav-text whitespace-nowrap transition-opacity duration-300">Order Management</span>
         </a>
-        <a href="#"
+
+        <!-- Coupon/Discount -->
+        <a href="/Coupon_Management/coupon.html"
             class="nav-link flex items-center gap-4 px-4 py-3 rounded-lg transition-colors text-[#1e2f3a] hover:bg-[#e5e0d1]">
-            <i class="fa-solid fa-ticket w-5 text-center flex-shrink-0" style="color: #957A54;"></i>
+            <i class="fa-solid fa-tags w-5 text-center flex-shrink-0" style="color: #957A54;"></i>
             <span class="nav-text whitespace-nowrap transition-opacity duration-300">Coupon/Discount</span>
         </a>
-        <a href="#"
+
+        <!-- Banner Management -->
+        <a href="/Banner_Management/banner.html"
             class="nav-link flex items-center gap-4 px-4 py-3 rounded-lg transition-colors text-[#1e2f3a] hover:bg-[#e5e0d1]">
             <i class="fa-solid fa-flag w-5 text-center flex-shrink-0" style="color: #957A54;"></i>
             <span class="nav-text whitespace-nowrap transition-opacity duration-300">Banner Management</span>
         </a>
-        <a href="#"
+
+        <!-- User Management -->
+        <a href="/User_Management/user.html"
             class="nav-link flex items-center gap-4 px-4 py-3 rounded-lg transition-colors text-[#1e2f3a] hover:bg-[#e5e0d1]">
-            <i class="fa-solid fa-chart-line w-5 text-center flex-shrink-0" style="color: #957A54;"></i>
+            <i class="fa-solid fa-users w-5 text-center flex-shrink-0" style="color: #957A54;"></i>
             <span class="nav-text whitespace-nowrap transition-opacity duration-300">User Management</span>
         </a>
-        <a href="#"
+
+        <!-- Report Sales -->
+       <a href="/Report_Sales/reports.html"
+    class="nav-link flex items-center gap-4 px-4 py-3 rounded-lg transition-colors text-[#1e2f3a] hover:bg-[#e5e0d1]">
+    <i class="fa-solid fa-chart-bar w-5 text-center flex-shrink-0" style="color: #957A54;"></i>
+    <span class="nav-text whitespace-nowrap transition-opacity duration-300">Report Sales</span>
+</a>
+
+        <!-- Contact -->
+        <a href="/Contact/contact.html"
             class="nav-link flex items-center gap-4 px-4 py-3 rounded-lg transition-colors text-[#1e2f3a] hover:bg-[#e5e0d1]">
-            <i class="fa-solid fa-lock w-5 text-center flex-shrink-0" style="color: #957A54;"></i>
-            <span class="nav-text whitespace-nowrap transition-opacity duration-300">Report Sales</span>
-        </a>
-        <a href="#"
-            class="nav-link flex items-center gap-4 px-4 py-3 rounded-lg transition-colors text-[#1e2f3a] hover:bg-[#e5e0d1]">
-            <i class="fa-solid fa-lock w-5 text-center flex-shrink-0" style="color: #957A54;"></i>
+            <i class="fa-solid fa-headset w-5 text-center flex-shrink-0" style="color: #957A54;"></i>
             <span class="nav-text whitespace-nowrap transition-opacity duration-300">Contact</span>
         </a>
-        
-
     </nav>
-
-   
 </aside>

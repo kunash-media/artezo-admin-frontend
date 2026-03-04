@@ -22,67 +22,75 @@ class LayoutComponents {
         this.setupLogoutModal();
     }
 
-   async loadComponents() {
-    try {
-        // Check if we're in a subfolder
-        const path = window.location.pathname;
-        const isInSubfolder = path.includes('/Order/');
-        
-        // Load sidebar with correct path
-        const sidebarPath = isInSubfolder ? '../sidebar.html' : 'sidebar.html';
-        const sidebarResponse = await fetch(sidebarPath);
-        const sidebarHtml = await sidebarResponse.text();
-        document.getElementById('sidebar-container').innerHTML = sidebarHtml;
+    async loadComponents() {
+        try {
+            // Check if we're in a subfolder
+            const path = window.location.pathname;
+            const isInSubfolder = path.includes('/Order_Management/') || path.includes('/Coupon_Management/') || path.includes('/User_Management/') || path.includes('/products.html');
+            
+            // Load sidebar with correct path
+            const sidebarPath = isInSubfolder ? '../sidebar.html' : 'sidebar.html';
+            const sidebarResponse = await fetch(sidebarPath);
+            const sidebarHtml = await sidebarResponse.text();
+            document.getElementById('sidebar-container').innerHTML = sidebarHtml;
 
-        // Load header with correct path
-        const headerPath = isInSubfolder ? '../header.html' : 'header.html';
-        const headerResponse = await fetch(headerPath);
-        const headerHtml = await headerResponse.text();
-        document.getElementById('header-container').innerHTML = headerHtml;
+            // Load header with correct path
+            const headerPath = isInSubfolder ? '../header.html' : 'header.html';
+            const headerResponse = await fetch(headerPath);
+            const headerHtml = await headerResponse.text();
+            document.getElementById('header-container').innerHTML = headerHtml;
 
-        document.dispatchEvent(new Event('componentsLoaded'));
-    } catch (error) {
-        console.error('Error loading components:', error);
-        this.loadFallbackContent();
+            document.dispatchEvent(new Event('componentsLoaded'));
+        } catch (error) {
+            console.error('Error loading components:', error);
+            this.loadFallbackContent();
+        }
     }
-}
 
     async loadModals() {
-    try {
-        // Check if we're in a subfolder
-        const path = window.location.pathname;
-        const isInSubfolder = path.includes('/Order/');
-        
-        // Load modals with correct path
-        const modalsPath = isInSubfolder ? '../modals.html' : 'modals.html';
-        const modalsResponse = await fetch(modalsPath);
-        const modalsHtml = await modalsResponse.text();
-        
-        let modalsContainer = document.getElementById('modals-container');
-        if (!modalsContainer) {
-            modalsContainer = document.createElement('div');
-            modalsContainer.id = 'modals-container';
-            document.body.appendChild(modalsContainer);
+        try {
+            // Check if we're in a subfolder
+            const path = window.location.pathname;
+            const isInSubfolder = path.includes('/Order_Management/') || path.includes('/Coupon_Management/') || path.includes('/User_Management/') || path.includes('/products.html');
+            
+            // Load modals with correct path
+            const modalsPath = isInSubfolder ? '../modals.html' : 'modals.html';
+            const modalsResponse = await fetch(modalsPath);
+            const modalsHtml = await modalsResponse.text();
+            
+            let modalsContainer = document.getElementById('modals-container');
+            if (!modalsContainer) {
+                modalsContainer = document.createElement('div');
+                modalsContainer.id = 'modals-container';
+                document.body.appendChild(modalsContainer);
+            }
+            
+            modalsContainer.innerHTML = modalsHtml;
+            document.dispatchEvent(new Event('modalsLoaded'));
+        } catch (error) {
+            console.error('Error loading modals:', error);
         }
-        
-        modalsContainer.innerHTML = modalsHtml;
-        document.dispatchEvent(new Event('modalsLoaded'));
-    } catch (error) {
-        console.error('Error loading modals:', error);
     }
-}
 
     loadFallbackContent() {
-        document.getElementById('sidebar-container').innerHTML = `
-            <aside class="bg-[#F8F8EA] w-72 h-screen fixed left-0 top-0 p-4">
-                <div class="text-[#133F53] font-bold">E-COMMERCE</div>
-            </aside>
-        `;
-        document.getElementById('header-container').innerHTML = `
-            <header class="bg-[#F8F8EA] p-4">
-                <h2 class="text-[#133F53]">Dashboard</h2>
-            </header>
-        `;
+        const sidebarContainer = document.getElementById('sidebar-container');
+        const headerContainer = document.getElementById('header-container');
+        
+        if (sidebarContainer) {
+            sidebarContainer.innerHTML = `
+                <aside class="bg-[#F8F8EA] w-72 h-screen fixed left-0 top-0 p-4">
+                    <div class="text-[#133F53] font-bold">E-COMMERCE</div>
+                </aside>
+            `;
+        }
+        
+        if (headerContainer) {
+            headerContainer.innerHTML = `
+                <header class="bg-[#F8F8EA] p-4">
+                    <h2 class="text-[#133F53]">Dashboard</h2>
+                </header>
+            `;
+        }
     }
 
     initializeElements() {
@@ -204,18 +212,24 @@ class LayoutComponents {
         const savedCollapsed = localStorage.getItem('sidebarCollapsed');
         if (savedCollapsed === 'true') {
             this.isCollapsed = true;
-            this.sidebar?.classList.add('sidebar-collapsed');
-            this.collapseIcon?.classList.remove('fa-chevron-left');
-            this.collapseIcon?.classList.add('fa-chevron-right');
-            this.mainContent?.classList.add('main-content-expanded');
-            this.mainContent?.classList.remove('main-content-normal');
+            if (this.sidebar) this.sidebar.classList.add('sidebar-collapsed');
+            if (this.collapseIcon) {
+                this.collapseIcon.classList.remove('fa-chevron-left');
+                this.collapseIcon.classList.add('fa-chevron-right');
+            }
+            if (this.mainContent) {
+                this.mainContent.classList.add('main-content-expanded');
+                this.mainContent.classList.remove('main-content-normal');
+            }
         }
     }
 
     handleResize() {
         if (window.innerWidth <= 1024) {
-            this.sidebar?.classList.remove('sidebar-collapsed');
-            this.mainContent?.classList.remove('main-content-expanded', 'main-content-normal');
+            if (this.sidebar) this.sidebar.classList.remove('sidebar-collapsed');
+            if (this.mainContent) {
+                this.mainContent.classList.remove('main-content-expanded', 'main-content-normal');
+            }
             
             if (this.isCollapsed) {
                 localStorage.setItem('sidebarCollapsed', 'false');
@@ -224,16 +238,18 @@ class LayoutComponents {
         } else {
             if (this.isMobileOpen) {
                 this.isMobileOpen = false;
-                this.sidebar?.classList.remove('mobile-open');
+                if (this.sidebar) this.sidebar.classList.remove('mobile-open');
                 document.body.style.overflow = '';
             }
             
-            if (this.isCollapsed) {
-                this.mainContent?.classList.add('main-content-expanded');
-                this.mainContent?.classList.remove('main-content-normal');
-            } else {
-                this.mainContent?.classList.remove('main-content-expanded');
-                this.mainContent?.classList.add('main-content-normal');
+            if (this.mainContent) {
+                if (this.isCollapsed) {
+                    this.mainContent.classList.add('main-content-expanded');
+                    this.mainContent.classList.remove('main-content-normal');
+                } else {
+                    this.mainContent.classList.remove('main-content-expanded');
+                    this.mainContent.classList.add('main-content-normal');
+                }
             }
         }
     }
@@ -460,7 +476,6 @@ class LayoutComponents {
         const userMenuButton = document.getElementById('user-menu-button');
         const userName = userMenuButton?.querySelector('span');
         const userInitials = userMenuButton?.querySelector('div');
-        const dropdownItems = document.querySelectorAll('.dropdown-item');
         const loginBtn = document.getElementById('login-btn');
         const logoutBtn = document.getElementById('logout-btn');
         
@@ -534,4 +549,172 @@ document.addEventListener('DOMContentLoaded', () => {
 // Export for use in other files
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = LayoutComponents;
+}
+
+// ==================== PAGE LOADER MANAGEMENT ====================
+
+class PageLoader {
+    constructor() {
+        this.loader = document.getElementById('page-loader');
+        this.init();
+    }
+
+    init() {
+        // Hide loader when page is fully loaded
+        this.hideLoaderOnLoad();
+        
+        // Show loader on navigation clicks
+        this.setupNavigationListeners();
+        
+        // Handle browser back/forward buttons
+        this.setupHistoryListeners();
+    }
+
+    // Hide loader when page is ready
+    hideLoaderOnLoad() {
+        // If page is already loaded
+        if (document.readyState === 'complete') {
+            this.hideLoader();
+        } else {
+            // Wait for page to load
+            window.addEventListener('load', () => {
+                this.hideLoader();
+            });
+        }
+    }
+
+    // Show loader function
+    showLoader() {
+        if (this.loader) {
+            this.loader.classList.remove('hidden-loader');
+            this.loader.style.opacity = '1';
+            this.loader.style.visibility = 'visible';
+            document.body.style.overflow = 'hidden'; // Prevent scrolling while loading
+        }
+    }
+
+    // Hide loader function with smooth fade out
+    hideLoader() {
+        if (this.loader) {
+            // Fade out
+            this.loader.style.opacity = '0';
+            
+            // After fade out, hide completely
+            setTimeout(() => {
+                this.loader.classList.add('hidden-loader');
+                this.loader.style.visibility = 'hidden';
+                document.body.style.overflow = ''; // Restore scrolling
+            }, 300);
+        }
+    }
+
+    // Setup listeners for navigation clicks
+    setupNavigationListeners() {
+        document.addEventListener('click', (e) => {
+            // Check if clicked element is a navigation link
+            const navLink = e.target.closest('a');
+            
+            if (navLink) {
+                const href = navLink.getAttribute('href');
+                
+                // Skip if:
+                // - It's an external link
+                // - It has target="_blank"
+                // - It's a hash link (same page)
+                // - It's a download link
+                // - It has no href
+                if (!href || 
+                    href.startsWith('http') || 
+                    href.startsWith('https') || 
+                    href.startsWith('#') || 
+                    navLink.getAttribute('target') === '_blank' ||
+                    navLink.hasAttribute('download')) {
+                    return;
+                }
+
+                // Show loader for internal navigation
+                this.showLoader();
+            }
+        });
+    }
+
+    // Handle browser back/forward buttons
+    setupHistoryListeners() {
+        // For modern browsers using Navigation API
+        if (window.navigation) {
+            window.navigation.addEventListener('navigate', (event) => {
+                // Don't show loader for same-document navigations
+                if (!event.hashChange && !event.formData) {
+                    this.showLoader();
+                }
+            });
+        }
+
+        // Fallback for older browsers
+        window.addEventListener('popstate', () => {
+            this.showLoader();
+        });
+
+        // Also catch any clicks on browser back/forward
+        window.addEventListener('pageshow', (event) => {
+            // If loading from cache (bfcache)
+            if (event.persisted) {
+                this.hideLoader();
+            }
+        });
+    }
+
+    // Manual method to show loader (can be called from anywhere)
+    static show() {
+        if (window.pageLoader) {
+            window.pageLoader.showLoader();
+        }
+    }
+
+    // Manual method to hide loader (can be called from anywhere)
+    static hide() {
+        if (window.pageLoader) {
+            window.pageLoader.hideLoader();
+        }
+    }
+}
+
+// Initialize loader when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    window.pageLoader = new PageLoader();
+});
+
+// ==================== ADDITIONAL LOADER STYLES ====================
+// Add these styles to your css/components.css file
+
+const loaderStyles = `
+/* Hidden loader state */
+#page-loader.hidden-loader {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* Ensure loader covers everything */
+#page-loader {
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 9999;
+}
+
+/* Disable interactions while loading */
+body.loading * {
+    pointer-events: none;
+}
+
+/* Small text improvement */
+#page-loader p {
+    letter-spacing: 0.5px;
+}
+`;
+
+// Optional: Inject styles if not already in CSS
+if (!document.querySelector('#loader-style')) {
+    const styleTag = document.createElement('style');
+    styleTag.id = 'loader-style';
+    styleTag.textContent = loaderStyles;
+    document.head.appendChild(styleTag);
 }
