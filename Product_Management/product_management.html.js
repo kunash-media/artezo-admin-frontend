@@ -1,0 +1,751 @@
+// =============================================
+// Product Management - Admin Panel
+// FIXED: view in overlay (read-only), full population, progress bar, main image column
+// =============================================
+
+const BASE_URL = 'http://localhost:8085';
+let currentProductId = null;
+let products = [];
+let categories = new Set();
+let isReadOnlyMode = false;
+
+// Toast
+function showToast(message, type = 'success') {
+    Toastify({
+        text: message,
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: type === 'error' ? "#dc2626" : type === 'warning' ? "#d97706" : "#957A54",
+        stopOnFocus: true
+    }).showToast();
+}
+
+// Safe clear
+function safeClear(id) {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '';
+}
+
+// Reset form
+function resetForm() {
+    currentProductId = null;
+    isReadOnlyMode = false;
+
+    document.getElementById('form-title').textContent = 'Add New Product';
+    document.getElementById('btn-submit-product').textContent = 'Save Product';
+    document.getElementById('btn-submit-product').disabled = false;
+    document.getElementById('btn-submit-product').style.display = 'inline-flex';
+
+    document.getElementById('product-form').reset();
+    safeClear('variants-container');
+    safeClear('hero-banners-container');
+    safeClear('installation-steps-container');
+    ['main-image-preview', 'mockup-preview', 'product-video-preview'].forEach(safeClear);
+
+    variantCounter = 0;
+    bannerCounter = 0;
+    stepCounter = 0;
+
+    document.getElementById('variants-section').classList.add('hidden');
+    document.getElementById('has-variants').checked = false;
+
+    // Remove read-only
+    document.querySelectorAll('#product-form input, #product-form textarea, #product-form select').forEach(el => {
+        el.removeAttribute('readonly');
+        el.removeAttribute('disabled');
+    });
+    document.querySelectorAll('#product-form button:not(#btn-close-form):not(#btn-cancel-form)').forEach(btn => {
+        btn.style.display = 'inline-flex';
+    });
+}
+
+// Open form (create / edit / view)
+async function openForm(mode = 'create', product = null, readOnly = false) {
+    resetForm();
+    isReadOnlyMode = readOnly;
+
+    const titleEl = document.getElementById('form-title');
+    const submitBtn = document.getElementById('btn-submit-product');
+
+    if (readOnly) {
+        titleEl.textContent = 'View Product';
+        submitBtn.style.display = 'none';
+        document.querySelectorAll('#product-form button:not(#btn-close-form):not(#btn-cancel-form)').forEach(btn => {
+            btn.style.display = 'none';
+        });
+        document.querySelectorAll('#product-form input, #product-form textarea, #product-form select').forEach(el => {
+            el.setAttribute('readonly', 'readonly');
+            if (el.type !== 'checkbox') el.disabled = true;
+        });
+    } else {
+        titleEl.textContent = mode === 'edit' ? 'Edit Product' : 'Add New Product';
+        submitBtn.textContent = mode === 'edit' ? 'Update Product' : 'Save Product';
+    }
+
+    if (!readOnly) {
+        document.getElementById('add-variant-btn')?.addEventListener('click', addVariant);
+        document.getElementById('add-hero-banner-btn')?.addEventListener('click', addHeroBanner);
+        document.getElementById('add-step-btn')?.addEventListener('click', addInstallationStep);
+    }
+
+    if (product) {
+        currentProductId = product.productId;
+
+        // Basic fields
+        document.getElementById('product-name').value = product.productName || '';
+        document.getElementById('brand-name').value = product.brandName || '';
+        document.getElementById('product-category').value = product.productCategory || '';
+        document.getElementById('product-subcategory').value = product.productSubCategory || '';
+        document.getElementById('selected-color').value = product.selectedColor || '';
+        document.getElementById('current-sku').value = product.currentSku || '';
+        document.getElementById('current-selling-price').value = product.currentSellingPrice || '';
+        document.getElementById('current-mrp-price').value = product.currentMrpPrice || '';
+        document.getElementById('current-stock').value = product.currentStock || 0;
+        document.getElementById('category-path').value = (product.categoryPath || []).join(', ');
+
+        document.getElementById('has-variants').checked = !!product.hasVariants;
+        document.getElementById('is-exchange').checked = product.isExchange ?? true;
+        document.getElementById('return-available').checked = product.returnAvailable ?? true;
+        document.getElementById('is-customizable').checked = !!product.isCustomizable;
+        document.getElementById('trending-category').checked = !!product.underTrendCategory;
+
+        document.getElementById('description').value = (product.description || []).join('\n');
+
+        if (product.hasVariants) {
+            document.getElementById('variants-section').classList.remove('hidden');
+        }
+
+        try {
+            const res = await fetch(`${BASE_URL}/api/products/get-by-productPrimeId/${product.productId}`);
+            if (!res.ok) throw new Error(await res.text());
+            const full = await res.json();
+
+            document.getElementById('about-item').value = (full.aboutItem || []).join('\n');
+            document.getElementById('specifications').value = Object.entries(full.specifications || {})
+                .map(([k, v]) => `${k}: ${v}`).join('\n');
+            document.getElementById('faq').value = Object.entries(full.faq || {})
+                .map(([k, v]) => `${k}: ${v}`).join('\n');
+
+            const info = full.additionalInfo || {};
+            document.getElementById('seller-name').value = info.sellerName || '';
+            document.getElementById('seller-address').value = info.sellerAddress || '';
+            document.getElementById('manufacturer-details').value = info.manufacturerDetails || '';
+            document.getElementById('package-details').value = info.packageDetails || '';
+            document.getElementById('country').value = info.country || 'india';
+
+            document.getElementById('global-tags').value = (full.globalTags || []).join(', ');
+            document.getElementById('addon-keys').value = (full.addonKeys || []).join(', ');
+            document.getElementById('youtube-url').value = full.youtubeUrl || '';
+
+            // Previews
+            if (full.mainImage) {
+                document.getElementById('main-image-preview').innerHTML = `<img src="${BASE_URL}${full.mainImage}" class="max-h-20 rounded">`;
+            }
+            if (full.mockupImages?.length) {
+                const cont = document.getElementById('mockup-preview');
+                full.mockupImages.forEach(url => {
+                    cont.innerHTML += `<img src="${BASE_URL}${url}" class="max-h-20 rounded ml-2">`;
+                });
+            }
+            if (full.productVideoUrl) {
+                document.getElementById('product-video-preview').innerHTML = 'Video available';
+            }
+
+            // Variants
+            if (full.availableVariants?.length) {
+                full.availableVariants.forEach(v => {
+                    addVariant();
+                    const blocks = document.querySelectorAll('.variant-block');
+                    const last = blocks[blocks.length - 1];
+                    last.querySelector('.variant-title').value = v.titleName || '';
+                    last.querySelector('.variant-color').value = v.color || '';
+                    last.querySelector('.variant-sku').value = v.sku || '';
+                    last.querySelector('.variant-price').value = v.price || '';
+                    last.querySelector('.variant-mrp').value = v.mrp || '';
+                    last.querySelector('.variant-stock').value = v.stock || '';
+                    last.querySelector('.variant-mfgdate').value = v.mfgDate || '';
+                    last.querySelector('.variant-expdate').value = v.expDate || '';
+                    last.querySelector('.variant-size').value = v.size || '';
+                    if (v.mainImage) {
+                        last.querySelector('.variant-preview').innerHTML = `<img src="${BASE_URL}${v.mainImage}" class="max-h-20 rounded">`;
+                    }
+                    if (v.mockupImages?.length) {
+                        const mcont = last.querySelector('.variant-mockup-preview');
+                        v.mockupImages.forEach(url => {
+                            mcont.innerHTML += `<img src="${url}" class="max-h-20 rounded ml-2">`;
+                        });
+                    }
+                });
+            }
+
+            // Hero Banners
+            if (full.heroBanners?.length) {
+                full.heroBanners.forEach(b => {
+                    addHeroBanner();
+                    const blocks = document.querySelectorAll('.hero-banner-block');
+                    const last = blocks[blocks.length - 1];
+                    last.querySelector('.banner-description').value = b.imgDescription || '';
+                    if (b.bannerImg) {
+                        last.querySelector('.banner-preview').innerHTML = `<img src="${BASE_URL}${b.bannerImg}" class="max-h-20 rounded">`;
+                    }
+                });
+            }
+
+            // Installation Steps
+            if (full.installationSteps?.length) {
+                full.installationSteps.forEach(s => {
+                    addInstallationStep();
+                    const blocks = document.querySelectorAll('.step-block');
+                    const last = blocks[blocks.length - 1];
+                    last.querySelector('.step-title').value = s.title || '';
+                    last.querySelector('.step-shortdesc').value = s.shortDescription || '';
+                    last.querySelector('.step-shortnote').value = s.shortNote || '';
+                    if (s.stepImage) {
+                        last.querySelector('.step-image-preview').innerHTML = `<img src="${BASE_URL}${s.stepImage}" class="max-h-20 rounded">`;
+                    }
+                    if (s.videoUrl) {
+                        last.querySelector('.step-video-preview').innerHTML = `<video src="${BASE_URL}${s.videoUrl}" class="max-h-20 rounded">`;
+                    }
+                });
+            }
+
+        } catch (err) {
+            showToast('Could not load full product details', 'error');
+            console.error(err);
+        }
+    }
+
+    document.getElementById('product-form-overlay').style.display = 'flex';
+}
+
+// Close form
+function closeForm() {
+    document.getElementById('product-form-overlay').style.display = 'none';
+    document.getElementById('upload-progress-container').style.display = 'none';
+    resetForm();
+}
+
+// Counters
+let variantCounter = 0;
+let bannerCounter = 0;
+let stepCounter = 0;
+
+// Templates (unchanged from your original)
+const variantTemplate = `
+<div class="variant-block p-4 border border-gray-200 rounded-lg space-y-4">
+    <div class="flex justify-between items-center">
+        <h4 class="font-medium text-gray-900">Variant <span class="variant-index"></span></h4>
+        <button type="button" class="remove-variant text-red-500 hover:text-red-700 text-sm">Remove</button>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <input type="text" class="variant-title px-3 py-2 border border-gray-300 rounded-lg" placeholder="Title Name (glossy)">
+        <input type="text" class="variant-color px-3 py-2 border border-gray-300 rounded-lg" placeholder="Color (Golden)">
+        <input type="text" class="variant-sku px-3 py-2 border border-gray-300 rounded-lg" placeholder="SKU">
+        <input type="number" step="0.01" class="variant-price px-3 py-2 border border-gray-300 rounded-lg" placeholder="Price">
+        <input type="number" step="0.01" class="variant-mrp px-3 py-2 border border-gray-300 rounded-lg" placeholder="MRP">
+        <input type="number" min="0" class="variant-stock px-3 py-2 border border-gray-300 rounded-lg" placeholder="Stock">
+        <input type="date" class="variant-mfgdate px-3 py-2 border border-gray-300 rounded-lg">
+        <input type="date" class="variant-expdate px-3 py-2 border border-gray-300 rounded-lg" placeholder="Exp Date (optional)">
+        <input type="text" class="variant-size px-3 py-2 border border-gray-300 rounded-lg" placeholder="Size">
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">Variant Main Image</label>
+            <input type="file" accept="image/*" class="variant-main-image w-full px-3 py-2 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#957A54]/10 file:text-[#957A54]">
+            <div class="variant-preview mt-2"></div>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">Variant Mockup Images (multiple)</label>
+            <input type="file" accept="image/*" multiple class="variant-mockup-images w-full px-3 py-2 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#957A54]/10 file:text-[#957A54]">
+            <div class="variant-mockup-preview mt-2 grid grid-cols-3 gap-2"></div>
+        </div>
+    </div>
+</div>`;
+
+const heroBannerTemplate = `
+<div class="hero-banner-block p-4 border border-gray-200 rounded-lg space-y-3">
+    <div class="flex justify-between items-center">
+        <h4 class="font-medium text-gray-900">Banner <span class="banner-index"></span></h4>
+        <button type="button" class="remove-banner text-red-500 hover:text-red-700 text-sm">Remove</button>
+    </div>
+    <textarea class="banner-description w-full px-3 py-2 border border-gray-300 rounded-lg" rows="2" placeholder="e.g. Golden premium finish close-up"
+            focus:outline-none focus:ring-1 focus:ring-[#D89F34]/30 focus:border-[#957A54]"></textarea>
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Banner Image</label>
+        <input type="file" accept="image/*" class="banner-image w-full px-3 py-2 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#957A54]/10 file:text-[#957A54]
+           focus:outline-none focus:ring-1 focus:ring-[#D89F34]/30 focus:border-[#957A54] ">
+        <div class="banner-preview mt-2"></div>
+    </div>
+</div>`;
+
+const installationStepTemplate = `
+<div class="step-block p-4 border border-gray-200 rounded-lg space-y-3">
+    <div class="flex justify-between items-center">
+        <h4 class="font-medium text-gray-900">Step <span class="step-index"></span></h4>
+        <button type="button" class="remove-step text-red-500 hover:text-red-700 text-sm">Remove</button>
+    </div>
+    <input type="text" class="step-title w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Title"
+       focus:outline-none focus:ring-1 focus:ring-[#D89F34]/30 focus:border-[#957A54] ">
+    <textarea class="step-shortdesc w-full px-3 py-2 border border-gray-300 rounded-lg" rows="2" placeholder="Short description"
+       focus:outline-none focus:ring-1 focus:ring-[#D89F34]/30 focus:border-[#957A54] "></textarea>
+    <input type="text" class="step-shortnote w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Short note"
+        focus:outline-none focus:ring-1 focus:ring-[#D89F34]/30 focus:border-[#957A54] ">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">Step Image</label>
+            <input type="file" accept="image/*" class="step-image w-full px-3 py-2 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#957A54]/10 file:text-[#957A54]
+               focus:outline-none focus:ring-1 focus:ring-[#D89F34]/30 focus:border-[#957A54] ">
+            <div class="step-image-preview mt-2"></div>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">Step Video (optional)</label>
+            <input type="file" accept="video/*" class="step-video w-full px-3 py-2 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#957A54]/10 file:text-[#957A54]
+                focus:outline-none focus:ring-1 focus:ring-[#D89F34]/30 focus:border-[#957A54] ">
+            <div class="step-video-preview mt-2 text-sm text-gray-500"></div>
+        </div>
+    </div>
+</div>`;
+
+// Add functions
+function addVariant() {
+    variantCounter++;
+    const container = document.getElementById('variants-container');
+    const temp = document.createElement('div');
+    temp.innerHTML = variantTemplate;
+    const block = temp.firstElementChild;
+    block.querySelector('.variant-index').textContent = variantCounter;
+    container.appendChild(block);
+    block.querySelector('.remove-variant').addEventListener('click', () => block.remove());
+}
+
+function addHeroBanner() {
+    bannerCounter++;
+    const container = document.getElementById('hero-banners-container');
+    const temp = document.createElement('div');
+    temp.innerHTML = heroBannerTemplate;
+    const block = temp.firstElementChild;
+    block.querySelector('.banner-index').textContent = bannerCounter;
+    container.appendChild(block);
+    block.querySelector('.remove-banner').addEventListener('click', () => block.remove());
+}
+
+function addInstallationStep() {
+    stepCounter++;
+    const container = document.getElementById('installation-steps-container');
+    const temp = document.createElement('div');
+    temp.innerHTML = installationStepTemplate;
+    const block = temp.firstElementChild;
+    block.querySelector('.step-index').textContent = stepCounter;
+    container.appendChild(block);
+    block.querySelector('.remove-step').addEventListener('click', () => block.remove());
+}
+
+// Variants toggle
+document.getElementById('has-variants').addEventListener('change', e => {
+    document.getElementById('variants-section').classList.toggle('hidden', !e.target.checked);
+    if (e.target.checked && variantCounter === 0) addVariant();
+});
+
+// File preview
+document.addEventListener('change', e => {
+    if (e.target.type !== 'file') return;
+    const files = e.target.files;
+    if (!files.length) return;
+    const preview = e.target.closest('div').querySelector('[class*="preview"]') || e.target.parentElement.querySelector('[class*="preview"]');
+    if (!preview) return;
+
+    if (e.target.multiple) {
+        preview.innerHTML = '';
+        Array.from(files).forEach(file => {
+            if (file.type.startsWith('image/')) {
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                img.className = 'max-h-20 rounded';
+                preview.appendChild(img);
+            } else {
+                preview.innerHTML += `<div class="text-sm">${file.name}</div>`;
+            }
+        });
+    } else {
+        const file = files[0];
+        if (file.type.startsWith('image/')) {
+            preview.innerHTML = `<img src="${BASE_URL}${URL.createObjectURL(file)}" class="max-h-20 rounded">`;
+        } else if (file.type.startsWith('video/')) {
+            preview.textContent = file.name;
+        }
+    }
+});
+
+// Load products
+async function loadProducts() {
+    try {
+        const res = await fetch(`${BASE_URL}/api/products/get-all-active-products`);
+        if (!res.ok) throw new Error('Failed');
+        const data = await res.json();
+        products = data.content || [];
+        renderTable(products);
+        updateStats();
+        populateCategories();
+    } catch (err) {
+        showToast('Error loading products', 'error');
+    }
+}
+
+function renderTable(data) {
+    const tbody = document.getElementById('product-table-body');
+    tbody.innerHTML = '';
+    data.forEach(p => {
+        const tr = document.createElement('tr');
+
+        tr.className = 
+            p.currentStock === 0 ? 'bg-red-100 border-1-4 border-red-600' : p.currentStock <= 10 
+            ? 'bg-yellow-50 border-l-4 border-yellow-400' 
+            : '';
+
+        const mainImg = p.mainImage 
+            ? `<img src="${BASE_URL}${p.mainImage}" class="h-18 w-18 object-cover rounded" alt="main image">`
+            : '<span class="text-gray-400 italic">No image</span>';
+
+        // Build variant stock badges
+        let variantStockHtml = '<span class="text-gray-400 italic text-xs">No variants</span>';
+
+        console.log('Product:', p.productId, p.productName);
+        console.log('availableVariants:', p.availableVariants);
+        console.log('hasVariants:', p.hasVariants);
+
+        if (p.availableVariants && p.availableVariants.length > 0) {
+            console.log('Rendering', p.availableVariants.length, 'variants for product', p.productId);
+            variantStockHtml = p.availableVariants.map(v => {
+                console.log('Variant:', v);
+                const isLow = v.stock <= 10 && v.stock > 0;
+                const isOut = v.stock === 0;
+                const badgeColor = isOut
+                    ? 'bg-red-100 text-red-700 border-red-300'
+                    : isLow
+                        ? 'bg-yellow-100 text-yellow-700 border-yellow-300'
+                        : 'bg-green-100 text-green-700 border-green-300';
+                const label = v.titleName || v.color || v.sku;
+                return `
+                    <div class="flex items-center justify-between gap-2 px-2 py-1 rounded border text-xs ${badgeColor}">
+                        <span class="font-medium truncate max-w-[80px]" title="${v.color || ''} - ${v.sku}">${label}</span>
+                        <span class="font-bold whitespace-nowrap"> : ${v.stock}</span>
+                    </div>`;
+            }).join('');
+        } else {
+            console.warn('No variants found for product', p.productId, '— availableVariants value:', p.availableVariants);
+        }
+        tr.innerHTML = `
+            <td class="px-6 py-4">${mainImg}</td>
+            <td class="px-6 py-4 font-medium">${p.productName || '—'}</td>
+            <td class="px-6 py-4 font-mono text-sm">${p.currentSku || '—'}</td>
+
+            <td class="px-6 py-4">
+                <span class="inline-flex items-center px-2 py-1 rounded border text-xs font-bold ${
+                    p.currentStock === 0
+                        ? 'bg-red-100 text-red-700 border-red-300'
+                        : p.currentStock <= 10
+                            ? 'bg-yellow-100 text-yellow-700 border-yellow-300'
+                            : 'bg-green-100 text-green-700 border-green-300'
+                            }">
+                                ${p.currentStock || 0}
+                </span>
+            </td>  
+            <td class="px-6 py-4">
+                <div class="flex flex-wrap gap-1 max-w-[180px]">
+                    ${variantStockHtml}
+                </div>
+            </td>
+            <td class="px-6 py-4">${p.productCategory || 'Main Category'}</td>
+            <td class="px-6 py-4">${p.productSubCategory || 'Sub Category'}</td>
+            <td class="px-6 py-4">₹${(p.currentSellingPrice || 0).toFixed(2)}</td>
+            <td class="px-6 py-4">₹${(p.currentMrpPrice || 0).toFixed(2)}</td>
+            <td class="text-center space-x-2">
+                <button onclick="viewProduct(${p.productId})" class="text-blue-600 hover:text-blue-800"><i class="fas fa-eye"></i></button>
+                <button onclick="editProduct(${p.productId})" class="text-green-600 hover:text-green-800"><i class="fas fa-edit"></i></button>
+                <button onclick="confirmDelete(${p.productId})" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
+            </td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+function updateStats() {
+    const total = products.length;
+    const low = products.filter(p => p.currentStock > 0 && p.currentStock <= 10).length;
+    const out = products.filter(p => p.currentStock === 0).length;
+    document.getElementById('total-products').textContent = total;
+    document.getElementById('low-stock-count').textContent = low;
+    document.getElementById('out-of-stock-count').textContent = out;
+}
+
+function populateCategories() {
+    const select = document.getElementById('category-filter');
+    categories.clear();
+    products.forEach(p => { if (p.productCategory) categories.add(p.productCategory); });
+    select.innerHTML = '<option value="">All Categories</option>';
+    [...categories].sort().forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        select.appendChild(opt);
+    });
+}
+
+// Filters
+function applyFilters() {
+    let filtered = [...products];
+    const search = document.getElementById('search-input').value.toLowerCase().trim();
+    const cat = document.getElementById('category-filter').value;
+    const stock = document.getElementById('stock-filter').value;
+
+    if (search.length >= 3) {
+        filtered = filtered.filter(p =>
+            (p.productName||'').toLowerCase().includes(search) ||
+            (p.currentSku||'').toLowerCase().includes(search) ||
+            (p.brandName||'').toLowerCase().includes(search)
+        );
+    }
+    if (cat) filtered = filtered.filter(p => p.productCategory === cat);
+    if (stock) {
+        if (stock === 'low-stock') filtered = filtered.filter(p => 0 < p.currentStock && p.currentStock <= 10);
+        else if (stock === 'out-of-stock') filtered = filtered.filter(p => p.currentStock === 0);
+        else if (stock === 'in-stock') filtered = filtered.filter(p => p.currentStock > 10);
+    }
+    renderTable(filtered);
+}
+
+let debounceTimer;
+document.getElementById('search-input').addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(applyFilters, 400);
+});
+['category-filter','stock-filter'].forEach(id => document.getElementById(id).addEventListener('change', applyFilters));
+document.getElementById('reset-filters').addEventListener('click', () => {
+    document.getElementById('search-input').value = '';
+    document.getElementById('category-filter').value = '';
+    document.getElementById('stock-filter').value = '';
+    applyFilters();
+});
+
+// Key:value parser
+function parseKeyValue(text) {
+    const obj = {};
+    text.split('\n').forEach(line => {
+        const trimmed = line.trim();
+        if (!trimmed) return;
+        const colon = trimmed.indexOf(':');
+        if (colon === -1) return;
+        const key = trimmed.substring(0, colon).trim();
+        const val = trimmed.substring(colon + 1).trim();
+        if (key) obj[key] = val;
+    });
+    return obj;
+}
+
+// Submit with progress bar
+document.getElementById('product-form').addEventListener('submit', async e => {
+    e.preventDefault();
+
+    const payload = {
+        productName: document.getElementById('product-name').value.trim(),
+        brandName: document.getElementById('brand-name').value.trim(),
+        productCategory: document.getElementById('product-category').value.trim(),
+        productSubCategory: document.getElementById('product-subcategory').value.trim(),
+        categoryPath: document.getElementById('category-path').value.trim().split(',').map(s=>s.trim()).filter(Boolean),
+        hasVariants: document.getElementById('has-variants').checked,
+        isCustomizable: document.getElementById('is-customizable').checked,
+        isExchange: document.getElementById('is-exchange').checked,
+        returnAvailable: document.getElementById('return-available').checked,
+        underTrendCategory : document.getElementById('trending-category').checked,
+        currentSku: document.getElementById('current-sku').value.trim(),
+        selectedColor: document.getElementById('selected-color').value.trim(),
+        currentSellingPrice: parseFloat(document.getElementById('current-selling-price').value) || null,
+        currentMrpPrice: parseFloat(document.getElementById('current-mrp-price').value) || null,
+        currentStock: parseInt(document.getElementById('current-stock').value) || 0,
+        description: document.getElementById('description').value.trim().split('\n').map(s=>s.trim()).filter(Boolean),
+        aboutItem: document.getElementById('about-item').value.trim().split('\n').map(s=>s.trim()).filter(Boolean),
+        specifications: parseKeyValue(document.getElementById('specifications').value),
+        additionalInfo: {
+            sellerName: document.getElementById('seller-name').value.trim(),
+            sellerAddress: document.getElementById('seller-address').value.trim(),
+            manufacturerDetails: document.getElementById('manufacturer-details').value.trim(),
+            packageDetails: document.getElementById('package-details').value.trim(),
+            country: document.getElementById('country').value.trim() || 'india'
+        },
+        faq: parseKeyValue(document.getElementById('faq').value),
+        globalTags: document.getElementById('global-tags').value.trim().split(',').map(s=>s.trim()).filter(Boolean),
+        addonKeys: document.getElementById('addon-keys').value.trim().split(',').map(s=>s.trim()).filter(Boolean),
+        variants: [],
+        heroBanners: [],
+        installationSteps: [],
+        youtubeUrl: document.getElementById('youtube-url').value.trim()
+    };
+
+    // Variants data (without files)
+    document.querySelectorAll('.variant-block').forEach(b => {
+        payload.variants.push({
+            titleName: b.querySelector('.variant-title').value.trim(),
+            color: b.querySelector('.variant-color').value.trim(),
+            sku: b.querySelector('.variant-sku').value.trim(),
+            price: parseFloat(b.querySelector('.variant-price').value) || null,
+            mrp: parseFloat(b.querySelector('.variant-mrp').value) || null,
+            stock: parseInt(b.querySelector('.variant-stock').value) || 0,
+            mfgDate: b.querySelector('.variant-mfgdate').value || null,
+            expDate: b.querySelector('.variant-expdate').value || null,
+            size: b.querySelector('.variant-size').value.trim()
+        });
+    });
+
+    // Hero banners data
+    document.querySelectorAll('.hero-banner-block').forEach((b, i) => {
+        payload.heroBanners.push({
+            bannerId: i + 1,
+            imgDescription: b.querySelector('.banner-description').value.trim()
+        });
+    });
+
+    // Installation steps data
+    document.querySelectorAll('.step-block').forEach((b, i) => {
+        payload.installationSteps.push({
+            step: i + 1,
+            title: b.querySelector('.step-title').value.trim(),
+            shortDescription: b.querySelector('.step-shortdesc').value.trim(),
+            shortNote: b.querySelector('.step-shortnote').value.trim()
+        });
+    });
+
+    // Basic validation
+    if (!payload.productName || !payload.currentSku || payload.currentStock < 0) {
+        showToast('Required: Name, SKU, Stock ≥ 0', 'error');
+        return;
+    }
+
+    const formData = new FormData();
+
+    formData.append('productJsonData', new Blob([JSON.stringify(payload)], { type: 'application/json' }), 'productJsonData');
+
+
+    // Core files
+    const mainFile = document.getElementById('main-image').files[0];
+    if (mainFile) formData.append('mainImage', mainFile);
+
+    Array.from(document.getElementById('mockup-images').files || []).forEach(f => formData.append('mockupImages', f));
+
+    const videoFile = document.getElementById('product-video').files[0];
+    if (videoFile) formData.append('productVideo', videoFile);
+
+    // Variant files
+    document.querySelectorAll('.variant-main-image').forEach((input, i) => {
+        if (input.files[0]) formData.append('variantsMainImages', input.files[0]);
+    });
+
+    document.querySelectorAll('.variant-mockup-images').forEach(input => {
+        Array.from(input.files || []).forEach(f => formData.append('variantMockupImages', f));
+    });
+
+    // Banner files
+    document.querySelectorAll('.banner-image').forEach((input, i) => {
+        if (input.files[0]) formData.append('heroBannersImages', input.files[0]);
+    });
+
+    // Step files
+    document.querySelectorAll('.step-image').forEach((input, i) => {
+        if (input.files[0]) formData.append('installationStepsImages', input.files[0]);
+    });
+    document.querySelectorAll('.step-video').forEach((input, i) => {
+        if (input.files[0]) formData.append('installationStepsVideos', input.files[0]);
+    });
+
+    // Progress UI
+    const progressContainer = document.getElementById('upload-progress-container');
+    const progressFill = document.getElementById('upload-progress-fill');
+    const progressText = document.getElementById('upload-progress-text');
+
+    progressContainer.style.display = 'block';
+    progressFill.style.width = '0%';
+    progressText.textContent = 'Preparing... 0%';
+
+    try {
+        const method = currentProductId ? 'PATCH' : 'POST';
+        const url = currentProductId 
+            ? `${BASE_URL}/api/products/patch-product/${currentProductId}`
+            : `${BASE_URL}/api/products/create-product`;
+
+        const xhr = new XMLHttpRequest();
+        xhr.open(method, url);
+
+        xhr.upload.onprogress = function(e) {
+            if (e.lengthComputable) {
+                const percent = Math.round((e.loaded / e.total) * 100);
+                progressFill.style.width = percent + '%';
+                progressText.textContent = `Uploading... ${percent}%`;
+            }
+        };
+
+        xhr.onload = function() {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                showToast(currentProductId ? 'Product updated' : 'Product created');
+                closeForm();
+                loadProducts();
+            } else {
+                throw new Error(xhr.responseText || `Server error ${xhr.status}`);
+            }
+        };
+
+        xhr.onerror = function() {
+            throw new Error('Network error during upload');
+        };
+
+        xhr.send(formData);
+
+    } catch (err) {
+        showToast('Save failed: ' + err.message, 'error');
+    } finally {
+        setTimeout(() => {
+            progressContainer.style.display = 'none';
+        }, 1200);
+    }
+});
+
+// Actions
+function viewProduct(id) {
+    const p = products.find(x => x.productId === id);
+    if (p) openForm('view', p, true);
+}
+
+function editProduct(id) {
+    const p = products.find(x => x.productId === id);
+    if (p) openForm('edit', p, false);
+}
+
+function confirmDelete(id) {
+    currentProductId = id;
+    document.getElementById('delete-modal').style.display = 'flex';
+}
+
+async function deleteProduct() {
+    if (!currentProductId) return;
+    try {
+        const res = await fetch(`${BASE_URL}/api/products/delete-by-productPrimeId/${currentProductId}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error(await res.text());
+        showToast('Deleted successfully');
+        loadProducts();
+    } catch (err) {
+        showToast('Delete failed: ' + err.message, 'error');
+    } finally {
+        document.getElementById('delete-modal').style.display = 'none';
+        currentProductId = null;
+    }
+}
+
+// Event listeners
+document.getElementById('btn-create-product').addEventListener('click', () => openForm('create'));
+document.getElementById('btn-close-form').addEventListener('click', closeForm);
+document.getElementById('btn-cancel-form').addEventListener('click', closeForm);
+document.getElementById('btn-cancel-delete').addEventListener('click', () => {
+    document.getElementById('delete-modal').style.display = 'none';
+});
+document.getElementById('btn-confirm-delete').addEventListener('click', deleteProduct);
+
+// Start
+document.addEventListener('DOMContentLoaded', loadProducts);
