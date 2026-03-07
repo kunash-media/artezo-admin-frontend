@@ -158,6 +158,8 @@ async function openForm(mode = 'create', product = null, readOnly = false) {
                     addVariant();
                     const blocks = document.querySelectorAll('.variant-block');
                     const last = blocks[blocks.length - 1];
+
+
                     last.querySelector('.variant-title').value = v.titleName || '';
                     last.querySelector('.variant-color').value = v.color || '';
                     last.querySelector('.variant-sku').value = v.sku || '';
@@ -180,35 +182,44 @@ async function openForm(mode = 'create', product = null, readOnly = false) {
             }
 
             // Hero Banners
-            if (full.heroBanners?.length) {
-                full.heroBanners.forEach(b => {
-                    addHeroBanner();
-                    const blocks = document.querySelectorAll('.hero-banner-block');
-                    const last = blocks[blocks.length - 1];
-                    last.querySelector('.banner-description').value = b.imgDescription || '';
-                    if (b.bannerImg) {
-                        last.querySelector('.banner-preview').innerHTML = `<img src="${BASE_URL}${b.bannerImg}" class="max-h-20 rounded">`;
-                    }
-                });
-            }
+           // Hero Banners — fix bannerId
+if (full.heroBanners?.length) {
+    full.heroBanners.forEach(b => {
+        addHeroBanner();
+        const blocks = document.querySelectorAll('.hero-banner-block');
+        const last = blocks[blocks.length - 1];
 
-            // Installation Steps
-            if (full.installationSteps?.length) {
-                full.installationSteps.forEach(s => {
-                    addInstallationStep();
-                    const blocks = document.querySelectorAll('.step-block');
-                    const last = blocks[blocks.length - 1];
-                    last.querySelector('.step-title').value = s.title || '';
-                    last.querySelector('.step-shortdesc').value = s.shortDescription || '';
-                    last.querySelector('.step-shortnote').value = s.shortNote || '';
-                    if (s.stepImage) {
-                        last.querySelector('.step-image-preview').innerHTML = `<img src="${BASE_URL}${s.stepImage}" class="max-h-20 rounded">`;
-                    }
-                    if (s.videoUrl) {
-                        last.querySelector('.step-video-preview').innerHTML = `<video src="${BASE_URL}${s.videoUrl}" class="max-h-20 rounded">`;
-                    }
-                });
-            }
+        // ✅ Fix: use b.bannerId not s.step
+        last.dataset.bannerId = b.bannerId;
+
+        last.querySelector('.banner-description').value = b.imgDescription || '';
+        if (b.bannerImg) {
+            last.querySelector('.banner-preview').innerHTML = `<img src="${BASE_URL}${b.bannerImg}" class="max-h-20 rounded">`;
+        }
+    });
+}
+
+// Installation Steps — fix stepNum
+if (full.installationSteps?.length) {
+    full.installationSteps.forEach(s => {
+        addInstallationStep();
+        const blocks = document.querySelectorAll('.step-block');
+        const last = blocks[blocks.length - 1];
+
+        // ✅ Already correct: s.step
+        last.dataset.step = s.step;
+
+        last.querySelector('.step-title').value = s.title || '';
+        last.querySelector('.step-shortdesc').value = s.shortDescription || '';
+        last.querySelector('.step-shortnote').value = s.shortNote || '';
+        if (s.stepImage) {
+            last.querySelector('.step-image-preview').innerHTML = `<img src="${BASE_URL}${s.stepImage}" class="max-h-20 rounded">`;
+        }
+        if (s.videoUrl) {
+            last.querySelector('.step-video-preview').innerHTML = `<video src="${BASE_URL}${s.videoUrl}" class="max-h-20 rounded">`;
+        }
+    });
+}
 
         } catch (err) {
             showToast('Could not load full product details', 'error');
@@ -319,6 +330,29 @@ function addVariant() {
     block.querySelector('.remove-variant').addEventListener('click', () => block.remove());
 }
 
+// function addHeroBanner() {
+//     bannerCounter++;
+//     const container = document.getElementById('hero-banners-container');
+//     const temp = document.createElement('div');
+//     temp.innerHTML = heroBannerTemplate;
+//     const block = temp.firstElementChild;
+//     block.querySelector('.banner-index').textContent = bannerCounter;
+//     container.appendChild(block);
+//     block.querySelector('.remove-banner').addEventListener('click', () => block.remove());
+// }
+
+// function addInstallationStep() {
+//     stepCounter++;
+//     const container = document.getElementById('installation-steps-container');
+//     const temp = document.createElement('div');
+//     temp.innerHTML = installationStepTemplate;
+//     const block = temp.firstElementChild;
+//     block.querySelector('.step-index').textContent = stepCounter;
+//     container.appendChild(block);
+//     block.querySelector('.remove-step').addEventListener('click', () => block.remove());
+// }
+
+
 function addHeroBanner() {
     bannerCounter++;
     const container = document.getElementById('hero-banners-container');
@@ -326,6 +360,7 @@ function addHeroBanner() {
     temp.innerHTML = heroBannerTemplate;
     const block = temp.firstElementChild;
     block.querySelector('.banner-index').textContent = bannerCounter;
+    block.dataset.bannerId = bannerCounter; // ✅ ADD THIS
     container.appendChild(block);
     block.querySelector('.remove-banner').addEventListener('click', () => block.remove());
 }
@@ -337,6 +372,7 @@ function addInstallationStep() {
     temp.innerHTML = installationStepTemplate;
     const block = temp.firstElementChild;
     block.querySelector('.step-index').textContent = stepCounter;
+    block.dataset.step = stepCounter; // ✅ ADD THIS
     container.appendChild(block);
     block.querySelector('.remove-step').addEventListener('click', () => block.remove());
 }
@@ -389,35 +425,152 @@ async function loadProducts() {
         populateCategories();
     } catch (err) {
         showToast('Error loading products', 'error');
+                renderTable([], 'error'); // ← pass empty + error flag
+
     }
 }
 
-function renderTable(data) {
+async function loadProducts() {
+    try {
+        renderTable(null, 'loading'); // ← show loader immediately
+        const res = await fetch(`${BASE_URL}/api/products/get-all-active-products`);
+        if (!res.ok) throw new Error('Failed');
+        const data = await res.json();
+        products = data.content || [];
+        renderTable(products);
+        updateStats();
+        populateCategories();
+    } catch (err) {
+        showToast('Error loading products', 'error');
+        renderTable([], 'error');
+    }
+}
+
+function renderTable(data, state = 'empty') {
     const tbody = document.getElementById('product-table-body');
     tbody.innerHTML = '';
+
+    if (!data || data.length === 0 || state === 'loading') {
+        const COLSPAN = 10;
+
+        // --- LOADING STATE ---
+        if (state === 'loading') {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="${COLSPAN}" style="padding: 0;">
+                        <div style="
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            justify-content: center;
+                            padding: 56px 24px;
+                            gap: 16px;
+                            font-family: inherit;
+                        ">
+                            <div style="position: relative; width: 48px; height: 48px;">
+                                <svg viewBox="0 0 48 48" width="48" height="48" style="
+                                    animation: spin 0.9s linear infinite;
+                                    display: block;
+                                " xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="24" cy="24" r="20"
+                                        fill="none"
+                                        stroke="#e5e7eb"
+                                        stroke-width="4"
+                                    />
+                                    <circle cx="24" cy="24" r="20"
+                                        fill="none"
+                                        stroke="#D89F34"
+                                        stroke-width="4"
+                                        stroke-linecap="round"
+                                        stroke-dasharray="30 96"
+                                        stroke-dashoffset="0"
+                                    />
+                                </svg>
+                            </div>
+                            <div style="text-align: center;">
+                                <p style="margin: 0; font-size: 15px; font-weight: 600; color: #374151;">Loading products…</p>
+                                <p style="margin: 6px 0 0; font-size: 13px; color: #9ca3af;">Hang tight, fetching your inventory.</p>
+                            </div>
+                        </div>
+
+                        <style>
+                            @keyframes spin {
+                                from { transform: rotate(0deg); }
+                                to   { transform: rotate(360deg); }
+                            }
+                        </style>
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        // --- ERROR STATE ---
+        const isError = state === 'error';
+
+        const icon = isError
+            ? `<svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="36" cy="36" r="28" fill="#fef2f2" stroke="#fca5a5" stroke-width="2"/>
+                <path d="M36 22v16" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round"/>
+                <circle cx="36" cy="46" r="2" fill="#ef4444"/>
+               </svg>`
+            : `<svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="8" y="26" width="56" height="38" rx="4" fill="#f3f4f6" stroke="#d1d5db" stroke-width="2"/>
+                <path d="M8 34h56" stroke="#d1d5db" stroke-width="2"/>
+                <path d="M27 26V18a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8" stroke="#d1d5db" stroke-width="2"/>
+                <rect x="29" y="40" width="14" height="9" rx="2" fill="#e5e7eb" stroke="#d1d5db" stroke-width="1.5"/>
+                <line x1="33" y1="44.5" x2="39" y2="44.5" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round"/>
+                <circle cx="52" cy="53" r="10" fill="#fff" stroke="#e5e7eb" stroke-width="2"/>
+                <circle cx="51" cy="52" r="4" stroke="#9ca3af" stroke-width="1.8"/>
+                <line x1="54.5" y1="55.5" x2="59" y2="60" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/>
+               </svg>`;
+
+        const title = isError ? 'Failed to load products' : 'No products found';
+        const subtitle = isError
+            ? 'Something went wrong while fetching data. Please refresh the page or try again.'
+            : 'There are no products to display right now. Try adjusting your filters or add a new product.';
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="${COLSPAN}" style="padding: 0;">
+                    <div style="
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        padding: 56px 24px;
+                        gap: 14px;
+                        font-family: inherit;
+                    ">
+                        ${icon}
+                        <div style="text-align: center;">
+                            <p style="margin: 0; font-size: 15px; font-weight: 600; color: #374151;">${title}</p>
+                            <p style="margin: 6px 0 0; font-size: 13px; color: #9ca3af; max-width: 300px; line-height: 1.6;">
+                                ${subtitle}
+                            </p>
+                        </div>
+                    </div>
+                </td>
+            </tr>`;
+        return;
+    }
+
+    // --- NORMAL ROWS ---
     data.forEach(p => {
         const tr = document.createElement('tr');
 
-        tr.className = 
-            p.currentStock === 0 ? 'bg-red-100 border-1-4 border-red-600' : p.currentStock <= 10 
-            ? 'bg-yellow-50 border-l-4 border-yellow-400' 
+        tr.className =
+            p.currentStock === 0 ? 'bg-red-100 border-1-4 border-red-600' : p.currentStock <= 10
+            ? 'bg-yellow-50 border-l-4 border-yellow-400'
             : '';
 
-        const mainImg = p.mainImage 
+        const mainImg = p.mainImage
             ? `<img src="${BASE_URL}${p.mainImage}" class="h-18 w-18 object-cover rounded" alt="main image">`
             : '<span class="text-gray-400 italic">No image</span>';
 
-        // Build variant stock badges
         let variantStockHtml = '<span class="text-gray-400 italic text-xs">No variants</span>';
 
-        console.log('Product:', p.productId, p.productName);
-        console.log('availableVariants:', p.availableVariants);
-        console.log('hasVariants:', p.hasVariants);
-
         if (p.availableVariants && p.availableVariants.length > 0) {
-            console.log('Rendering', p.availableVariants.length, 'variants for product', p.productId);
             variantStockHtml = p.availableVariants.map(v => {
-                console.log('Variant:', v);
                 const isLow = v.stock <= 10 && v.stock > 0;
                 const isOut = v.stock === 0;
                 const badgeColor = isOut
@@ -432,14 +585,12 @@ function renderTable(data) {
                         <span class="font-bold whitespace-nowrap"> : ${v.stock}</span>
                     </div>`;
             }).join('');
-        } else {
-            console.warn('No variants found for product', p.productId, '— availableVariants value:', p.availableVariants);
         }
+
         tr.innerHTML = `
             <td class="px-6 py-4">${mainImg}</td>
             <td class="px-6 py-4 font-medium">${p.productName || '—'}</td>
             <td class="px-6 py-4 font-mono text-sm">${p.currentSku || '—'}</td>
-
             <td class="px-6 py-4">
                 <span class="inline-flex items-center px-2 py-1 rounded border text-xs font-bold ${
                     p.currentStock === 0
@@ -447,10 +598,10 @@ function renderTable(data) {
                         : p.currentStock <= 10
                             ? 'bg-yellow-100 text-yellow-700 border-yellow-300'
                             : 'bg-green-100 text-green-700 border-green-300'
-                            }">
-                                ${p.currentStock || 0}
+                }">
+                    ${p.currentStock || 0}
                 </span>
-            </td>  
+            </td>
             <td class="px-6 py-4">
                 <div class="flex flex-wrap gap-1 max-w-[180px]">
                     ${variantStockHtml}
@@ -556,7 +707,7 @@ document.getElementById('product-form').addEventListener('submit', async e => {
         isCustomizable: document.getElementById('is-customizable').checked,
         isExchange: document.getElementById('is-exchange').checked,
         returnAvailable: document.getElementById('return-available').checked,
-        underTrendCategory : document.getElementById('trending-category').checked,
+        underTrendCategory: document.getElementById('trending-category').checked,
         currentSku: document.getElementById('current-sku').value.trim(),
         selectedColor: document.getElementById('selected-color').value.trim(),
         currentSellingPrice: parseFloat(document.getElementById('current-selling-price').value) || null,
@@ -581,7 +732,9 @@ document.getElementById('product-form').addEventListener('submit', async e => {
         youtubeUrl: document.getElementById('youtube-url').value.trim()
     };
 
-    // Variants data (without files)
+    const formData = new FormData();
+
+    // ── Variants ──
     document.querySelectorAll('.variant-block').forEach(b => {
         payload.variants.push({
             titleName: b.querySelector('.variant-title').value.trim(),
@@ -596,78 +749,103 @@ document.getElementById('product-form').addEventListener('submit', async e => {
         });
     });
 
-    // Hero banners data
-    document.querySelectorAll('.hero-banner-block').forEach((b, i) => {
-        payload.heroBanners.push({
-            bannerId: i + 1,
-            imgDescription: b.querySelector('.banner-description').value.trim()
-        });
+    // ── Variant files ──
+    document.querySelectorAll('.variant-block').forEach(b => {
+        const imgInput = b.querySelector('.variant-main-image');
+        if (imgInput && imgInput.files[0]) formData.append('variantsMainImages', imgInput.files[0]);
+    });
+    document.querySelectorAll('.variant-mockup-images').forEach(input => {
+        Array.from(input.files || []).forEach(f => formData.append('variantMockupImages', f));
     });
 
-    // Installation steps data
-    document.querySelectorAll('.step-block').forEach((b, i) => {
-        payload.installationSteps.push({
-            step: i + 1,
-            title: b.querySelector('.step-title').value.trim(),
-            shortDescription: b.querySelector('.step-shortdesc').value.trim(),
-            shortNote: b.querySelector('.step-shortnote').value.trim()
-        });
+    // ── Hero banners ──
+    // ── Hero banners — only send banners that have a new file OR description change ──
+document.querySelectorAll('.hero-banner-block').forEach((b, i) => {
+    const bannerId = parseInt(b.dataset.bannerId) || (i + 1);
+    const imgInput = b.querySelector('.banner-image');
+    const hasNewFile = imgInput && imgInput.files[0];
+
+    // ✅ Always include in payload (description might have changed)
+    payload.heroBanners.push({
+        bannerId: bannerId,
+        imgDescription: b.querySelector('.banner-description').value.trim()
     });
 
+    // ✅ append file — position in heroBannersImages matches position in heroBanners array
+    if (hasNewFile) {
+        formData.append('heroBannersImages', imgInput.files[0]);
+    }
+});
+
+// ── Installation steps — ONLY send steps that have a new file ──
+// Steps without files are NOT included in JSON so queue index stays correct
+const allStepBlocks = document.querySelectorAll('.step-block');
+
+// allStepBlocks.forEach((b, i) => {
+//     const stepNum = parseInt(b.dataset.step) || (i + 1);
+//     const imgInput = b.querySelector('.step-image');
+//     const vidInput = b.querySelector('.step-video');
+//     const hasNewImg = imgInput && imgInput.files[0];
+//     const hasNewVid = vidInput && vidInput.files[0];
+
+//     // ✅ Always push ALL steps for text field updates
+//     payload.installationSteps.push({
+//         step: stepNum,
+//         title: b.querySelector('.step-title').value.trim(),
+//         shortDescription: b.querySelector('.step-shortdesc').value.trim(),
+//         shortNote: b.querySelector('.step-shortnote').value.trim()
+//     });
+
+//     if (hasNewImg) formData.append('installationStepsImages', imgInput.files[0]);
+//     if (hasNewVid) formData.append('installationStepsVideos', vidInput.files[0]);
+// });
+
+
+allStepBlocks.forEach((b, i) => {
+    const stepNum = parseInt(b.dataset.step) || (i + 1);
+    const imgInput = b.querySelector('.step-image');
+    const vidInput = b.querySelector('.step-video');
+    const hasNewImg = !!(imgInput && imgInput.files[0]);
+    const hasNewVid = !!(vidInput && vidInput.files[0]);
+
+    payload.installationSteps.push({
+        step: stepNum,
+        title: b.querySelector('.step-title').value.trim(),
+        shortDescription: b.querySelector('.step-shortdesc').value.trim(),
+        shortNote: b.querySelector('.step-shortnote').value.trim(),
+        hasNewImage: hasNewImg, // ✅ ADD THIS
+        hasNewVideo: hasNewVid  // ✅ ADD THIS
+    });
+
+    if (hasNewImg) formData.append('installationStepsImages', imgInput.files[0]);
+    if (hasNewVid) formData.append('installationStepsVideos', vidInput.files[0]);
+});
     // Basic validation
     if (!payload.productName || !payload.currentSku || payload.currentStock < 0) {
         showToast('Required: Name, SKU, Stock ≥ 0', 'error');
         return;
     }
 
-    const formData = new FormData();
-
     formData.append('productJsonData', new Blob([JSON.stringify(payload)], { type: 'application/json' }), 'productJsonData');
-
 
     // Core files
     const mainFile = document.getElementById('main-image').files[0];
     if (mainFile) formData.append('mainImage', mainFile);
-
     Array.from(document.getElementById('mockup-images').files || []).forEach(f => formData.append('mockupImages', f));
-
     const videoFile = document.getElementById('product-video').files[0];
     if (videoFile) formData.append('productVideo', videoFile);
 
-    // Variant files
-    document.querySelectorAll('.variant-main-image').forEach((input, i) => {
-        if (input.files[0]) formData.append('variantsMainImages', input.files[0]);
-    });
-
-    document.querySelectorAll('.variant-mockup-images').forEach(input => {
-        Array.from(input.files || []).forEach(f => formData.append('variantMockupImages', f));
-    });
-
-    // Banner files
-    document.querySelectorAll('.banner-image').forEach((input, i) => {
-        if (input.files[0]) formData.append('heroBannersImages', input.files[0]);
-    });
-
-    // Step files
-    document.querySelectorAll('.step-image').forEach((input, i) => {
-        if (input.files[0]) formData.append('installationStepsImages', input.files[0]);
-    });
-    document.querySelectorAll('.step-video').forEach((input, i) => {
-        if (input.files[0]) formData.append('installationStepsVideos', input.files[0]);
-    });
-
-    // Progress UI
+    // ── Progress UI ──
     const progressContainer = document.getElementById('upload-progress-container');
     const progressFill = document.getElementById('upload-progress-fill');
     const progressText = document.getElementById('upload-progress-text');
-
     progressContainer.style.display = 'block';
     progressFill.style.width = '0%';
     progressText.textContent = 'Preparing... 0%';
 
     try {
         const method = currentProductId ? 'PATCH' : 'POST';
-        const url = currentProductId 
+        const url = currentProductId
             ? `${BASE_URL}/api/products/patch-product/${currentProductId}`
             : `${BASE_URL}/api/products/create-product`;
 
@@ -688,24 +866,129 @@ document.getElementById('product-form').addEventListener('submit', async e => {
                 closeForm();
                 loadProducts();
             } else {
-                throw new Error(xhr.responseText || `Server error ${xhr.status}`);
+                let msg = `Server error ${xhr.status}`;
+                try { msg = JSON.parse(xhr.responseText).message || msg; } catch {}
+                showToast('Save failed: ' + msg, 'error');
             }
         };
 
         xhr.onerror = function() {
-            throw new Error('Network error during upload');
+            showToast('Network error during upload', 'error');
         };
 
         xhr.send(formData);
 
-    } catch (err) {
-        showToast('Save failed: ' + err.message, 'error');
     } finally {
-        setTimeout(() => {
-            progressContainer.style.display = 'none';
-        }, 1200);
+        setTimeout(() => { progressContainer.style.display = 'none'; }, 1200);
     }
 });
+
+
+// ── Image preview helper — call this once on page load ──
+function initImagePreviews() {
+
+    // Generic helper
+    function attachPreview(inputEl, previewEl) {
+        if (!inputEl || !previewEl) return;
+        inputEl.addEventListener('change', function() {
+            const file = this.files[0];
+            if (!file) return;
+            const url = URL.createObjectURL(file);
+            previewEl.src = url;
+            previewEl.style.display = 'block';
+            previewEl.onload = () => URL.revokeObjectURL(url); // free memory
+        });
+    }
+
+    // Main image
+    attachPreview(
+        document.getElementById('main-image'),
+        document.getElementById('main-image-preview')
+    );
+
+    // Mockup images — multiple, show thumbnails in a container
+    const mockupInput = document.getElementById('mockup-images');
+    if (mockupInput) {
+        mockupInput.addEventListener('change', function() {
+            const container = document.getElementById('mockup-previews');
+            if (!container) return;
+            container.innerHTML = '';
+            Array.from(this.files).forEach(file => {
+                const img = document.createElement('img');
+                img.className = 'h-16 w-16 object-cover rounded border';
+                const url = URL.createObjectURL(file);
+                img.src = url;
+                img.onload = () => URL.revokeObjectURL(url);
+                container.appendChild(img);
+            });
+        });
+    }
+}
+
+
+
+
+// ── Variant block preview — call after adding a new variant block ──
+function attachVariantPreview(variantBlock) {
+    const input = variantBlock.querySelector('.variant-main-image');
+    const preview = variantBlock.querySelector('.variant-image-preview');
+    if (!input || !preview) return;
+    input.addEventListener('change', function() {
+        const file = this.files[0];
+        if (!file) return;
+        const url = URL.createObjectURL(file);
+        preview.src = url;
+        preview.style.display = 'block';
+        preview.onload = () => URL.revokeObjectURL(url);
+    });
+}
+
+// ── Banner block preview — call after adding a new banner block ──
+function attachBannerPreview(bannerBlock) {
+    const input = bannerBlock.querySelector('.banner-image');
+    const preview = bannerBlock.querySelector('.banner-image-preview');
+    if (!input || !preview) return;
+    input.addEventListener('change', function() {
+        const file = this.files[0];
+        if (!file) return;
+        const url = URL.createObjectURL(file);
+        preview.src = url;
+        preview.style.display = 'block';
+        preview.onload = () => URL.revokeObjectURL(url);
+    });
+}
+
+// ── Step block preview — call after adding a new step block ──
+function attachStepPreview(stepBlock) {
+    const imgInput = stepBlock.querySelector('.step-image');
+    const imgPreview = stepBlock.querySelector('.step-image-preview');
+    if (imgInput && imgPreview) {
+        imgInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (!file) return;
+            const url = URL.createObjectURL(file);
+            imgPreview.src = url;
+            imgPreview.style.display = 'block';
+            imgPreview.onload = () => URL.revokeObjectURL(url);
+        });
+    }
+
+    const vidInput = stepBlock.querySelector('.step-video');
+    const vidPreview = stepBlock.querySelector('.step-video-preview');
+    if (vidInput && vidPreview) {
+        vidInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (!file) return;
+            const url = URL.createObjectURL(file);
+            vidPreview.src = url;
+            vidPreview.style.display = 'block';
+            vidPreview.onload = () => URL.revokeObjectURL(url);
+        });
+    }
+}
+
+// Call on page load
+document.addEventListener('DOMContentLoaded', initImagePreviews);
 
 // Actions
 function viewProduct(id) {
