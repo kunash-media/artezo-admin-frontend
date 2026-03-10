@@ -26,7 +26,7 @@ class LayoutComponents {
         try {
             // Check if we're in a subfolder
             const path = window.location.pathname;
-            const isInSubfolder = path.includes('/Order_Management/') || path.includes('/Coupon_Management/') || path.includes('/User_Management/') || path.includes('/product_management.html');
+            const isInSubfolder = path.includes('/Order_Management/') || path.includes('/Coupon_Management/') || path.includes('/User_Management/') || path.includes('/products.html') || path.includes("/inventory.html");
             
             // Load sidebar with correct path
             const sidebarPath = isInSubfolder ? '../sidebar.html' : 'sidebar.html';
@@ -51,7 +51,7 @@ class LayoutComponents {
         try {
             // Check if we're in a subfolder
             const path = window.location.pathname;
-            const isInSubfolder = path.includes('/Order_Management/') || path.includes('/Coupon_Management/') || path.includes('/User_Management/') || path.includes('/product_management.html');
+            const isInSubfolder = path.includes('/Order_Management/') || path.includes('/Coupon_Management/') || path.includes('/User_Management/') || path.includes('/products.html')|| path.includes('/inventory.html');
             
             // Load modals with correct path
             const modalsPath = isInSubfolder ? '../modals.html' : 'modals.html';
@@ -202,7 +202,7 @@ class LayoutComponents {
             const linkText = link.querySelector('.nav-text')?.textContent;
             const href = link.getAttribute('href');
             
-            if ((currentPath === '/' && linkText === 'Dashboard') || 
+            if ((currentPath === '/dashboard' && linkText === 'Dashboard') || 
                 (savedActiveLink && linkText === savedActiveLink) ||
                 (href === currentPath)) {
                 this.setActiveLink(link);

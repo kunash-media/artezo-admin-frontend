@@ -90,7 +90,7 @@ async function openForm(mode = 'create', product = null, readOnly = false) {
     }
 
     if (product) {
-        currentProductId = product.productId;
+        currentProductId = product.productPrimeId;
 
         // Basic fields
         document.getElementById('product-name').value = product.productName || '';
@@ -117,7 +117,7 @@ async function openForm(mode = 'create', product = null, readOnly = false) {
         }
 
         try {
-            const res = await fetch(`${BASE_URL}/api/products/get-by-productPrimeId/${product.productId}`);
+            const res = await fetch(`${BASE_URL}/api/products/admin/get-by-productPrimeId/${product.productPrimeId}`);
             if (!res.ok) throw new Error(await res.text());
             const full = await res.json();
 
@@ -414,36 +414,157 @@ document.addEventListener('change', e => {
 });
 
 // Load products
-async function loadProducts() {
-    try {
-        const res = await fetch(`${BASE_URL}/api/products/get-all-active-products`);
+// Pagination state
+let currentPage = 0;
+const PAGE_SIZE = 10;
+
+async function loadProducts(page = 0) {
+
+     if (typeof page !== 'number') page = 0;
+
+    try {   
+        renderTable(null, 'loading');
+        const res = await fetch(`${BASE_URL}/api/products/get-all-active-products?page=${page}&size=${PAGE_SIZE}`);
         if (!res.ok) throw new Error('Failed');
         const data = await res.json();
         products = data.content || [];
-        renderTable(products);
-        updateStats();
-        populateCategories();
-    } catch (err) {
-        showToast('Error loading products', 'error');
-                renderTable([], 'error'); // ← pass empty + error flag
+        currentPage = data.page.number;
 
-    }
-}
-
-async function loadProducts() {
-    try {
-        renderTable(null, 'loading'); // ← show loader immediately
-        const res = await fetch(`${BASE_URL}/api/products/get-all-active-products`);
-        if (!res.ok) throw new Error('Failed');
-        const data = await res.json();
-        products = data.content || [];
         renderTable(products);
+        renderPagination(data.page);
         updateStats();
         populateCategories();
     } catch (err) {
         showToast('Error loading products', 'error');
         renderTable([], 'error');
+        renderPagination(null);
     }
+}
+
+function renderPagination(pageInfo) {
+    // Create pagination container if it doesn't exist
+    let paginationEl = document.getElementById('pagination-container');
+    if (!paginationEl) {
+        paginationEl = document.createElement('div');
+        paginationEl.id = 'pagination-container';
+        // Insert after your table's parent — adjust selector to match your layout
+        const tableWrapper = document.getElementById('product-table-body').closest('table').parentElement;
+        tableWrapper.insertAdjacentElement('afterend', paginationEl);
+    }
+
+    if (!pageInfo || pageInfo.totalElements === 0) {
+        paginationEl.innerHTML = '';
+        return;
+    }
+
+    const { number: current, totalPages, totalElements, size } = pageInfo;
+    const from = current * size + 1;
+    const to = Math.min((current + 1) * size, totalElements);
+
+    // Build page number buttons (show max 5 around current)
+    const delta = 2;
+    const pages = [];
+    for (let i = Math.max(0, current - delta); i <= Math.min(totalPages - 1, current + delta); i++) {
+        pages.push(i);
+    }
+
+    const pageButtons = pages.map(i => `
+        <button
+            onclick="loadProducts(${i})"
+            style="
+                min-width: 34px; height: 34px;
+                padding: 0 10px;
+                border-radius: 6px;
+                border: 1px solid ${i === current ? '#D89F34' : '#e5e7eb'};
+                background: ${i === current ? '#D89F34' : '#fff'};
+                color: ${i === current ? '#fff' : '#374151'};
+                font-size: 13px;
+                font-weight: ${i === current ? '600' : '400'};
+                cursor: ${i === current ? 'default' : 'pointer'};
+                transition: all 0.15s ease;
+            "
+            ${i === current ? 'disabled' : ''}
+            onmouseover="if(${i !== current}) { this.style.background='#f5f3ff'; this.style.borderColor='#6366f1'; this.style.color='#6366f1'; }"
+            onmouseout="if(${i !== current}) { this.style.background='#fff'; this.style.borderColor='#e5e7eb'; this.style.color='#374151'; }"
+        >${i + 1}</button>
+    `).join('');
+
+    const btnBase = `
+        min-width: 34px; height: 34px;
+        padding: 0 12px;
+        border-radius: 6px;
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        color: #374151;
+        font-size: 13px;
+        cursor: pointer;
+        display: inline-flex; align-items: center; gap: 4px;
+        transition: all 0.15s ease;
+    `;
+
+    paginationEl.innerHTML = `
+        <style>
+            #pagination-container button:disabled {
+                opacity: 0.4;
+                cursor: not-allowed !important;
+            }
+        </style>
+        <div style="
+            display: flex;
+            align-items: center;
+            justify-content: between;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 14px 4px;
+            border-top: 1px solid #f3f4f6;
+            margin-top: 4px;
+        ">
+            <!-- Left: count info -->
+            <span style="font-size: 13px; color: #9ca3af; flex: 1; min-width: 140px;">
+                Showing <strong style="color: #374151;">${from}–${to}</strong> of <strong style="color: #374151;">${totalElements}</strong> products
+            </span>
+
+            <!-- Right: controls -->
+            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+
+                <!-- Prev -->
+                <button
+                    onclick="loadProducts(${current - 1})"
+                    ${current === 0 ? 'disabled' : ''}
+                    style="${btnBase}"
+                    onmouseover="if(!this.disabled){ this.style.background='#f5f3ff'; this.style.borderColor='#6366f1'; this.style.color='#6366f1'; }"
+                    onmouseout="this.style.background='#fff'; this.style.borderColor='#e5e7eb'; this.style.color='#374151';"
+                >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M8.5 10.5L5 7l3.5-3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Prev
+                </button>
+
+                <!-- Page numbers -->
+                ${pages[0] > 0 ? `
+                    <button onclick="loadProducts(0)" style="${btnBase}" onmouseover="this.style.background='#f5f3ff'" onmouseout="this.style.background='#fff'">1</button>
+                    ${pages[0] > 1 ? `<span style="color:#d1d5db; font-size:13px;">…</span>` : ''}
+                ` : ''}
+
+                ${pageButtons}
+
+                ${pages[pages.length - 1] < totalPages - 1 ? `
+                    ${pages[pages.length - 1] < totalPages - 2 ? `<span style="color:#d1d5db; font-size:13px;">…</span>` : ''}
+                    <button onclick="loadProducts(${totalPages - 1})" style="${btnBase}" onmouseover="this.style.background='#f5f3ff'" onmouseout="this.style.background='#fff'">${totalPages}</button>
+                ` : ''}
+
+                <!-- Next -->
+                <button
+                    onclick="loadProducts(${current + 1})"
+                    ${current >= totalPages - 1 ? 'disabled' : ''}
+                    style="${btnBase}"
+                    onmouseover="if(!this.disabled){ this.style.background='#f5f3ff'; this.style.borderColor='#6366f1'; this.style.color='#6366f1'; }"
+                    onmouseout="this.style.background='#fff'; this.style.borderColor='#e5e7eb'; this.style.color='#374151';"
+                >
+                    Next
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5.5 3.5L9 7l-3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+            </div>
+        </div>`;
 }
 
 function renderTable(data, state = 'empty') {
@@ -453,137 +574,61 @@ function renderTable(data, state = 'empty') {
     if (!data || data.length === 0 || state === 'loading') {
         const COLSPAN = 10;
 
-        // --- LOADING STATE ---
         if (state === 'loading') {
             tbody.innerHTML = `
-                <tr>
-                    <td colspan="${COLSPAN}" style="padding: 0;">
-                        <div style="
-                            display: flex;
-                            flex-direction: column;
-                            align-items: center;
-                            justify-content: center;
-                            padding: 56px 24px;
-                            gap: 16px;
-                            font-family: inherit;
-                        ">
-                            <div style="position: relative; width: 48px; height: 48px;">
-                                <svg viewBox="0 0 48 48" width="48" height="48" style="
-                                    animation: spin 0.9s linear infinite;
-                                    display: block;
-                                " xmlns="http://www.w3.org/2000/svg">
-                                    <circle cx="24" cy="24" r="20"
-                                        fill="none"
-                                        stroke="#e5e7eb"
-                                        stroke-width="4"
-                                    />
-                                    <circle cx="24" cy="24" r="20"
-                                        fill="none"
-                                        stroke="#D89F34"
-                                        stroke-width="4"
-                                        stroke-linecap="round"
-                                        stroke-dasharray="30 96"
-                                        stroke-dashoffset="0"
-                                    />
-                                </svg>
-                            </div>
-                            <div style="text-align: center;">
-                                <p style="margin: 0; font-size: 15px; font-weight: 600; color: #374151;">Loading products…</p>
-                                <p style="margin: 6px 0 0; font-size: 13px; color: #9ca3af;">Hang tight, fetching your inventory.</p>
-                            </div>
+                <tr><td colspan="${COLSPAN}" style="padding:0;">
+                    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px 24px;gap:16px;font-family:inherit;">
+                        <svg viewBox="0 0 48 48" width="48" height="48" style="animation:spin 0.9s linear infinite;display:block;" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="24" cy="24" r="20" fill="none" stroke="#e5e7eb" stroke-width="4"/>
+                            <circle cx="24" cy="24" r="20" fill="none" stroke="#D89F34" stroke-width="4" stroke-linecap="round" stroke-dasharray="30 96"/>
+                        </svg>
+                        <div style="text-align:center;">
+                            <p style="margin:0;font-size:15px;font-weight:600;color:#374151;">Loading products…</p>
+                            <p style="margin:6px 0 0;font-size:13px;color:#9ca3af;">Hang tight, fetching your inventory.</p>
                         </div>
-
-                        <style>
-                            @keyframes spin {
-                                from { transform: rotate(0deg); }
-                                to   { transform: rotate(360deg); }
-                            }
-                        </style>
-                    </td>
-                </tr>`;
+                    </div>
+                    <style>@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }</style>
+                </td></tr>`;
             return;
         }
 
-        // --- ERROR STATE ---
         const isError = state === 'error';
-
         const icon = isError
-            ? `<svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="36" cy="36" r="28" fill="#fef2f2" stroke="#fca5a5" stroke-width="2"/>
-                <path d="M36 22v16" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round"/>
-                <circle cx="36" cy="46" r="2" fill="#ef4444"/>
-               </svg>`
-            : `<svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="8" y="26" width="56" height="38" rx="4" fill="#f3f4f6" stroke="#d1d5db" stroke-width="2"/>
-                <path d="M8 34h56" stroke="#d1d5db" stroke-width="2"/>
-                <path d="M27 26V18a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8" stroke="#d1d5db" stroke-width="2"/>
-                <rect x="29" y="40" width="14" height="9" rx="2" fill="#e5e7eb" stroke="#d1d5db" stroke-width="1.5"/>
-                <line x1="33" y1="44.5" x2="39" y2="44.5" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round"/>
-                <circle cx="52" cy="53" r="10" fill="#fff" stroke="#e5e7eb" stroke-width="2"/>
-                <circle cx="51" cy="52" r="4" stroke="#9ca3af" stroke-width="1.8"/>
-                <line x1="54.5" y1="55.5" x2="59" y2="60" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/>
-               </svg>`;
-
-        const title = isError ? 'Failed to load products' : 'No products found';
-        const subtitle = isError
-            ? 'Something went wrong while fetching data. Please refresh the page or try again.'
-            : 'There are no products to display right now. Try adjusting your filters or add a new product.';
+            ? `<svg width="72" height="72" viewBox="0 0 72 72" fill="none"><circle cx="36" cy="36" r="28" fill="#fef2f2" stroke="#fca5a5" stroke-width="2"/><path d="M36 22v16" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round"/><circle cx="36" cy="46" r="2" fill="#ef4444"/></svg>`
+            : `<svg width="72" height="72" viewBox="0 0 72 72" fill="none"><rect x="8" y="26" width="56" height="38" rx="4" fill="#f3f4f6" stroke="#d1d5db" stroke-width="2"/><path d="M8 34h56" stroke="#d1d5db" stroke-width="2"/><path d="M27 26V18a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8" stroke="#d1d5db" stroke-width="2"/><rect x="29" y="40" width="14" height="9" rx="2" fill="#e5e7eb" stroke="#d1d5db" stroke-width="1.5"/><line x1="33" y1="44.5" x2="39" y2="44.5" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round"/><circle cx="52" cy="53" r="10" fill="#fff" stroke="#e5e7eb" stroke-width="2"/><circle cx="51" cy="52" r="4" stroke="#9ca3af" stroke-width="1.8"/><line x1="54.5" y1="55.5" x2="59" y2="60" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/></svg>`;
 
         tbody.innerHTML = `
-            <tr>
-                <td colspan="${COLSPAN}" style="padding: 0;">
-                    <div style="
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: center;
-                        padding: 56px 24px;
-                        gap: 14px;
-                        font-family: inherit;
-                    ">
-                        ${icon}
-                        <div style="text-align: center;">
-                            <p style="margin: 0; font-size: 15px; font-weight: 600; color: #374151;">${title}</p>
-                            <p style="margin: 6px 0 0; font-size: 13px; color: #9ca3af; max-width: 300px; line-height: 1.6;">
-                                ${subtitle}
-                            </p>
-                        </div>
+            <tr><td colspan="${COLSPAN}" style="padding:0;">
+                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px 24px;gap:14px;font-family:inherit;">
+                    ${icon}
+                    <div style="text-align:center;">
+                        <p style="margin:0;font-size:15px;font-weight:600;color:#374151;">${isError ? 'Failed to load products' : 'No products found'}</p>
+                        <p style="margin:6px 0 0;font-size:13px;color:#9ca3af;max-width:300px;line-height:1.6;">${isError ? 'Something went wrong. Please refresh and try again.' : 'No products to display. Try adjusting your filters or add a new product.'}</p>
                     </div>
-                </td>
-            </tr>`;
+                </div>
+            </td></tr>`;
         return;
     }
 
-    // --- NORMAL ROWS ---
     data.forEach(p => {
         const tr = document.createElement('tr');
-
-        tr.className =
-            p.currentStock === 0 ? 'bg-red-100 border-1-4 border-red-600' : p.currentStock <= 10
-            ? 'bg-yellow-50 border-l-4 border-yellow-400'
-            : '';
+        tr.className = p.currentStock === 0 ? 'bg-red-100 border-1-4 border-red-600' : p.currentStock <= 10 ? 'bg-yellow-50 border-l-4 border-yellow-400' : '';
 
         const mainImg = p.mainImage
             ? `<img src="${BASE_URL}${p.mainImage}" class="h-18 w-18 object-cover rounded" alt="main image">`
             : '<span class="text-gray-400 italic">No image</span>';
 
         let variantStockHtml = '<span class="text-gray-400 italic text-xs">No variants</span>';
-
         if (p.availableVariants && p.availableVariants.length > 0) {
             variantStockHtml = p.availableVariants.map(v => {
                 const isLow = v.stock <= 10 && v.stock > 0;
                 const isOut = v.stock === 0;
-                const badgeColor = isOut
-                    ? 'bg-red-100 text-red-700 border-red-300'
-                    : isLow
-                        ? 'bg-yellow-100 text-yellow-700 border-yellow-300'
-                        : 'bg-green-100 text-green-700 border-green-300';
+                const badgeColor = isOut ? 'bg-red-100 text-red-700 border-red-300' : isLow ? 'bg-yellow-100 text-yellow-700 border-yellow-300' : 'bg-green-100 text-green-700 border-green-300';
                 const label = v.titleName || v.color || v.sku;
-                return `
-                    <div class="flex items-center justify-between gap-2 px-2 py-1 rounded border text-xs ${badgeColor}">
-                        <span class="font-medium truncate max-w-[80px]" title="${v.color || ''} - ${v.sku}">${label}</span>
-                        <span class="font-bold whitespace-nowrap"> : ${v.stock}</span>
-                    </div>`;
+                return `<div class="flex items-center justify-between gap-2 px-2 py-1 rounded border text-xs ${badgeColor}">
+                    <span class="font-medium truncate max-w-[80px]" title="${v.color || ''} - ${v.sku}">${label}</span>
+                    <span class="font-bold whitespace-nowrap"> : ${v.stock}</span>
+                </div>`;
             }).join('');
         }
 
@@ -592,27 +637,17 @@ function renderTable(data, state = 'empty') {
             <td class="px-6 py-4 font-medium">${p.productName || '—'}</td>
             <td class="px-6 py-4 font-mono text-sm">${p.currentSku || '—'}</td>
             <td class="px-6 py-4">
-                <span class="inline-flex items-center px-2 py-1 rounded border text-xs font-bold ${
-                    p.currentStock === 0
-                        ? 'bg-red-100 text-red-700 border-red-300'
-                        : p.currentStock <= 10
-                            ? 'bg-yellow-100 text-yellow-700 border-yellow-300'
-                            : 'bg-green-100 text-green-700 border-green-300'
-                }">
+                <span class="inline-flex items-center px-2 py-1 rounded border text-xs font-bold ${p.currentStock === 0 ? 'bg-red-100 text-red-700 border-red-300' : p.currentStock <= 10 ? 'bg-yellow-100 text-yellow-700 border-yellow-300' : 'bg-green-100 text-green-700 border-green-300'}">
                     ${p.currentStock || 0}
                 </span>
             </td>
-            <td class="px-6 py-4">
-                <div class="flex flex-wrap gap-1 max-w-[180px]">
-                    ${variantStockHtml}
-                </div>
-            </td>
+            <td class="px-6 py-4"><div class="flex flex-wrap gap-1 max-w-[180px]">${variantStockHtml}</div></td>
             <td class="px-6 py-4">${p.productCategory || 'Main Category'}</td>
             <td class="px-6 py-4">${p.productSubCategory || 'Sub Category'}</td>
             <td class="px-6 py-4">₹${(p.currentSellingPrice || 0).toFixed(2)}</td>
             <td class="px-6 py-4">₹${(p.currentMrpPrice || 0).toFixed(2)}</td>
             <td class="text-center space-x-2">
-                <button onclick="viewProduct(${p.productId})" class="text-blue-600 hover:text-blue-800"><i class="fas fa-eye"></i></button>
+                <button onclick="viewProduct(${p.productId})" class="text-[#D89F33] hover:text-[#133F53]"><i class="fas fa-eye"></i></button>
                 <button onclick="editProduct(${p.productId})" class="text-green-600 hover:text-green-800"><i class="fas fa-edit"></i></button>
                 <button onclick="confirmDelete(${p.productId})" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
             </td>`;
@@ -1031,4 +1066,5 @@ document.getElementById('btn-cancel-delete').addEventListener('click', () => {
 document.getElementById('btn-confirm-delete').addEventListener('click', deleteProduct);
 
 // Start
-document.addEventListener('DOMContentLoaded', loadProducts);
+document.addEventListener('DOMContentLoaded', () => loadProducts(0));
+// document.addEventListener('DOMContentLoaded', loadProducts());
