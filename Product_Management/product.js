@@ -633,24 +633,32 @@ function renderTable(data, state = 'empty') {
         }
 
         tr.innerHTML = `
-            <td class="px-6 py-4">${mainImg}</td>
-            <td class="px-6 py-4 font-medium">${p.productName || '—'}</td>
-            <td class="px-6 py-4 font-mono text-sm">${p.currentSku || '—'}</td>
-            <td class="px-6 py-4">
-                <span class="inline-flex items-center px-2 py-1 rounded border text-xs font-bold ${p.currentStock === 0 ? 'bg-red-100 text-red-700 border-red-300' : p.currentStock <= 10 ? 'bg-yellow-100 text-yellow-700 border-yellow-300' : 'bg-green-100 text-green-700 border-green-300'}">
-                    ${p.currentStock || 0}
-                </span>
-            </td>
-            <td class="px-6 py-4"><div class="flex flex-wrap gap-1 max-w-[180px]">${variantStockHtml}</div></td>
-            <td class="px-6 py-4">${p.productCategory || 'Main Category'}</td>
-            <td class="px-6 py-4">${p.productSubCategory || 'Sub Category'}</td>
-            <td class="px-6 py-4">₹${(p.currentSellingPrice || 0).toFixed(2)}</td>
-            <td class="px-6 py-4">₹${(p.currentMrpPrice || 0).toFixed(2)}</td>
-            <td class="text-center space-x-2">
-                <button onclick="viewProduct(${p.productId})" class="text-[#D89F33] hover:text-[#133F53]"><i class="fas fa-eye"></i></button>
-                <button onclick="editProduct(${p.productId})" class="text-green-600 hover:text-green-800"><i class="fas fa-edit"></i></button>
-                <button onclick="confirmDelete(${p.productId})" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
-            </td>`;
+    <td class="px-4 py-3" style="min-width:70px;">${mainImg}</td>
+    <td class="px-4 py-3" style="min-width:200px;">
+        <div style="font-size:13.5px;font-weight:500;color:#1a1a14;line-height:1.4;">${p.productName || '—'}</div>
+    </td>
+    <td class="px-4 py-3" style="white-space:nowrap;">
+        <span style="font-family:monospace;font-size:12px;">${p.currentSku || '—'}</span>
+    </td>
+    <td class="px-4 py-3" style="text-align:center;white-space:nowrap;">
+        <span class="inline-flex items-center px-2 py-1 rounded border text-xs font-bold ${p.currentStock === 0 ? 'bg-red-100 text-red-700 border-red-300' : p.currentStock <= 10 ? 'bg-yellow-100 text-yellow-700 border-yellow-300' : 'bg-green-100 text-green-700 border-green-300'}">
+            ${p.currentStock || 0}
+        </span>
+    </td>
+    <td class="px-4 py-3" style="min-width:180px;">
+        <div class="flex flex-wrap gap-1">${variantStockHtml}</div>
+    </td>
+    <td class="px-4 py-3" style="white-space:nowrap;">${p.productCategory || 'Main Category'}</td>
+    <td class="px-4 py-3" style="white-space:nowrap;">${p.productSubCategory || 'Sub Category'}</td>
+    <td class="px-4 py-3" style="white-space:nowrap;text-align:right;">₹${(p.currentSellingPrice || 0).toFixed(2)}</td>
+    <td class="px-4 py-3" style="white-space:nowrap;text-align:right;">₹${(p.currentMrpPrice || 0).toFixed(2)}</td>
+    <td class="px-4 py-3" style="white-space:nowrap;text-align:center;">
+        <div style="display:flex;gap:10px;justify-content:center;align-items:center;">
+            <button onclick="viewProduct(${p.productId})" class="text-[#D89F33] hover:text-[#133F53]"><i class="fas fa-eye"></i></button>
+            <button onclick="editProduct(${p.productId})" class="text-green-600 hover:text-green-800"><i class="fas fa-edit"></i></button>
+            <button onclick="confirmDelete(${p.productId})" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
+        </div>
+    </td>`;
         tbody.appendChild(tr);
     });
 }
