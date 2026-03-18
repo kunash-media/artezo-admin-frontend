@@ -7,6 +7,7 @@ class LayoutComponents {
         this.isCollapsed = false;
         this.isMobileOpen = false;
         this.isDropdownOpen = false;
+        this.currentUser = null;
         this.init();
     }
 
@@ -20,14 +21,53 @@ class LayoutComponents {
         this.setupDropdown();
         this.setupModals();
         this.setupLogoutModal();
+        this.loadUserFromStorage();
+        this.setupNotificationModal();
+    }
+
+    loadUserFromStorage() {
+        try {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                this.currentUser = JSON.parse(savedUser);
+                this.updateUserDisplay();
+            } else {
+                // Check if user was logged in from previous session
+                const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+                if (isLoggedIn) {
+                    // Try to get user from users array
+                    const users = JSON.parse(localStorage.getItem('users') || '[]');
+                    const lastLoggedInEmail = localStorage.getItem('lastLoggedInEmail');
+                    
+                    if (lastLoggedInEmail && users.length > 0) {
+                        const user = users.find(u => u.email === lastLoggedInEmail);
+                        if (user) {
+                            this.currentUser = {
+                                name: user.name,
+                                email: user.email,
+                                initials: user.name.charAt(0).toUpperCase()
+                            };
+                            localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
+                            this.updateUserDisplay();
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error loading user from storage:', error);
+        }
     }
 
     async loadComponents() {
         try {
             // Check if we're in a subfolder
             const path = window.location.pathname;
-            const isInSubfolder = path.includes('/Order_Management/') || path.includes('/Coupon_Management/') || path.includes('/User_Management/') || path.includes('/products.html') || path.includes("/inventory.html");
-            
+            const isInSubfolder = path.includes('/Order_Management/') || path.includes('/Coupon_Management/') || 
+                                 path.includes('/User_Management/') || path.includes('/products.html') 
+                                 || path.includes("/Banner_Management/") || path.includes('/Inventory_Management/') 
+                                 || path.includes("/ProductReview_Management/") || path.includes("/Report_Sales/")
+                                 || path.includes("/Contact_Management/");
+                        
             // Load sidebar with correct path
             const sidebarPath = isInSubfolder ? '../sidebar.html' : 'sidebar.html';
             const sidebarResponse = await fetch(sidebarPath);
@@ -51,7 +91,11 @@ class LayoutComponents {
         try {
             // Check if we're in a subfolder
             const path = window.location.pathname;
-            const isInSubfolder = path.includes('/Order_Management/') || path.includes('/Coupon_Management/') || path.includes('/User_Management/') || path.includes('/products.html')|| path.includes('/inventory.html');
+            const isInSubfolder = path.includes('/Order_Management/') || path.includes('/Coupon_Management/') || 
+                                 path.includes('/User_Management/') || path.includes('/products.html') 
+                                 || path.includes("/Banner_Management/") || path.includes('/Inventory_Management/') 
+                                 || path.includes("/ProductReview_Management/") || path.includes("/Report_Sales/")
+                                 || path.includes("/Contact_Management/");
             
             // Load modals with correct path
             const modalsPath = isInSubfolder ? '../modals.html' : 'modals.html';
@@ -71,6 +115,7 @@ class LayoutComponents {
             console.error('Error loading modals:', error);
         }
     }
+
 
     loadFallbackContent() {
         const sidebarContainer = document.getElementById('sidebar-container');
@@ -202,7 +247,7 @@ class LayoutComponents {
             const linkText = link.querySelector('.nav-text')?.textContent;
             const href = link.getAttribute('href');
             
-            if ((currentPath === '/dashboard' && linkText === 'Dashboard') || 
+            if ((currentPath === '/' && linkText === 'Dashboard') || 
                 (savedActiveLink && linkText === savedActiveLink) ||
                 (href === currentPath)) {
                 this.setActiveLink(link);
@@ -223,6 +268,100 @@ class LayoutComponents {
             }
         }
     }
+
+    setupNotificationModal() {
+    const notificationBell = document.getElementById('notification-bell');
+    const notificationModal = document.getElementById('notification-modal');
+    const markAllReadBtn = document.getElementById('mark-all-read');
+    let isNotificationOpen = false;
+
+    if (notificationBell && notificationModal) {
+        notificationBell.addEventListener('click', (e) => {
+            e.stopPropagation();
+            isNotificationOpen = !isNotificationOpen;
+            
+            if (isNotificationOpen) {
+                notificationModal.classList.remove('hidden');
+            } else {
+                notificationModal.classList.add('hidden');
+            }
+        });
+
+        // Close modal when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!notificationBell.contains(e.target) && !notificationModal.contains(e.target)) {
+                notificationModal.classList.add('hidden');
+                isNotificationOpen = false;
+            }
+        });
+
+        // Mark all as read functionality
+        if (markAllReadBtn) {
+            markAllReadBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.markAllNotificationsRead();
+            });
+        }
+    }
+}
+
+markAllNotificationsRead() {
+    const unreadItems = document.querySelectorAll('.notification-item.unread');
+    const unreadDots = document.querySelectorAll('.unread-dot');
+    const notificationBadge = document.getElementById('notification-badge');
+    
+    // Remove unread class and hide dots
+    unreadItems.forEach(item => {
+        item.classList.remove('unread');
+    });
+    
+    unreadDots.forEach(dot => {
+        dot.style.display = 'none';
+    });
+    
+    // Update badge count
+    if (notificationBadge) {
+        notificationBadge.textContent = '0';
+        notificationBadge.classList.add('hidden');
+    }
+    
+    this.showNotification('All notifications marked as read', 'success');
+}
+
+
+addNotification(notification) {
+    const notificationList = document.getElementById('notification-list');
+    const notificationBadge = document.getElementById('notification-badge');
+    
+    if (!notificationList) return;
+    
+    const notificationItem = document.createElement('div');
+    notificationItem.className = 'px-4 py-3 hover:bg-[#F8F8EA] transition-colors border-b border-gray-50 notification-item unread';
+    
+    // Get current count
+    let currentCount = parseInt(notificationBadge.textContent) || 0;
+    
+    notificationItem.innerHTML = `
+        <div class="flex items-start gap-3">
+            <div class="w-8 h-8 rounded-full bg-[#D89F34] bg-opacity-20 flex items-center justify-center flex-shrink-0">
+                <i class="fa-regular ${notification.icon || 'fa-bell'} text-sm" style="color: #D89F34;"></i>
+            </div>
+            <div class="flex-1">
+                <p class="text-sm" style="color: #133F53;">${notification.message}</p>
+                <p class="text-xs mt-1" style="color: #957A54;">${notification.time || 'Just now'}</p>
+            </div>
+            <div class="w-2 h-2 rounded-full bg-[#D89F34] unread-dot"></div>
+        </div>
+    `;
+    
+    // Insert at the beginning
+    notificationList.insertBefore(notificationItem, notificationList.firstChild);
+    
+    // Update badge count
+    currentCount++;
+    notificationBadge.textContent = currentCount;
+    notificationBadge.classList.remove('hidden');
+}
 
     handleResize() {
         if (window.innerWidth <= 1024) {
@@ -373,6 +512,9 @@ class LayoutComponents {
         }, 100);
     }
 
+
+    
+
     setupLogoutModal() {
         setTimeout(() => {
             this.logoutModal = document.getElementById('logout-modal');
@@ -452,53 +594,185 @@ class LayoutComponents {
     }
 
     handleLogin(e) {
-        console.log('Login form submitted');
-        this.showNotification('Login successful!', 'success');
-        this.closeModal('login');
-        this.updateUserState('loggedIn');
+        const form = e.target;
+        const email = form.querySelector('input[type="email"]')?.value || '';
+        const password = form.querySelector('input[type="password"]')?.value || '';
+        
+        // Get existing users from localStorage or create empty array
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        
+        // Find user with matching email and password
+        const user = users.find(u => u.email === email && u.password === password);
+        
+        if (user) {
+            // Store user data
+            this.currentUser = {
+                name: user.name,
+                email: user.email,
+                initials: user.name.charAt(0).toUpperCase()
+            };
+
+            // Save to localStorage
+            localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('userName', user.name);
+            localStorage.setItem('lastLoggedInEmail', user.email);
+
+            // Update display
+            this.updateUserDisplay();
+
+            console.log('Login successful for:', user.name);
+            this.showNotification(`Welcome back, ${user.name}!`, 'success');
+            this.closeModal('login');
+        } else {
+            this.showNotification('Invalid email or password', 'error');
+        }
     }
 
     handleSignup(e) {
-        console.log('Signup form submitted');
-        this.showNotification('Account created successfully!', 'success');
+        const form = e.target;
+        const fullName = form.querySelector('input[type="text"]')?.value || '';
+        const email = form.querySelector('input[type="email"]')?.value || '';
+        const password = form.querySelector('input[type="password"]')?.value || '';
+        
+        if (!fullName || !email || !password) {
+            this.showNotification('Please fill in all fields', 'error');
+            return;
+        }
+
+        // Get existing users from localStorage
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        
+        // Check if user already exists
+        const existingUser = users.find(u => u.email === email);
+        if (existingUser) {
+            this.showNotification('User with this email already exists', 'error');
+            return;
+        }
+
+        // Create new user
+        const newUser = {
+            name: fullName,
+            email: email,
+            password: password,
+            createdAt: new Date().toISOString()
+        };
+
+        // Add to users array
+        users.push(newUser);
+        localStorage.setItem('users', JSON.stringify(users));
+
+        // Store current user data
+        this.currentUser = {
+            name: fullName,
+            email: email,
+            initials: fullName.charAt(0).toUpperCase()
+        };
+
+        // Save to localStorage
+        localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('userName', fullName);
+        localStorage.setItem('lastLoggedInEmail', email);
+
+        // Update display
+        this.updateUserDisplay();
+
+        console.log('Signup successful for:', fullName);
+        this.showNotification(`Account created successfully! Welcome, ${fullName}!`, 'success');
         this.closeModal('signup');
-        this.updateUserState('loggedIn');
     }
 
     handleLogout() {
-        console.log('Logging out...');
-        this.closeLogoutModal();
-        this.showNotification('Logged out successfully!', 'info');
-        this.updateUserState('loggedOut');
-    }
+    // Clear user data
+    this.currentUser = null;
+    localStorage.removeItem('currentUser');
+    localStorage.setItem('isLoggedIn', 'false');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('lastLoggedInEmail');
+    
+    // Update display to guest
+    this.updateUserDisplay();
+    
+    console.log('Logging out...');
+    this.closeLogoutModal();
+    this.showNotification('Logged out successfully!', 'info');
+    
+    // Redirect to index.html after a short delay
+    setTimeout(() => {
+        window.location.href = '/index.html';
+    }, 1000);
+}
 
-    updateUserState(state) {
-        const userMenuButton = document.getElementById('user-menu-button');
-        const userName = userMenuButton?.querySelector('span');
-        const userInitials = userMenuButton?.querySelector('div');
-        const loginBtn = document.getElementById('login-btn');
-        const logoutBtn = document.getElementById('logout-btn');
+   updateUserDisplay() {
+    // Get all the elements that need updating
+    const userMenuButton = document.getElementById('user-menu-button');
+    if (!userMenuButton) return;
+
+    // Update the circle with user initial
+    const userInitialsDiv = userMenuButton.querySelector('div:first-child');
+    // Update the name span
+    const userNameSpan = userMenuButton.querySelector('span.text-sm');
+    
+    // Get dropdown elements
+    const userDropdown = document.getElementById('user-dropdown');
+    const loginBtn = document.getElementById('login-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    
+    if (this.currentUser) {
+        // Logged in state - update all instances with actual user data
+        if (userInitialsDiv) {
+            userInitialsDiv.textContent = this.currentUser.initials;
+        }
         
-        if (state === 'loggedIn') {
-            if (userName) userName.textContent = 'Alex Carter';
-            if (userInitials) userInitials.textContent = 'AC';
+        if (userNameSpan) {
+            userNameSpan.textContent = this.currentUser.name;
+        }
+        
+        // Update dropdown info
+        if (userDropdown) {
+            const dropdownName = userDropdown.querySelector('.px-4.py-2 p:first-child');
+            const dropdownEmail = userDropdown.querySelector('.px-4.py-2 p:last-child');
             
-            if (loginBtn) loginBtn.style.display = 'none';
-            if (logoutBtn) logoutBtn.style.display = 'flex';
+            if (dropdownName) dropdownName.textContent = this.currentUser.name;
+            if (dropdownEmail) dropdownEmail.textContent = this.currentUser.email;
+        }
+        
+        // Hide Login/Signup button and show Logout button
+        if (loginBtn) {
+            loginBtn.style.display = 'none';
+        }
+        if (logoutBtn) {
+            logoutBtn.style.display = 'flex';
+        }
+    } else {
+        // Guest state
+        if (userInitialsDiv) {
+            userInitialsDiv.textContent = 'G';
+        }
+        
+        if (userNameSpan) {
+            userNameSpan.textContent = 'Guest';
+        }
+        
+        // Update dropdown info
+        if (userDropdown) {
+            const dropdownName = userDropdown.querySelector('.px-4.py-2 p:first-child');
+            const dropdownEmail = userDropdown.querySelector('.px-4.py-2 p:last-child');
             
-            localStorage.setItem('isLoggedIn', 'true');
-            localStorage.setItem('userName', 'Alex Carter');
-        } else {
-            if (userName) userName.textContent = 'Guest';
-            if (userInitials) userInitials.textContent = 'G';
-            
-            if (loginBtn) loginBtn.style.display = 'flex';
-            if (logoutBtn) logoutBtn.style.display = 'none';
-            
-            localStorage.setItem('isLoggedIn', 'false');
-            localStorage.removeItem('userName');
+            if (dropdownName) dropdownName.textContent = 'Guest User';
+            if (dropdownEmail) dropdownEmail.textContent = 'guest@email.com';
+        }
+        
+        // Show Login/Signup button and hide Logout button
+        if (loginBtn) {
+            loginBtn.style.display = 'flex';
+        }
+        if (logoutBtn) {
+            logoutBtn.style.display = 'none';
         }
     }
+}
 
     showNotification(message, type = 'info') {
         const notification = document.createElement('div');
@@ -708,6 +982,67 @@ body.loading * {
 /* Small text improvement */
 #page-loader p {
     letter-spacing: 0.5px;
+}
+
+/* Notification Modal Styles */
+#notification-modal {
+    max-width: 320px;
+    transform-origin: top right;
+    animation: notificationFadeIn 0.2s ease;
+}
+
+@keyframes notificationFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.notification-item {
+    transition: background-color 0.2s;
+}
+
+.notification-item.unread {
+    background-color: rgba(216, 159, 52, 0.05);
+}
+
+.notification-item .unread-dot {
+    transition: opacity 0.2s;
+}
+
+#notification-modal::-webkit-scrollbar {
+    width: 4px;
+}
+
+#notification-modal::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+#notification-modal::-webkit-scrollbar-thumb {
+    background: #D89F34;
+    border-radius: 4px;
+}
+
+#notification-modal::-webkit-scrollbar-thumb:hover {
+    background: #957A54;
+}
+
+#notification-badge.hidden {
+    display: none;
+}
+
+/* Hover effects */
+.notification-item:hover {
+    background-color: #F8F8EA;
+}
+
+#mark-all-read:hover {
+    text-decoration: underline;
 }
 `;
 

@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports & Sales - E-Commerce Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <style>
+        .report-card {
+            transition: all 0.2s ease;
+        }
+        .report-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .skeleton-text {
+            height: 1rem;
+            border-radius: 0.25rem;
+            margin-bottom: 0.5rem;
+        }
+        .content-hidden {
+            display: none !important;
+        }
+        .content-visible {
+            display: block !important;
+        }
+        .chart-bar {
+            transition: height 0.3s ease;
+        }
+        .filter-btn.active {
+            background-color: #133F53;
+            color: #F8F8EA;
+        }
+        .filter-btn {
+            transition: all 0.2s ease;
+        }
+        .period-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+        .period-btn.active {
+            background-color: #133F53;
+            color: #F8F8EA;
+        }
+        .period-btn:hover {
+            background-color: #F8F8EA;
+        }
+    </style>
+</head>
+<body class="bg-[#F2F2E8]">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar container -->
+        <div id="sidebar-container"></div>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Header container -->
+            <div id="header-container"></div>
+
+            <!-- Reports & Sales Content -->
+            <main class="flex-1 overflow-y-auto p-6">
+                <!-- Skeleton Loading -->
+                <div id="skeletonLoader" class="content-visible">
+                    <!-- Statistics Cards Skeleton -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <div class="skeleton skeleton-text w-24 h-4 mb-2"></div>
+                            <div class="skeleton skeleton-text w-16 h-8 mb-2"></div>
+                            <div class="skeleton skeleton-text w-32 h-3"></div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <div class="skeleton skeleton-text w-24 h-4 mb-2"></div>
+                            <div class="skeleton skeleton-text w-16 h-8 mb-2"></div>
+                            <div class="skeleton skeleton-text w-32 h-3"></div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <div class="skeleton skeleton-text w-24 h-4 mb-2"></div>
+                            <div class="skeleton skeleton-text w-16 h-8 mb-2"></div>
+                            <div class="skeleton skeleton-text w-32 h-3"></div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <div class="skeleton skeleton-text w-24 h-4 mb-2"></div>
+                            <div class="skeleton skeleton-text w-16 h-8 mb-2"></div>
+                            <div class="skeleton skeleton-text w-32 h-3"></div>
+                        </div>
+                    </div>
+
+                    <!-- Period Selector Skeleton -->
+                    <div class="bg-white p-4 rounded-lg shadow-sm mb-6">
+                        <div class="skeleton skeleton-text w-64 h-10"></div>
+                    </div>
+
+                    <!-- Charts Skeleton -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <div class="skeleton skeleton-text w-48 h-6 mb-4"></div>
+                            <div class="skeleton skeleton-text w-full h-64"></div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <div class="skeleton skeleton-text w-48 h-6 mb-4"></div>
+                            <div class="skeleton skeleton-text w-full h-64"></div>
+                        </div>
+                    </div>
+
+                    <!-- Table Skeleton -->
+                    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                        <div class="p-4">
+                            <div class="skeleton skeleton-text w-full h-12 mb-2"></div>
+                            <div class="skeleton skeleton-text w-full h-12 mb-2"></div>
+                            <div class="skeleton skeleton-text w-full h-12 mb-2"></div>
+                            <div class="skeleton skeleton-text w-full h-12 mb-2"></div>
+                            <div class="skeleton skeleton-text w-full h-12"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actual Content -->
+                <div id="actualContent" class="content-hidden">
+                    <!-- Page Header -->
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                        <div>
+                            <h1 class="text-2xl font-bold" style="color: #133F53;">Reports & Sales</h1>
+                            <p class="text-sm" style="color: #957A54;">View and analyze sales performance, revenue, and trends</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="px-4 py-2 rounded-lg text-sm flex items-center gap-2 border"
+                                style="border-color: #D89F34; color: #133F53;" onclick="exportReport()">
+                                <i class="fa-solid fa-download"></i>
+                                Export Report
+                            </button>
+                            <button class="px-4 py-2 rounded-lg text-sm flex items-center gap-2"
+                                style="background-color: #D89F34; color: #133F53;" onclick="generateReport()">
+                                <i class="fa-solid fa-chart-line"></i>
+                                Generate Report
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Period Selector -->
+                    <div class="bg-white p-4 rounded-lg shadow-sm mb-6">
+                        <div class="flex flex-wrap gap-2 items-center">
+                            <span class="text-sm font-medium mr-2" style="color: #133F53;">Period:</span>
+                            <button class="period-btn active" onclick="setPeriod('today')" id="period-today">Today</button>
+                            <button class="period-btn" onclick="setPeriod('week')" id="period-week">This Week</button>
+                            <button class="period-btn" onclick="setPeriod('month')" id="period-month">This Month</button>
+                            <button class="period-btn" onclick="setPeriod('quarter')" id="period-quarter">This Quarter</button>
+                            <button class="period-btn" onclick="setPeriod('year')" id="period-year">This Year</button>
+                            <div class="ml-auto flex gap-2">
+                                <input type="date" id="startDate" class="px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                                <span class="text-sm" style="color: #957A54;">to</span>
+                                <input type="date" id="endDate" class="px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                                <button class="px-4 py-2 bg-[#D89F34] text-[#133F53] rounded-lg text-sm" onclick="applyCustomRange()">Apply</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Statistics Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        <!-- Total Revenue -->
+                        <div class="bg-white p-4 rounded-lg shadow-sm report-card">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs text-gray-500">Total Revenue</p>
+                                    <p class="text-2xl font-bold" style="color: #133F53;" id="totalRevenue">$128,430</p>
+                                </div>
+                                <div class="w-12 h-12 rounded-full bg-[#F8F8EA] flex items-center justify-center">
+                                    <i class="fa-solid fa-dollar-sign text-xl" style="color: #D89F34;"></i>
+                                </div>
+                            </div>
+                            <div class="mt-2 flex items-center text-xs">
+                                <span class="text-green-600">↑ 12.5%</span>
+                                <span class="text-gray-400 ml-2">vs last period</span>
+                            </div>
+                        </div>
+
+                        <!-- Total Orders -->
+                        <div class="bg-white p-4 rounded-lg shadow-sm report-card">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs text-gray-500">Total Orders</p>
+                                    <p class="text-2xl font-bold" style="color: #133F53;" id="totalOrders">1,250</p>
+                                </div>
+                                <div class="w-12 h-12 rounded-full bg-[#F8F8EA] flex items-center justify-center">
+                                    <i class="fa-solid fa-shopping-cart text-xl" style="color: #D89F34;"></i>
+                                </div>
+                            </div>
+                            <div class="mt-2 flex items-center text-xs">
+                                <span class="text-green-600">↑ 8.3%</span>
+                                <span class="text-gray-400 ml-2">vs last period</span>
+                            </div>
+                        </div>
+
+                        <!-- Average Order Value -->
+                        <div class="bg-white p-4 rounded-lg shadow-sm report-card">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs text-gray-500">Avg. Order Value</p>
+                                    <p class="text-2xl font-bold" style="color: #133F53;" id="avgOrderValue">$102.74</p>
+                                </div>
+                                <div class="w-12 h-12 rounded-full bg-[#F8F8EA] flex items-center justify-center">
+                                    <i class="fa-solid fa-chart-simple text-xl" style="color: #133F53;"></i>
+                                </div>
+                            </div>
+                            <div class="mt-2 flex items-center text-xs">
+                                <span class="text-green-600">↑ 3.2%</span>
+                                <span class="text-gray-400 ml-2">vs last period</span>
+                            </div>
+                        </div>
+
+                        <!-- Conversion Rate -->
+                        <div class="bg-white p-4 rounded-lg shadow-sm report-card">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs text-gray-500">Conversion Rate</p>
+                                    <p class="text-2xl font-bold" style="color: #133F53;">3.8%</p>
+                                </div>
+                                <div class="w-12 h-12 rounded-full bg-[#F8F8EA] flex items-center justify-center">
+                                    <i class="fa-solid fa-percent text-xl" style="color: #957A54;"></i>
+                                </div>
+                            </div>
+                            <div class="mt-2 flex items-center text-xs">
+                                <span class="text-green-600">↑ 0.5%</span>
+                                <span class="text-gray-400 ml-2">vs last period</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Section -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                        <!-- Sales Trend Chart -->
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-semibold" style="color: #133F53;">Sales Trend</h3>
+                                <select id="chartType" class="px-3 py-1 border border-gray-200 rounded-lg text-sm" onchange="changeChartType()">
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                </select>
+                            </div>
+                            <div class="h-64 relative" id="salesChart">
+                                <div class="absolute inset-0 flex items-end justify-between px-2">
+                                    <div class="w-1/7 flex flex-col items-center">
+                                        <div class="w-12 bg-[#D89F34] chart-bar rounded-t" style="height: 120px;" title="$12,450"></div>
+                                        <span class="text-xs mt-2" style="color: #957A54;">Mon</span>
+                                    </div>
+                                    <div class="w-1/7 flex flex-col items-center">
+                                        <div class="w-12 bg-[#D89F34] chart-bar rounded-t" style="height: 95px;" title="$9,850"></div>
+                                        <span class="text-xs mt-2" style="color: #957A54;">Tue</span>
+                                    </div>
+                                    <div class="w-1/7 flex flex-col items-center">
+                                        <div class="w-12 bg-[#D89F34] chart-bar rounded-t" style="height: 145px;" title="$15,200"></div>
+                                        <span class="text-xs mt-2" style="color: #957A54;">Wed</span>
+                                    </div>
+                                    <div class="w-1/7 flex flex-col items-center">
+                                        <div class="w-12 bg-[#D89F34] chart-bar rounded-t" style="height: 110px;" title="$11,300"></div>
+                                        <span class="text-xs mt-2" style="color: #957A54;">Thu</span>
+                                    </div>
+                                    <div class="w-1/7 flex flex-col items-center">
+                                        <div class="w-12 bg-[#D89F34] chart-bar rounded-t" style="height: 165px;" title="$17,800"></div>
+                                        <span class="text-xs mt-2" style="color: #957A54;">Fri</span>
+                                    </div>
+                                    <div class="w-1/7 flex flex-col items-center">
+                                        <div class="w-12 bg-[#D89F34] chart-bar rounded-t" style="height: 140px;" title="$14,600"></div>
+                                        <span class="text-xs mt-2" style="color: #957A54;">Sat</span>
+                                    </div>
+                                    <div class="w-1/7 flex flex-col items-center">
+                                        <div class="w-12 bg-[#D89F34] chart-bar rounded-t" style="height: 98px;" title="$10,200"></div>
+                                        <span class="text-xs mt-2" style="color: #957A54;">Sun</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Revenue by Category Chart -->
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <h3 class="font-semibold mb-4" style="color: #133F53;">Revenue by Category</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span style="color: #133F53;">Electronics</span>
+                                        <span class="font-medium" style="color: #133F53;">$45,200</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                        <div class="bg-[#D89F34] h-2.5 rounded-full" style="width: 45%"></div>
+                                    </div>
+                                    <p class="text-xs text-gray-400 mt-1">45% of total</p>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span style="color: #133F53;">Fashion</span>
+                                        <span class="font-medium" style="color: #133F53;">$28,500</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                        <div class="bg-[#D89F34] h-2.5 rounded-full" style="width: 28%"></div>
+                                    </div>
+                                    <p class="text-xs text-gray-400 mt-1">28% of total</p>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span style="color: #133F53;">Home & Living</span>
+                                        <span class="font-medium" style="color: #133F53;">$18,300</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                        <div class="bg-[#D89F34] h-2.5 rounded-full" style="width: 18%"></div>
+                                    </div>
+                                    <p class="text-xs text-gray-400 mt-1">18% of total</p>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span style="color: #133F53;">Beauty</span>
+                                        <span class="font-medium" style="color: #133F53;">$9,400</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                        <div class="bg-[#D89F34] h-2.5 rounded-full" style="width: 9%"></div>
+                                    </div>
+                                    <p class="text-xs text-gray-400 mt-1">9% of total</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top Products Table -->
+                    <div class="bg-white rounded-lg shadow-sm overflow-hidden mb-6">
+                        <div class="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                            <h3 class="font-semibold" style="color: #133F53;">Top Selling Products</h3>
+                            <select id="productFilter" class="px-3 py-1 border border-gray-200 rounded-lg text-sm" onchange="filterProducts()">
+                                <option value="all">All Categories</option>
+                                <option value="electronics">Electronics</option>
+                                <option value="fashion">Fashion</option>
+                                <option value="home">Home & Living</option>
+                                <option value="beauty">Beauty</option>
+                            </select>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="border-b border-gray-200" style="background-color: #F8F8EA;">
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">Product</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">Category</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">Units Sold</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">Revenue</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">Growth</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="productsTableBody">
+                                    <!-- Products will be loaded dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Additional Reports -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Daily Sales Summary -->
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <h3 class="font-semibold mb-3" style="color: #133F53;">Today's Summary</h3>
+                            <div class="space-y-2">
+                                <div class="flex justify-between text-sm">
+                                    <span style="color: #957A54;">Sales</span>
+                                    <span class="font-medium" style="color: #133F53;">$4,250</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span style="color: #957A54;">Orders</span>
+                                    <span class="font-medium" style="color: #133F53;">42</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span style="color: #957A54;">Customers</span>
+                                    <span class="font-medium" style="color: #133F53;">38</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span style="color: #957A54;">Avg. Order</span>
+                                    <span class="font-medium" style="color: #133F53;">$101.19</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Top Categories -->
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <h3 class="font-semibold mb-3" style="color: #133F53;">Top Categories</h3>
+                            <div class="space-y-2">
+                                <div class="flex justify-between text-sm">
+                                    <span style="color: #957A54;">Electronics</span>
+                                    <span class="font-medium" style="color: #133F53;">45%</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span style="color: #957A54;">Fashion</span>
+                                    <span class="font-medium" style="color: #133F53;">28%</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span style="color: #957A54;">Home</span>
+                                    <span class="font-medium" style="color: #133F53;">18%</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span style="color: #957A54;">Beauty</span>
+                                    <span class="font-medium" style="color: #133F53;">9%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Payment Methods -->
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <h3 class="font-semibold mb-3" style="color: #133F53;">Payment Methods</h3>
+                            <div class="space-y-2">
+                                <div class="flex justify-between text-sm">
+                                    <span style="color: #957A54;">Credit Card</span>
+                                    <span class="font-medium" style="color: #133F53;">65%</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span style="color: #957A54;">PayPal</span>
+                                    <span class="font-medium" style="color: #133F53;">20%</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span style="color: #957A54;">Debit Card</span>
+                                    <span class="font-medium" style="color: #133F53;">10%</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span style="color: #957A54;">Cash on Delivery</span>
+                                    <span class="font-medium" style="color: #133F53;">5%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modals Container -->
+    <div id="modals-container"></div>
+
+    <!-- Report Generation Modal -->
+    <div id="reportModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 modal-enter">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold" style="color: #133F53;">Generate Report</h3>
+                <button onclick="closeReportModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+
+            <form id="reportForm" class="space-y-4" onsubmit="generateCustomReport(event)">
+                <div>
+                    <label class="block text-sm font-medium mb-1" style="color: #133F53;">Report Type</label>
+                    <select id="reportType" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                        <option value="sales">Sales Report</option>
+                        <option value="products">Products Report</option>
+                        <option value="customers">Customers Report</option>
+                        <option value="inventory">Inventory Report</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-1" style="color: #133F53;">Date Range</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="date" id="reportStartDate" class="px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                        <input type="date" id="reportEndDate" class="px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-1" style="color: #133F53;">Format</label>
+                    <select id="reportFormat" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                        <option value="pdf">PDF</option>
+                        <option value="excel">Excel</option>
+                        <option value="csv">CSV</option>
+                    </select>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="includeCharts" checked class="rounded border-gray-300">
+                        <span class="text-sm" style="color: #133F53;">Include Charts</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="includeTables" checked class="rounded border-gray-300">
+                        <span class="text-sm" style="color: #133F53;">Include Tables</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="includeSummary" checked class="rounded border-gray-300">
+                        <span class="text-sm" style="color: #133F53;">Include Summary</span>
+                    </label>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                    <button type="button" onclick="closeReportModal()"
+                        class="px-4 py-2 border border-gray-200 rounded-lg text-sm">Cancel</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg text-sm"
+                        style="background-color: #D89F34; color: #133F53;">Generate</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="fixed top-4 right-4 px-4 py-2 rounded-lg shadow-lg z-50 hidden" style="min-width: 250px;">
+        <div class="flex items-center gap-2">
+            <i id="notificationIcon" class=""></i>
+            <span id="notificationMessage" class="text-sm"></span>
+        </div>
+    </div>
+
+    <script src="../js/components.js"></script>
+    <script>
+        // Sample sales data
+        const salesData = {
+            totalRevenue: 128430,
+            totalOrders: 1250,
+            avgOrderValue: 102.74,
+            conversionRate: 3.8,
+            salesTrend: [
+                { day: 'Mon', revenue: 12450 },
+                { day: 'Tue', revenue: 9850 },
+                { day: 'Wed', revenue: 15200 },
+                { day: 'Thu', revenue: 11300 },
+                { day: 'Fri', revenue: 17800 },
+                { day: 'Sat', revenue: 14600 },
+                { day: 'Sun', revenue: 10200 }
+            ],
+            categoryRevenue: [
+                { category: 'Electronics', revenue: 45200, percentage: 45 },
+                { category: 'Fashion', revenue: 28500, percentage: 28 },
+                { category: 'Home & Living', revenue: 18300, percentage: 18 },
+                { category: 'Beauty', revenue: 9400, percentage: 9 }
+            ],
+            topProducts: [
+                { id: 1, name: 'Wireless Headphones Pro', category: 'Electronics', units: 234, revenue: 23200, growth: 15 },
+                { id: 2, name: 'Designer Leather Jacket', category: 'Fashion', units: 89, revenue: 17800, growth: 8 },
+                { id: 3, name: 'Smart Watch Series 5', category: 'Electronics', units: 156, revenue: 23400, growth: 22 },
+                { id: 4, name: 'Premium Coffee Maker', category: 'Home & Living', units: 67, revenue: 13400, growth: -2 },
+                { id: 5, name: 'Organic Skincare Set', category: 'Beauty', units: 145, revenue: 8700, growth: 12 },
+                { id: 6, name: 'Running Shoes', category: 'Fashion', units: 178, revenue: 14240, growth: 18 },
+                { id: 7, name: 'Tablet Pro 11"', category: 'Electronics', units: 92, revenue: 27600, growth: 25 },
+                { id: 8, name: 'Smart Home Hub', category: 'Home & Living', units: 45, revenue: 6750, growth: -5 }
+            ]
+        };
+
+        // State variables
+        let currentPeriod = 'month';
+        let currentPage = 1;
+        const itemsPerPage = 5;
+
+        // ==================== PAGE LOAD ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show skeleton, hide actual content
+            document.getElementById('skeletonLoader').classList.remove('content-hidden');
+            document.getElementById('skeletonLoader').classList.add('content-visible');
+            document.getElementById('actualContent').classList.remove('content-visible');
+            document.getElementById('actualContent').classList.add('content-hidden');
+
+            // Set today's date for custom range
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('startDate').value = today;
+            document.getElementById('endDate').value = today;
+
+            // Load data
+            loadData();
+        });
+
+        async function loadData() {
+            try {
+                await new Promise(resolve => setTimeout(resolve, 800));
+                renderProducts();
+                updateStatistics();
+
+                document.getElementById('skeletonLoader').classList.remove('content-visible');
+                document.getElementById('skeletonLoader').classList.add('content-hidden');
+                document.getElementById('actualContent').classList.remove('content-hidden');
+                document.getElementById('actualContent').classList.add('content-visible');
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showNotification('Error loading reports', 'error');
+            }
+        }
+
+        function updateStatistics() {
+            document.getElementById('totalRevenue').textContent = '$' + salesData.totalRevenue.toLocaleString();
+            document.getElementById('totalOrders').textContent = salesData.totalOrders.toLocaleString();
+            document.getElementById('avgOrderValue').textContent = '$' + salesData.avgOrderValue.toFixed(2);
+        }
+
+        function renderProducts() {
+            const tbody = document.getElementById('productsTableBody');
+            if (!tbody) return;
+
+            const filter = document.getElementById('productFilter')?.value || 'all';
+            let filteredProducts = salesData.topProducts;
+            
+            if (filter !== 'all') {
+                filteredProducts = filteredProducts.filter(p => p.category.toLowerCase().includes(filter));
+            }
+
+            tbody.innerHTML = '';
+            filteredProducts.forEach(product => {
+                const row = document.createElement('tr');
+                row.className = 'border-b border-gray-100 hover:bg-[#F8F8EA]';
+                
+                const growthClass = product.growth >= 0 ? 'text-green-600' : 'text-red-600';
+                const growthIcon = product.growth >= 0 ? '↑' : '↓';
+
+                row.innerHTML = `
+                    <td class="py-3 px-4">
+                        <span class="text-sm font-medium" style="color: #133F53;">${product.name}</span>
+                    </td>
+                    <td class="py-3 px-4">
+                        <span class="text-xs px-2 py-1 bg-[#F8F8EA] rounded-full" style="color: #957A54;">${product.category}</span>
+                    </td>
+                    <td class="py-3 px-4 text-sm" style="color: #133F53;">${product.units}</td>
+                    <td class="py-3 px-4 text-sm font-medium" style="color: #133F53;">$${product.revenue.toLocaleString()}</td>
+                    <td class="py-3 px-4">
+                        <span class="text-sm ${growthClass}">${growthIcon} ${Math.abs(product.growth)}%</span>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // ==================== PERIOD FUNCTIONS ====================
+        function setPeriod(period) {
+            currentPeriod = period;
+            
+            // Update active button
+            document.querySelectorAll('.period-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`period-${period}`).classList.add('active');
+            
+            showNotification(`Showing data for: ${period}`, 'info');
+            // Here you would fetch data for selected period
+        }
+
+        function applyCustomRange() {
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+            
+            if (start && end) {
+                showNotification(`Filtering from ${start} to ${end}`, 'success');
+                // Here you would fetch data for custom date range
+            } else {
+                showNotification('Please select both dates', 'error');
+            }
+        }
+
+        // ==================== CHART FUNCTIONS ====================
+        function changeChartType() {
+            const type = document.getElementById('chartType').value;
+            showNotification(`Chart type changed to: ${type}`, 'info');
+            // Here you would update the chart
+        }
+
+        // ==================== FILTER FUNCTIONS ====================
+        function filterProducts() {
+            renderProducts();
+        }
+
+        // ==================== REPORT FUNCTIONS ====================
+        function exportReport() {
+            showNotification('Report exported successfully', 'success');
+        }
+
+        function generateReport() {
+            document.getElementById('reportModal').classList.remove('hidden');
+            document.getElementById('reportModal').classList.add('flex');
+        }
+
+        function closeReportModal() {
+            document.getElementById('reportModal').classList.add('hidden');
+            document.getElementById('reportModal').classList.remove('flex');
+        }
+
+        function generateCustomReport(event) {
+            event.preventDefault();
+            
+            const type = document.getElementById('reportType').value;
+            const format = document.getElementById('reportFormat').value;
+            
+            showNotification(`Generating ${type} report in ${format.toUpperCase()} format...`, 'info');
+            
+            setTimeout(() => {
+                closeReportModal();
+                showNotification('Report generated successfully!', 'success');
+            }, 1500);
+        }
+
+        // ==================== NOTIFICATION FUNCTION ====================
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            const icon = document.getElementById('notificationIcon');
+            const messageEl = document.getElementById('notificationMessage');
+
+            const colors = {
+                success: { bg: '#10B981', icon: 'fa-regular fa-circle-check' },
+                error: { bg: '#EF4444', icon: 'fa-solid fa-circle-exclamation' },
+                info: { bg: '#3B82F6', icon: 'fa-solid fa-circle-info' }
+            };
+
+            notification.style.backgroundColor = colors[type].bg;
+            notification.style.color = 'white';
+            icon.className = colors[type].icon;
+            messageEl.textContent = message;
+
+            notification.classList.remove('hidden');
+
+            setTimeout(() => {
+                notification.classList.add('hidden');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

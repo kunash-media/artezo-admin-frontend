@@ -9,6 +9,7 @@
     <link rel="manifest" href="/site.webmanifest">
     <title>Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="/css/components.css">
     <script src="/js/components.js"></script>
@@ -358,10 +359,18 @@ select.field-input { appearance: none; background-image: url("data:image/svg+xml
                     <h1 class="text-[22px] font-semibold text-[#133F53] tracking-tight">Inventory</h1>
                     <p class="text-[13px] text-[#957A54] mt-0.5">Monitor stock levels and manage product inventory</p>
                 </div>
-                <button class="btn-gold border border-gray-500" onclick="openBulkUpload()">
-                    <i class="fas fa-layer-group text-[12px]"></i>
-                    Bulk Upload
-                </button>
+
+                <div class="flex gap-3">
+                    <button class="btn-gold border border-gray-500" onclick="openBulkUpload()">
+                        <i class="fas fa-layer-group text-[12px]"></i>
+                        Bulk Upload
+                    </button>
+                    <button class="btn-outline border border-gray-400" onclick="exportInventory()">
+                        <i class="fas fa-file-arrow-down text-[12px]"></i>
+                        Export
+                    </button>
+                </div>
+                
             </div>
 
             <!-- Filters -->
@@ -624,6 +633,13 @@ select.field-input { appearance: none; background-image: url("data:image/svg+xml
                         <i class="fas fa-file-excel text-[#1A6B3A] mr-1.5"></i>
                         Product Data — Excel File <span class="text-[#D89F34]">*</span>
                     </label>
+
+                    <div class="mb-2">
+                        <a href="/static/artezo_bulk_product_template.xlsx" class="text-[12.5px] text-[#D89F34] hover:underline font-medium">
+                        <i class="fas fa-download text-[11px] mr-1"></i> Download Template
+                    </a>
+                    </div>
+                    
                     <div class="upload-zone" id="excelZone"
                         onclick="document.getElementById('excelInput').click()"
                         ondragover="handleDragOver(event,'excelZone')"
@@ -694,9 +710,7 @@ select.field-input { appearance: none; background-image: url("data:image/svg+xml
  
             </div>
             <div class="px-6 pb-5 flex justify-between items-center">
-                <a href="/static/artezo_bulk_product_template.xlsx" class="text-[12.5px] text-[#D89F34] hover:underline font-medium">
-                    <i class="fas fa-download text-[11px] mr-1"></i> Download Template
-                </a>
+                
                 <div class="flex gap-2">
                     <button class="btn-outline" onclick="closeBulkOverlay()">Cancel</button>
                     <button class="btn-primary" id="bulkUploadBtn" onclick="handleBulkUpload()">
@@ -1106,25 +1120,6 @@ function switchToEdit() {
 // ============================================================
 // EDIT
 // ============================================================
-// function openEdit(id) {
-//     const item = allInventory.find(i => i.inventoryId === id);
-//     if (!item) return;
-//     currentEditSku = item.sku;
-
-//     document.getElementById('editSubtitle').textContent = item.sku;
-//     document.getElementById('edit_title').textContent = item.product.title;
-//     document.getElementById('edit_sku').textContent = item.sku;
-//     document.getElementById('edit_currentTotal').textContent = item.totalStock;
-//     // document.getElementById('edit_currentAvailable').textContent = item.availableStock;
-//     document.getElementById('edit_threshold').textContent = item.lowStockThreshold;
-//     document.getElementById('newStockInput').value = item.availableStock;
-//     document.getElementById('editError').classList.add('hidden');
-
-//     const btn = document.getElementById('saveStockBtn');
-//     btn.innerHTML = `<i class="fas fa-check" style="font-size:11px;"></i> Save Changes`;
-//     btn.disabled = false;
-//     openOverlay('editOverlay');
-// }
 
 function openEdit(id) {
     const item = allInventory.find(i => i.inventoryId === id);
@@ -1154,47 +1149,6 @@ function openEdit(id) {
     btn.disabled = false;
     openOverlay('editOverlay');
 }
-
-// async function saveStock() {
-//     const val = parseInt(document.getElementById('newStockInput').value);
-//     const errEl = document.getElementById('editError');
-//     errEl.classList.add('hidden');
-
-//     if (isNaN(val) || val < 0) {
-//         errEl.textContent = 'Please enter a valid stock value (0 or more).';
-//         errEl.classList.remove('hidden');
-//         return;
-//     }
-
-//     const btn = document.getElementById('saveStockBtn');
-//     btn.innerHTML = `<span class="spinner"></span> Saving…`;
-//     btn.disabled = true;
-
-//     try {
-//         const res = await fetch(
-//             `${BASE_URL}/api/inventory/patch-by-sku/${currentEditSku}/stock?availableStock=${val}`,
-//             { method: 'PATCH' }
-//         );
-//         if (!res.ok) throw new Error(`Server error ${res.status}`);
-
-//         const item = allInventory.find(i => i.sku === currentEditSku);
-//         if (item) { item.availableStock = val; item.updatedAt = new Date().toISOString(); }
-
-//         // closeOverlay('editOverlay');
-//         // applyFilters();
-//         // showToast(`Stock updated — ${currentEditSku} set to ${val} units`);
-
-//         closeOverlay('editOverlay');
-//         showToast(`Stock updated — ${currentEditSku} set to ${val} units`);
-//         await refreshInventory();
-
-//     } catch (err) {
-//         errEl.textContent = `Failed to save: ${err.message}`;
-//         errEl.classList.remove('hidden');
-//         btn.innerHTML = `<i class="fas fa-check" style="font-size:11px;"></i> Save Changes`;
-//         btn.disabled = false;
-//     }
-// }
 
 
 
@@ -1558,6 +1512,92 @@ function showToast(msg, type = 'success') {
     requestAnimationFrame(() => { t.style.transform = 'translateY(0)'; t.style.opacity = '1'; });
     setTimeout(() => { t.style.transform = 'translateY(8px)'; t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3200);
 }
+
+// ============================================================
+// EXPORT INVENTORY
+// ============================================================
+function exportInventory() {
+    const dataToExport = filteredInventory.length > 0 ? filteredInventory : allInventory;
+
+    if (!dataToExport || dataToExport.length === 0) {
+        showToast('No inventory data to export', 'error');
+        return;
+    }
+
+    // Build rows — one row per inventory item (product + variant side by side)
+    const rows = dataToExport.map(item => ({
+        // ── Inventory Info ──
+        'Inventory ID':             item.inventoryId,
+        'SKU':                      item.sku,
+        'Total Stock':              item.totalStock,
+        'Available Stock':          item.availableStock,
+        'Low Stock Threshold':      item.lowStockThreshold,
+        'Stock Status':             getStatus(item) === 'ok'  ? 'In Stock'
+                                  : getStatus(item) === 'low' ? 'Low Stock'
+                                  : 'Out of Stock',
+        'Last Updated':             item.updatedAt
+                                        ? new Date(item.updatedAt).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })
+                                        : '—',
+        'Created At':               item.createdAt
+                                        ? new Date(item.createdAt).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })
+                                        : '—',
+
+        // ── Main Product Info ──
+        'Product ID':               item.product?.productStrId   ?? '—',
+        'Product Title':            item.product?.title          ?? '—',
+        'Category':                 item.product?.productCategory    ?? '—',
+        'Sub-Category':             item.product?.productSubCategory ?? '—',
+        'Main Product Stock':       item.product?.currentStock   ?? '—',
+        'Main Selling Price (₹)':   item.product?.currentSellingPrice ?? '—',
+        'Main MRP Price (₹)':       item.product?.currentMrpPrice    ?? '—',
+
+        // ── Variant Info ──
+        'Variant Title':            item.product?.variantTitle       ?? '—',
+        'Variant Stock':            item.product?.variantStock       ?? '—',
+        'Variant Selling Price (₹)':item.product?.variantSellingPrice ?? '—',
+        'Variant MRP Price (₹)':    item.product?.variantMrpPrice    ?? '—',
+    }));
+
+    // Create workbook + worksheet
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(rows);
+
+    // ── Column widths ──
+    ws['!cols'] = [
+        { wch: 14 }, // Inventory ID
+        { wch: 18 }, // SKU
+        { wch: 13 }, // Total Stock
+        { wch: 16 }, // Available Stock
+        { wch: 20 }, // Low Stock Threshold
+        { wch: 14 }, // Stock Status
+        { wch: 15 }, // Last Updated
+        { wch: 15 }, // Created At
+        { wch: 18 }, // Product ID
+        { wch: 32 }, // Product Title
+        { wch: 20 }, // Category
+        { wch: 20 }, // Sub-Category
+        { wch: 20 }, // Main Product Stock
+        { wch: 22 }, // Main Selling Price
+        { wch: 20 }, // Main MRP Price
+        { wch: 24 }, // Variant Title
+        { wch: 16 }, // Variant Stock
+        { wch: 26 }, // Variant Selling Price
+        { wch: 22 }, // Variant MRP Price
+    ];
+
+    // ── Freeze header row ──
+    ws['!freeze'] = { xSplit: 0, ySplit: 1 };
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Inventory');
+
+    // ── File name: Artezo_Inventory_DD-Mon-YYYY ──
+    const today = new Date().toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }).replace(/ /g, '-');
+    const fileName = `Artezo_Inventory_${today}.xlsx`;
+
+    XLSX.writeFile(wb, fileName);
+    showToast(`Exported ${rows.length} item${rows.length !== 1 ? 's' : ''} successfully`);
+}
+
 </script>
 </body>
 </html>

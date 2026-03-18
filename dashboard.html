@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <link rel="apple-touch-icon" sizes="180x180" href="/favicon_io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png">
+
+    <title>Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <script src="/js/components.js"></script>
+    
+</head>
+<style>
+   /* Barcode Loader CSS */
+.barcode-loader {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    height: 80px;
+    gap: 4px;
+}
+
+.bar {
+    width: 8px;
+    background: linear-gradient(180deg, #133F53 0%, #D89F34 70%, #957A54 100%);
+    border-radius: 4px 4px 0 0;
+    animation: scan-wave 1.2s ease-in-out infinite;
+    transform-origin: bottom;
+}
+
+@keyframes scan-wave {
+    0%, 100% {
+        transform: scaleY(1);
+        opacity: 0.8;
+        background: linear-gradient(180deg, #133F53 0%, #D89F34 70%, #957A54 100%);
+    }
+    50% {
+        transform: scaleY(1.4);
+        opacity: 1;
+        background: linear-gradient(180deg, #D89F34 0%, #133F53 70%, #957A54 100%);
+    }
+}
+</style>
+<body class="bg-[#F2F2E8]">
+
+
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar will be loaded here -->
+        <div id="sidebar-container"></div>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Header will be loaded here -->
+            <div id="header-container"></div>
+
+            <!-- Main Content -->
+            <main class="flex-1 overflow-y-auto p-6">
+                <!-- Dashboard Content -->
+                <div class="space-y-8">
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                        <!-- Total Sales -->
+                        <div class="bg-white p-5 rounded-xl shadow-sm border-l-4" style="border-left-color: #133F53;">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-sm text-gray-500">Total Sales</p>
+                                    <p class="text-2xl font-bold mt-1" style="color: #133F53;">$128,430.00</p>
+                                </div>
+                                <span class="text-sm font-semibold text-green-600 bg-green-100 px-2 py-1 rounded">+12.5%</span>
+                            </div>
+                        </div>
+                        <!-- Total Orders -->
+                        <div class="bg-white p-5 rounded-xl shadow-sm border-l-4" style="border-left-color: #D89F34;">
+                            <div class="flex justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-500">Total Orders</p>
+                                    <p class="text-2xl font-bold mt-1" style="color: #133F53;">1,250</p>
+                                </div>
+                                <span class="text-sm font-semibold text-green-600 bg-green-100 px-2 py-1 rounded">+5.2%</span>
+                            </div>
+                        </div>
+                        <!-- Active Users -->
+                        <div class="bg-white p-5 rounded-xl shadow-sm border-l-4" style="border-left-color: #957A54;">
+                            <div class="flex justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-500">Active Users</p>
+                                    <p class="text-2xl font-bold mt-1" style="color: #133F53;">842</p>
+                                </div>
+                                <span class="text-sm font-semibold text-green-600 bg-green-100 px-2 py-1 rounded">+3.1%</span>
+                            </div>
+                        </div>
+                        <!-- Total Revenue -->
+                        <div class="bg-white p-5 rounded-xl shadow-sm border-l-4" style="border-left-color: #133F53;">
+                            <div class="flex justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-500">Total Revenue</p>
+                                    <p class="text-2xl font-bold mt-1" style="color: #133F53;">$54,200.00</p>
+                                </div>
+                                <span class="text-sm font-semibold text-green-600 bg-green-100 px-2 py-1 rounded">+8.4%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Graphs Section -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Sales Trends Graph -->
+                        <div class="bg-white p-5 rounded-xl shadow-sm">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-semibold" style="color: #133F53;">Sales Trends</h3>
+                                <span class="text-xs border px-3 py-1 rounded-full bg-[#F8F8EA] text-[#957A54]">Last 30 Days</span>
+                            </div>
+                            <div class="h-48 flex items-end justify-between gap-2">
+                                <div class="w-8 bg-[#D89F34] h-24 rounded-t"></div>
+                                <div class="w-8 bg-[#133F53] h-32 rounded-t"></div>
+                                <div class="w-8 bg-[#957A54] h-28 rounded-t"></div>
+                                <div class="w-8 bg-[#D89F34] h-36 rounded-t"></div>
+                                <div class="w-8 bg-[#133F53] h-20 rounded-t"></div>
+                                <div class="w-8 bg-[#957A54] h-40 rounded-t"></div>
+                                <div class="w-8 bg-[#D89F34] h-16 rounded-t"></div>
+                            </div>
+                            <div class="flex justify-between mt-2 text-xs text-gray-500">
+                                <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+                            </div>
+                        </div>
+
+                        <!-- Revenue by Category -->
+                        <div class="bg-white p-5 rounded-xl shadow-sm">
+                            <h3 class="font-semibold mb-4" style="color: #133F53;">Revenue by Category</h3>
+                            <div class="space-y-3">
+                                <div><span class="text-sm">Electronics</span><div class="w-full bg-gray-200 h-2 rounded-full mt-1"><div class="bg-[#133F53] h-2 rounded-full" style="width: 45%"></div></div></div>
+                                <div><span class="text-sm">Fashion</span><div class="w-full bg-gray-200 h-2 rounded-full mt-1"><div class="bg-[#D89F34] h-2 rounded-full" style="width: 30%"></div></div></div>
+                                <div><span class="text-sm">Home</span><div class="w-full bg-gray-200 h-2 rounded-full mt-1"><div class="bg-[#957A54] h-2 rounded-full" style="width: 15%"></div></div></div>
+                                <div><span class="text-sm">Beauty</span><div class="w-full bg-gray-200 h-2 rounded-full mt-1"><div class="bg-[#133F53] h-2 rounded-full" style="width: 10%"></div></div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Demographics and Order Frequency -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- User Demographics -->
+                        <div class="bg-white p-5 rounded-xl shadow-sm">
+                            <h3 class="font-semibold mb-4" style="color: #133F53;">User Demographics</h3>
+                            <div class="flex items-center justify-center gap-8">
+                                <div class="relative w-32 h-32">
+                                    <div class="absolute inset-0 rounded-full border-8" style="border-color: #133F53 #D89F34 #957A54 #F8F8EA;"></div>
+                                    <div class="absolute inset-0 flex items-center justify-center font-bold" style="color: #133F53;">10K+</div>
+                                </div>
+                                <div class="space-y-2">
+                                    <div><span class="inline-block w-3 h-3 bg-[#133F53] rounded-full"></span> 18-24 (45%)</div>
+                                    <div><span class="inline-block w-3 h-3 bg-[#D89F34] rounded-full"></span> 25-34 (30%)</div>
+                                    <div><span class="inline-block w-3 h-3 bg-[#957A54] rounded-full"></span> Other (25%)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Order Frequency -->
+                        <div class="bg-white p-5 rounded-xl shadow-sm">
+                            <h3 class="font-semibold mb-4" style="color: #133F53;">Order Frequency</h3>
+                            <div class="h-32 flex items-end justify-between gap-2">
+                                <div class="w-12 bg-[#133F53] h-16 rounded-t"></div>
+                                <div class="w-12 bg-[#D89F34] h-24 rounded-t"></div>
+                                <div class="w-12 bg-[#957A54] h-8 rounded-t"></div>
+                                <div class="w-12 bg-[#133F53] h-20 rounded-t"></div>
+                                <div class="w-12 bg-[#D89F34] h-12 rounded-t"></div>
+                            </div>
+                            <div class="flex justify-between mt-2 text-xs text-gray-500">
+                                <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>23:59</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Transactions -->
+                    <div class="bg-white p-5 rounded-xl shadow-sm">
+                        <h3 class="font-semibold mb-4" style="color: #133F53;">Recent Transactions</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="border-b border-gray-200">
+                                        <th class="text-left py-2">ORDER ID</th>
+                                        <th class="text-left">CUSTOMER</th>
+                                        <th class="text-left">PRODUCT</th>
+                                        <th class="text-left">AMOUNT</th>
+                                        <th class="text-left">STATUS</th>
+                                        <th class="text-left">ACTION</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b border-gray-100">
+                                        <td class="py-2">#ORD-7721</td>
+                                        <td>John Doe</td>
+                                        <td>Wireless Headphones</td>
+                                        <td>$99.00</td>
+                                        <td><span class="bg-[#D89F34] text-[#133F53] px-2 py-1 rounded text-xs">PROCESSING</span></td>
+                                        <td><i class="fa-solid fa-lock text-[#957A54]"></i></td>
+                                    </tr>
+                                    <tr class="border-b border-gray-100">
+                                        <td class="py-2">#ORD-7722</td>
+                                        <td>Jane Smith</td>
+                                        <td>Smart Watch (Pro)</td>
+                                        <td>$149.00</td>
+                                        <td><span class="bg-[#133F53] text-white px-2 py-1 rounded text-xs">SHIPPED</span></td>
+                                        <td><i class="fa-solid fa-lock text-[#957A54]"></i></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2">#ORD-7723</td>
+                                        <td>Mike Ross</td>
+                                        <td>Leather Wallet</td>
+                                        <td>$45.00</td>
+                                        <td><span class="bg-[#957A54] text-white px-2 py-1 rounded text-xs">DELIVERED</span></td>
+                                        <td><i class="fa-solid fa-lock text-[#957A54]"></i></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+<!-- Modals will be loaded here dynamically -->
+    <div id="modals-container"></div>
+    
+
+    
+</body>
+</html>
