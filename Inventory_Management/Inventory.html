@@ -53,7 +53,7 @@ body { font-family: 'DM Sans', sans-serif; }
 
 /* Stock count pill */
 .stock-pill { display: inline-flex; align-items: center; justify-content: center; min-width: 38px; padding: 3px 10px; border-radius: 20px; font-size: 13px; font-weight: 600; }
-.stock-pill-ok { background: #E6F4EC; color: #1A6B3A; }
+.stock-pill-ok { background: #E6F4EC; color: #1A6B3A; border:1px solid rgb(192, 191, 191) }
 .stock-pill-low { background: #FFF3DC; color: #9A6200; }
 .stock-pill-out { background: #FCEAEA; color: #B02A2A; }
 
@@ -392,8 +392,8 @@ select.field-input { appearance: none; background-image: url("data:image/svg+xml
                         <thead>
                             <tr>
                                 <th class="text-left">SKU</th>
-                                <th class="text-left">Product</th>
-                                <th class="text-left">Variant</th>                                
+                                <th class="text-left">Product Name</th>
+                                <th class="text-left">Variant Name</th>                                
                                 <th class="text-left">Category</th>
                                 <th class="text-left">Sub-Category</th>
                                 <th class="text-center">Total Stock</th>
@@ -429,7 +429,6 @@ select.field-input { appearance: none; background-image: url("data:image/svg+xml
                     <div class="flex gap-1.5" id="pageButtons"></div>
                 </div>
             </div>
-
         </main>
     </div>
 </div>
@@ -466,10 +465,20 @@ select.field-input { appearance: none; background-image: url("data:image/svg+xml
                     <label class="block text-[11px] font-semibold text-[#957A54] uppercase tracking-wider mb-1.5">Total Stock</label>
                     <div class="field-readonly text-center font-semibold text-[#133F53]" id="v_total">—</div>
                 </div>
-                <!-- <div>
-                    <label class="block text-[11px] font-semibold text-[#957A54] uppercase tracking-wider mb-1.5">Available</label>
-                    <div class="field-readonly text-center font-semibold text-[#1A6B3A]" id="v_available">—</div>
-                </div> -->
+              
+                 <div>
+                    <label class="block text-[11px] font-semibold text-[#957A54] uppercase tracking-wider mb-1.5">
+                        Main Product Stock
+                    </label>
+                    <div class="field-readonly text-center font-semibold text-[#133F53]" id="v_currentStock">—</div>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold text-[#957A54] uppercase tracking-wider mb-1.5">
+                        Variant Stock
+                    </label>
+                    <div class="field-readonly text-center font-semibold text-[#1A6B3A]" id="v_variantStock">—</div>
+                </div>
+
                 <div>
                     <label class="block text-[11px] font-semibold text-[#957A54] uppercase tracking-wider mb-1.5">Threshold</label>
                     <div class="field-readonly text-center" id="v_threshold">—</div>
@@ -500,6 +509,7 @@ select.field-input { appearance: none; background-image: url("data:image/svg+xml
 <!-- EDIT OVERLAY -->
 <div class="overlay-backdrop" id="editOverlay">
     <div class="overlay-panel" style="max-width:440px;">
+
         <div class="px-6 pt-5 pb-4 border-b border-[#d1d1b1] flex items-center justify-between">
             <div>
                 <h2 class="text-[16px] font-semibold text-[#133F53]">Update Stock</h2>
@@ -509,7 +519,9 @@ select.field-input { appearance: none; background-image: url("data:image/svg+xml
                 <i class="fas fa-xmark text-[15px]"></i>
             </button>
         </div>
+
         <div class="px-6 py-5 space-y-4">
+
             <div class="bg-[#F2F2E8] border border-[#957A54] rounded-lg p-3 flex items-start gap-3">
                 <div class="w-8 h-8 rounded-lg bg-[#EDF3F6] border border-[#C2D6DF] flex items-center justify-center flex-shrink-0">
                     <i class="fas fa-box text-[13px] text-[#133F53]"></i>
@@ -519,18 +531,48 @@ select.field-input { appearance: none; background-image: url("data:image/svg+xml
                     <p class="text-[11.5px] text-[#846b49] font-mono mt-0.5" id="edit_sku">—</p>
                 </div>
             </div>
-            <div class="grid grid-cols-1 gap-3">
-                <div class="rounded-lg border border-[#d1d1b1] bg-white/50 p-3 text-center">
-                    <div class="text-[11px] text-[#846b49] uppercase tracking-wider font-semibold mb-1">Total Stock</div>
-                    <div class="text-[22px] font-semibold text-[#133F53]" id="edit_currentTotal">—</div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[13px] font-medium text-[#133F53] mb-1.5">
+                        Main Product Stock <span class="text-[#D89F34]">*</span>
+                    </label>
+                    <input class="field-input" type="number" id="newRootStockInput" min="0" 
+                        placeholder="Root stock">
+                    <p class="text-[11.5px] text-[#957A54] mt-1">
+                        <!-- <i class="fas fa-circle-info text-[10px] mr-1"></i> -->
+                       <span class="font-bold">Product : </span><span class="font-semibold text-black" id="edit_currentProduct">—</span>
+                    </p>
                 </div>
-                <!-- <div class="rounded-lg border border-[#EBEBDF] bg-white/50 p-3 text-center">
-                    <div class="text-[11px] text-[#957A54] uppercase tracking-wider font-semibold mb-1">Current Available</div>
-                    <div class="text-[22px] font-semibold text-[#1A6B3A]" id="edit_currentAvailable">—</div>
-                </div> -->
+                <div>
+                    <label class="block text-[13px] font-medium text-[#133F53] mb-1.5">
+                        Variant Stock <span class="text-[#D89F34]">*</span>
+                    </label>
+                    <input class="field-input" type="number" id="newVariantStockInput" min="0" 
+                        placeholder="Variant stock">
+                    <p class="text-[11.5px] text-[#957A54] mt-1">
+                        <!-- <i class="fas fa-circle-info text-[10px] mr-1"></i> -->
+                        <span class="font-semibold">Variant : </span><span class="font-semibold text-black" id="edit_variantTitle">—</span>
+                    </p>
+                </div>
             </div>
+
+
+            <div id="editError" class="hidden text-[12.5px] text-[#B02A2A] bg-[#FCEAEA] 
+                border border-[#F5BABA] rounded-lg px-3 py-2.5"></div>
+
+                        <div class="rounded-lg border border-[#d1d1b1] bg-white/50 p-3 text-center">
+                            <div class="text-[11px] text-[#846b49] uppercase tracking-wider font-semibold mb-1">Total Stock</div>
+                            <div class="text-[22px] font-semibold text-[#133F53]" id="edit_currentTotal">—</div>
+                        </div>
+                        <p class="text-[12px] text-[#957A54]">
+                <i class="fas fa-circle-info text-[10px] mr-1"></i>
+                Low stock alert threshold is at 
+                <span class="font-semibold" id="edit_threshold">—</span> units
+            </p>
+
             <div class="divider"></div>
-            <div>
+            <!-- <div>
                 <label class="block text-[13px] font-medium text-[#133F53] mb-1.5">
                     New Available Stock <span class="text-[#D89F34]">*</span>
                 </label>
@@ -539,9 +581,11 @@ select.field-input { appearance: none; background-image: url("data:image/svg+xml
                     <i class="fas fa-circle-info text-[10px] mr-1"></i>
                     Low stock alert threshold is at <span class="font-semibold" id="edit_threshold">—</span> units
                 </p>
-            </div>
+            </div> -->
+        
             <div id="editError" class="hidden text-[12.5px] text-[#B02A2A] bg-[#FCEAEA] border border-[#F5BABA] rounded-lg px-3 py-2.5"></div>
         </div>
+
         <div class="px-6 pb-5 flex justify-end gap-2">
             <button class="btn-outline" onclick="closeOverlay('editOverlay')">Cancel</button>
             <button class="btn-primary" id="saveStockBtn" onclick="saveStock()">
@@ -550,6 +594,7 @@ select.field-input { appearance: none; background-image: url("data:image/svg+xml
         </div>
     </div>
 </div>
+
 
 
 <!--======================================================
@@ -942,15 +987,30 @@ function renderRow(item) {
     return `<tr class="${rowCls}">
         <td style="white-space:nowrap;"><span class="sku-chip">${item.sku}</span></td>
         <td style="min-width:240px;">
-            <div style="font-size:13.5px;font-weight:500;color:#1a1a14;line-height:1.35;">${item.product.title}</div>
-            <span style="font-size:11.5px;margin-top:2px;" 
-             class="bg-gray-100 border border-[#D89F34] rounded-md px-1">ID : ${item.product.productPrimeId}</span>
+            <div style="font-size:13.5px;font-weight:500;color:#1a1a14;line-height:1.35;" class="flex flex-col items-baseline justify-evenly gap-2 p-2" >
+                <span class="text-lg">${item.product.title}</span>
+                <span class="border border-gray-400 rounded-md ${pillCls} px-1">qty : ${item.product.currentStock}</span>
+                <span class="border border-[#D89F34] rounded-md bg-gray-100 px-1" >selling price : ${item.product.currentSellingPrice}</span>
+                <span class="border border-[#D89F34] rounded-md bg-gray-100 px-1" >mrp price : ${item.product.currentMrpPrice}</span>
+                <span style="font-size:11.5px;margin-top:2px;" 
+                class="bg-gray-100 border border-[#D89F34] rounded-md px-1">ID : ${item.product.productStrId}</span>
+            </div>
         </td>
-        <td style="white-space:nowrap;"><span class="cat-tag">${item.product.variantTitle}</span></td>
+
+
+        <td style="white-space:nowrap;" >
+            <div class="flex flex-col items-baseline justify-evenly gap-2 p-2">
+                <span class="cat-tag">
+                    ${item.product.variantTitle}
+                </span>
+                <span class="border border-gray-400 rounded-md ${pillCls} px-1">qty : ${item.product.variantStock}</span>
+                <span class="border border-[#D89F34] rounded-md bg-gray-100 px-1" >selling price : ${item.product.variantSellingPrice}</span>
+                <span class="border border-[#D89F34] rounded-md bg-gray-100 px-1" >mrp price : ${item.product.variantMrpPrice}</span>
+            </div>
+        </td>
         <td style="white-space:nowrap;"><span class="cat-tag">${item.product.productCategory}</span></td>
         <td style="white-space:nowrap;"><span class="cat-tag">${item.product.productSubCategory}</span></td>
-        <td style="text-align:center;white-space:nowrap;"><span class="stock-pill border border-gray-400 ${pillCls}">${item.totalStock}</span></td>
-        <!-- <td style="text-align:center;white-space:nowrap;"><span class="stock-pill ${pillCls}">${item.availableStock}</span></td> -->
+        <td style="text-align:center;white-space:nowrap;"><span class="border border-gray-400 rounded-md ${pillCls} px-1">${item.totalStock}</span></td>
         <td style="text-align:center;white-space:nowrap;" >${badgeHTML[status]}</td>
         <td style="text-align:center;font-size:12.5px;color:#957A54;white-space:nowrap;">${formatDate(item.updatedAt)}</td>
         <td style="white-space:nowrap;">
@@ -1022,6 +1082,8 @@ function openView(id) {
     // document.getElementById('v_variantTitle').textContent = item.product.variantTitle;
     document.getElementById('v_title').textContent = item.product.title;
     document.getElementById('v_total').textContent = item.totalStock;
+    document.getElementById('v_currentStock').textContent = item.product.currentStock ?? '—';
+    document.getElementById('v_variantStock').textContent  = item.product.variantStock  ?? '—';
     // document.getElementById('v_available').textContent = item.availableStock;
     document.getElementById('v_threshold').textContent = item.lowStockThreshold;
     document.getElementById('v_created').textContent = formatDate(item.createdAt);
@@ -1044,33 +1106,106 @@ function switchToEdit() {
 // ============================================================
 // EDIT
 // ============================================================
+// function openEdit(id) {
+//     const item = allInventory.find(i => i.inventoryId === id);
+//     if (!item) return;
+//     currentEditSku = item.sku;
+
+//     document.getElementById('editSubtitle').textContent = item.sku;
+//     document.getElementById('edit_title').textContent = item.product.title;
+//     document.getElementById('edit_sku').textContent = item.sku;
+//     document.getElementById('edit_currentTotal').textContent = item.totalStock;
+//     // document.getElementById('edit_currentAvailable').textContent = item.availableStock;
+//     document.getElementById('edit_threshold').textContent = item.lowStockThreshold;
+//     document.getElementById('newStockInput').value = item.availableStock;
+//     document.getElementById('editError').classList.add('hidden');
+
+//     const btn = document.getElementById('saveStockBtn');
+//     btn.innerHTML = `<i class="fas fa-check" style="font-size:11px;"></i> Save Changes`;
+//     btn.disabled = false;
+//     openOverlay('editOverlay');
+// }
+
 function openEdit(id) {
     const item = allInventory.find(i => i.inventoryId === id);
+    console.log("edit form :", item);
+
     if (!item) return;
     currentEditSku = item.sku;
 
-    document.getElementById('editSubtitle').textContent = item.sku;
-    document.getElementById('edit_title').textContent = item.product.title;
-    document.getElementById('edit_sku').textContent = item.sku;
+    document.getElementById('editSubtitle').textContent      = item.sku;
+    document.getElementById('edit_title').textContent        = item.product.title;
+    document.getElementById('edit_sku').textContent          = item.sku;
     document.getElementById('edit_currentTotal').textContent = item.totalStock;
-    // document.getElementById('edit_currentAvailable').textContent = item.availableStock;
-    document.getElementById('edit_threshold').textContent = item.lowStockThreshold;
-    document.getElementById('newStockInput').value = item.availableStock;
-    document.getElementById('editError').classList.add('hidden');
+    document.getElementById('edit_threshold').textContent    = item.lowStockThreshold;
+    document.getElementById('edit_variantTitle').textContent   = item.product.variantTitle;
 
+    // Show current values as hints below inputs
+    document.getElementById('edit_currentProduct').textContent = item.product.title;
+    // document.getElementById('edit_variantStock').textContent = item.product.variantStock  ?? '—';
+
+    // ✅ Pre-fill both inputs
+    document.getElementById('newRootStockInput').value    = item.product.currentStock ?? 0;
+    document.getElementById('newVariantStockInput').value = item.product.variantStock  ?? 0;
+
+    document.getElementById('editError').classList.add('hidden');
     const btn = document.getElementById('saveStockBtn');
     btn.innerHTML = `<i class="fas fa-check" style="font-size:11px;"></i> Save Changes`;
     btn.disabled = false;
     openOverlay('editOverlay');
 }
 
+// async function saveStock() {
+//     const val = parseInt(document.getElementById('newStockInput').value);
+//     const errEl = document.getElementById('editError');
+//     errEl.classList.add('hidden');
+
+//     if (isNaN(val) || val < 0) {
+//         errEl.textContent = 'Please enter a valid stock value (0 or more).';
+//         errEl.classList.remove('hidden');
+//         return;
+//     }
+
+//     const btn = document.getElementById('saveStockBtn');
+//     btn.innerHTML = `<span class="spinner"></span> Saving…`;
+//     btn.disabled = true;
+
+//     try {
+//         const res = await fetch(
+//             `${BASE_URL}/api/inventory/patch-by-sku/${currentEditSku}/stock?availableStock=${val}`,
+//             { method: 'PATCH' }
+//         );
+//         if (!res.ok) throw new Error(`Server error ${res.status}`);
+
+//         const item = allInventory.find(i => i.sku === currentEditSku);
+//         if (item) { item.availableStock = val; item.updatedAt = new Date().toISOString(); }
+
+//         // closeOverlay('editOverlay');
+//         // applyFilters();
+//         // showToast(`Stock updated — ${currentEditSku} set to ${val} units`);
+
+//         closeOverlay('editOverlay');
+//         showToast(`Stock updated — ${currentEditSku} set to ${val} units`);
+//         await refreshInventory();
+
+//     } catch (err) {
+//         errEl.textContent = `Failed to save: ${err.message}`;
+//         errEl.classList.remove('hidden');
+//         btn.innerHTML = `<i class="fas fa-check" style="font-size:11px;"></i> Save Changes`;
+//         btn.disabled = false;
+//     }
+// }
+
+
+
 async function saveStock() {
-    const val = parseInt(document.getElementById('newStockInput').value);
-    const errEl = document.getElementById('editError');
+    const variantVal = parseInt(document.getElementById('newVariantStockInput').value);
+    const rootVal    = parseInt(document.getElementById('newRootStockInput').value);
+    const errEl      = document.getElementById('editError');
     errEl.classList.add('hidden');
 
-    if (isNaN(val) || val < 0) {
-        errEl.textContent = 'Please enter a valid stock value (0 or more).';
+    if (isNaN(variantVal) || variantVal < 0 || isNaN(rootVal) || rootVal < 0) {
+        errEl.textContent = 'Please enter valid stock values (0 or more) for both fields.';
         errEl.classList.remove('hidden');
         return;
     }
@@ -1080,21 +1215,15 @@ async function saveStock() {
     btn.disabled = true;
 
     try {
+        // Single API call — variant SKU in path, rootStock as optional param
         const res = await fetch(
-            `${BASE_URL}/api/inventory/patch-by-sku/${currentEditSku}/stock?availableStock=${val}`,
+            `${BASE_URL}/api/inventory/patch-by-sku/${currentEditSku}/stock?availableStock=${variantVal}&rootStock=${rootVal}`,
             { method: 'PATCH' }
         );
         if (!res.ok) throw new Error(`Server error ${res.status}`);
 
-        const item = allInventory.find(i => i.sku === currentEditSku);
-        if (item) { item.availableStock = val; item.updatedAt = new Date().toISOString(); }
-
-        // closeOverlay('editOverlay');
-        // applyFilters();
-        // showToast(`Stock updated — ${currentEditSku} set to ${val} units`);
-
         closeOverlay('editOverlay');
-        showToast(`Stock updated — ${currentEditSku} set to ${val} units`);
+        showToast(`Stock updated — Variant: ${variantVal}, Root: ${rootVal}`);
         await refreshInventory();
 
     } catch (err) {
@@ -1104,6 +1233,9 @@ async function saveStock() {
         btn.disabled = false;
     }
 }
+
+
+
 
 // ============================================================
 // BULK UPLOAD
