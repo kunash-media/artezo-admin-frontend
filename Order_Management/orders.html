@@ -228,18 +228,33 @@
                             <p class="text-sm" style="color: #957A54;">Manage and track all customer orders</p>
                         </div>
                         <div class="flex gap-2">
+
+                            <div class="">
+                                <a href="https://app.shiprocket.in/newlogin" target="_blank" rel="noopener noreferrer" title="go to shiprocket">
+                                <button 
+                                    class="px-4 py-2 rounded-lg text-sm flex items-center gap-2 border
+                                   bg-white text-white" style="border-color: #D89F34; color: #133F53;">
+                                    <img class="h-6 w-20 object-contain" src="/assets/Shiprocket_logo.png" alt="">
+                                </button>
+                            </a>
+                            </div>
+                            
+                            
                             <button class="px-4 py-2 rounded-lg text-sm flex items-center gap-2 border"
+                                title="download excel"
                                 style="border-color: #D89F34; color: #133F53;" onclick="exportOrders()">
                                 <i class="fa-solid fa-download"></i>
                                 Export
                             </button>
+                             
+                           
                         </div>
                     </div>
 
                     <!-- Order Statistics Cards -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                         <!-- Total Orders -->
-                        <div class="bg-white p-4 rounded-lg shadow-sm order-card">
+                        <div class="bg-white p-4 rounded-lg border border-[#D89F34] order-card" >
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-xs text-gray-500">Total Orders</p>
@@ -256,10 +271,10 @@
                         </div>
 
                         <!-- Pending Orders -->
-                        <div class="bg-white p-4 rounded-lg shadow-sm order-card">
+                        <div class="bg-white p-4 rounded-lg border border-[#D89F34] order-card">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <p class="text-xs text-gray-500">Pending</p>
+                                    <p class="text-xs text-gray-500">Placed</p>
                                     <p class="text-xl font-bold" style="color: #133F53;">342</p>
                                 </div>
                                 <div class="w-10 h-10 rounded-full bg-[#F8F8EA] flex items-center justify-center">
@@ -271,26 +286,10 @@
                                 <span class="text-gray-400 ml-2">vs last month</span>
                             </div>
                         </div>
-
-                        <!-- Processing Orders -->
-                        <div class="bg-white p-4 rounded-lg shadow-sm order-card">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-xs text-gray-500">Processing</p>
-                                    <p class="text-xl font-bold" style="color: #133F53;">156</p>
-                                </div>
-                                <div class="w-10 h-10 rounded-full bg-[#F8F8EA] flex items-center justify-center">
-                                    <i class="fa-solid fa-rotate" style="color: #D89F34;"></i>
-                                </div>
-                            </div>
-                            <div class="mt-2 flex items-center text-xs">
-                                <span class="text-blue-600">↑ 8%</span>
-                                <span class="text-gray-400 ml-2">vs last month</span>
-                            </div>
-                        </div>
+                        
 
                         <!-- Delivered Orders -->
-                        <div class="bg-white p-4 rounded-lg shadow-sm order-card">
+                        <div class="bg-white p-4 rounded-lg border border-[#D89F34]  order-card">
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-xs text-gray-500">Delivered</p>
@@ -385,14 +384,16 @@
                                 </div>
 
                                 <!-- Sort Dropdown -->
-                                <select id="sortOrders"
+                                <!-- <select id="sortOrders"
                                     class="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#D89F34] bg-white w-full sm:w-40"
                                     onchange="sortOrders()">
                                     <option value="newest">Newest First</option>
                                     <option value="oldest">Oldest First</option>
                                     <option value="high-low">Amount: High to Low</option>
                                     <option value="low-high">Amount: Low to High</option>
-                                </select>
+                                </select> -->
+
+                                 
 
                                 <!-- Date Filter Button -->
                                 <button

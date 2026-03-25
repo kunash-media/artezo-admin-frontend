@@ -77,7 +77,7 @@ select.field-input { appearance: none; background-image: url("data:image/svg+xml
 .btn-primary:hover { background: #0E2E3D; transform: translateY(-1px); }
 .btn-primary:active { transform: translateY(0); }
 .btn-primary:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
-.btn-gold { background: #D89F34; color: #fff; padding: 9px 20px; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13.5px; font-weight: 500; cursor: pointer; transition: background 0.16s, transform 0.1s; display: inline-flex; align-items: center; gap: 7px; }
+.btn-gold {  color: #133F53; padding: 9px 20px; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13.5px; font-weight: 500; cursor: pointer; transition: background 0.16s, transform 0.1s; display: inline-flex; align-items: center; gap: 7px; }
 .btn-gold:hover { background: #C08A25; transform: translateY(-1px); }
 .btn-gold:active { transform: translateY(0); }
 .btn-outline { background: transparent; color: #133F53; padding: 8px 18px; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13.5px; font-weight: 500; border: 1.5px solid #C2D0D5; cursor: pointer; transition: border-color 0.16s, background 0.16s; }
@@ -343,6 +343,7 @@ select.field-input { appearance: none; background-image: url("data:image/svg+xml
 .rich-toast.toast-error .rich-toast-icon { background: rgba(176,42,42,0.3); color: #F87171; }
 .rich-toast.toast-error .rich-toast-bar { background: linear-gradient(90deg, #B02A2A, #D89F34); }
  
+ .export-btn:hover { background: #C08A25; transform: translateY(-1px); }
 </style>
 <body class="bg-[#F2F2E8]">
 
@@ -361,11 +362,11 @@ select.field-input { appearance: none; background-image: url("data:image/svg+xml
                 </div>
 
                 <div class="flex gap-3">
-                    <button class="btn-gold border border-gray-500" onclick="openBulkUpload()">
+                    <button class="btn-gold border border-[#D89F34]" onclick="openBulkUpload()">
                         <i class="fas fa-layer-group text-[12px]"></i>
                         Bulk Upload
                     </button>
-                    <button class="btn-outline border border-gray-400" onclick="exportInventory()">
+                    <button class="btn-outline export-btn border border-[#D89F34]" onclick="exportInventory()">
                         <i class="fas fa-file-arrow-down text-[12px]"></i>
                         Export
                     </button>
