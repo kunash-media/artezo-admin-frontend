@@ -7,6 +7,9 @@
     <title>Order Management - E-Commerce Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- jsPDF for invoice PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="/css/components.css">
     <script src="/js/components.js"></script>
     <style>
@@ -73,18 +76,9 @@
             scrollbar-color: #D89F34 #F8F8EA;
         }
 
-        #statusDropdown::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        #statusDropdown::-webkit-scrollbar-track {
-            background: #F8F8EA;
-        }
-
-        #statusDropdown::-webkit-scrollbar-thumb {
-            background: #D89F34;
-            border-radius: 4px;
-        }
+        #statusDropdown::-webkit-scrollbar { width: 4px; }
+        #statusDropdown::-webkit-scrollbar-track { background: #F8F8EA; }
+        #statusDropdown::-webkit-scrollbar-thumb { background: #D89F34; border-radius: 4px; }
 
         .status-item {
             transition: all 0.2s ease;
@@ -101,61 +95,65 @@
             font-size: 14px;
         }
 
-        .status-item:hover i {
-            transform: scale(1.1);
-        }
+        .status-item:hover i { transform: scale(1.1); }
 
-        /* Search Loading Animation */
         @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
 
-        .fa-circle-notch {
-            animation: spin 1s linear infinite;
-        }
+        .fa-circle-notch { animation: spin 1s linear infinite; }
 
-        /* Date Filter Animation */
-        #dateFilter {
-            animation: slideDown 0.3s ease;
-        }
+        #dateFilter { animation: slideDown 0.3s ease; }
 
         @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Modal Animations */
-        .modal-enter {
-            animation: modalFadeIn 0.3s ease;
-        }
+        .modal-enter { animation: modalFadeIn 0.3s ease; }
 
         @keyframes modalFadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Responsive adjustments */
         @media (max-width: 640px) {
-            #statusDropdownButton {
-                width: 100%;
-            }
-            #statusDropdown {
-                width: 100%;
-            }
+            #statusDropdownButton { width: 100%; }
+            #statusDropdown { width: 100%; }
         }
+
+        /* View Modal Scroll */
+        #viewOrderModal .modal-inner {
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        /* Invoice styles inside modal */
+        .invoice-section {
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            background: #fafafa;
+        }
+
+        .inv-table th {
+            background: #133F53;
+            color: white;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
+            text-align: left;
+        }
+
+        .inv-table td {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.8rem;
+            border-bottom: 1px solid #f0f0f0;
+            color: #374151;
+        }
+
+        .inv-table tr:last-child td { border-bottom: none; }
+        .inv-table tr:nth-child(even) td { background: #F8F8EA; }
     </style>
 </head>
 
@@ -174,7 +172,6 @@
             <main class="flex-1 overflow-y-auto p-6">
                 <!-- Skeleton Loading -->
                 <div id="skeletonLoader" class="content-visible">
-                    <!-- Statistics Cards Skeleton -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                         <div class="bg-white p-4 rounded-lg shadow-sm">
                             <div class="skeleton skeleton-text w-24 h-4 mb-2"></div>
@@ -197,8 +194,6 @@
                             <div class="skeleton skeleton-text w-32 h-3"></div>
                         </div>
                     </div>
-
-                    <!-- Filters Skeleton -->
                     <div class="bg-white p-4 rounded-lg shadow-sm mb-6">
                         <div class="flex gap-4">
                             <div class="skeleton skeleton-text w-96 h-10"></div>
@@ -206,8 +201,6 @@
                             <div class="skeleton skeleton-text w-40 h-10"></div>
                         </div>
                     </div>
-
-                    <!-- Table Skeleton -->
                     <div class="bg-white rounded-lg shadow-sm overflow-hidden">
                         <div class="p-4">
                             <div class="skeleton skeleton-text w-full h-12 mb-2"></div>
@@ -228,80 +221,64 @@
                             <p class="text-sm" style="color: #957A54;">Manage and track all customer orders</p>
                         </div>
                         <div class="flex gap-2">
-
-                            <div class="">
+                            <div>
                                 <a href="https://app.shiprocket.in/newlogin" target="_blank" rel="noopener noreferrer" title="go to shiprocket">
-                                <button 
-                                    class="px-4 py-2 rounded-lg text-sm flex items-center gap-2 border
-                                   bg-white text-white" style="border-color: #D89F34; color: #133F53;">
-                                    <img class="h-6 w-20 object-contain" src="/assets/Shiprocket_logo.png" alt="">
-                                </button>
-                            </a>
+                                    <button class="px-4 py-2 rounded-lg text-sm flex items-center gap-2 border bg-white text-white" style="border-color: #D89F34; color: #133F53;">
+                                        <img class="h-6 w-20 object-contain" src="/assets/Shiprocket_logo.png" alt="">
+                                    </button>
+                                </a>
                             </div>
-                            
-                            
                             <button class="px-4 py-2 rounded-lg text-sm flex items-center gap-2 border"
                                 title="download excel"
                                 style="border-color: #D89F34; color: #133F53;" onclick="exportOrders()">
                                 <i class="fa-solid fa-download"></i>
                                 Export
                             </button>
-                             
-                           
                         </div>
                     </div>
 
                     <!-- Order Statistics Cards -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                        <!-- Total Orders -->
-                        <div class="bg-white p-4 rounded-lg border border-[#D89F34] order-card" >
+                        <div class="bg-white p-4 rounded-lg border border-[#D89F34] order-card">
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-xs text-gray-500">Total Orders</p>
-                                    <p class="text-xl font-bold" style="color: #133F53;">1,250</p>
+                                    <p class="text-xl font-bold" id="statTotal" style="color: #133F53;">0</p>
                                 </div>
                                 <div class="w-10 h-10 rounded-full bg-[#F8F8EA] flex items-center justify-center">
                                     <i class="fa-solid fa-shopping-cart" style="color: #D89F34;"></i>
                                 </div>
                             </div>
                             <div class="mt-2 flex items-center text-xs">
-                                <span class="text-green-600">↑ 12%</span>
-                                <span class="text-gray-400 ml-2">vs last month</span>
+                                <!-- <span class="text-gray-400">from API</span> -->
                             </div>
                         </div>
-
-                        <!-- Pending Orders -->
                         <div class="bg-white p-4 rounded-lg border border-[#D89F34] order-card">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <p class="text-xs text-gray-500">Placed</p>
-                                    <p class="text-xl font-bold" style="color: #133F53;">342</p>
+                                    <p class="text-xs text-gray-500">Placed / Confirmed</p>
+                                    <p class="text-xl font-bold" id="statPlaced" style="color: #133F53;">0</p>
                                 </div>
                                 <div class="w-10 h-10 rounded-full bg-[#F8F8EA] flex items-center justify-center">
                                     <i class="fa-regular fa-clock" style="color: #D89F34;"></i>
                                 </div>
                             </div>
                             <div class="mt-2 flex items-center text-xs">
-                                <span class="text-yellow-600">↑ 5%</span>
-                                <span class="text-gray-400 ml-2">vs last month</span>
+                                <span class="text-gray-400">confirmed orders</span>
                             </div>
                         </div>
-                        
-
-                        <!-- Delivered Orders -->
-                        <div class="bg-white p-4 rounded-lg border border-[#D89F34]  order-card">
+                        <div class="bg-white p-4 rounded-lg border border-[#D89F34] order-card">
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-xs text-gray-500">Delivered</p>
-                                    <p class="text-xl font-bold" style="color: #133F53;">689</p>
+                                    <p class="text-xl font-bold" id="statDelivered" style="color: #133F53;">0</p>
                                 </div>
                                 <div class="w-10 h-10 rounded-full bg-[#F8F8EA] flex items-center justify-center">
                                     <i class="fa-solid fa-circle-check" style="color: #D89F34;"></i>
                                 </div>
                             </div>
                             <div class="mt-2 flex items-center text-xs">
-                                <span class="text-green-600">↑ 15%</span>
-                                <span class="text-gray-400 ml-2">vs last month</span>
+                                <span class="text-gray-400">delivered orders</span>
                             </div>
                         </div>
                     </div>
@@ -309,20 +286,17 @@
                     <!-- Filters and Search -->
                     <div class="bg-white p-4 rounded-lg shadow-sm mb-6">
                         <div class="flex flex-col lg:flex-row gap-4 items-center justify-between">
-                            <!-- Search with Debounce -->
                             <div class="relative w-full lg:w-96">
                                 <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
                                 <input type="text" id="searchOrder"
-                                    placeholder="Search by order ID, customer, or product..."
+                                    placeholder="Search by customer, or product..."
                                     class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D89F34] text-sm"
                                     onkeyup="debounceSearch()">
-                                <!-- Loading indicator for search -->
                                 <div id="searchLoading" class="absolute right-3 top-1/2 transform -translate-y-1/2 hidden">
                                     <i class="fa-solid fa-circle-notch fa-spin text-[#D89F34]"></i>
                                 </div>
                             </div>
 
-                            <!-- Filter Dropdowns and Sort -->
                             <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
                                 <!-- Status Filter Dropdown -->
                                 <div class="relative w-full sm:w-44">
@@ -333,67 +307,38 @@
                                         <i class="fa-solid fa-chevron-down text-xs transition-transform duration-200"
                                             id="statusDropdownArrow" style="color: #957A54;"></i>
                                     </button>
-
-                                    <!-- Status Dropdown Menu -->
                                     <div id="statusDropdown"
-                                        class="absolute right-0 mt-1 w-full bg-white rounded-lg shadow-lg py-1 hidden z-50 border border-gray-100"
-                                        style="max-height: 300px; overflow-y: auto;">
-                                        <button
-                                            class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between"
-                                            onclick="selectStatus('all', 'All Orders')">
+                                        class="absolute right-0 mt-1 w-full bg-white rounded-lg shadow-lg py-1 hidden z-50 border border-gray-100">
+                                        <button class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between" onclick="selectStatus('all', 'All Orders')">
                                             <span style="color: #133F53;">All Orders</span>
-                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;"
-                                                id="check-status-all"></i>
+                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;" id="check-status-all"></i>
                                         </button>
-                                        <button
-                                            class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between"
-                                            onclick="selectStatus('pending', 'Pending')">
-                                            <span style="color: #133F53;">Pending</span>
-                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;"
-                                                id="check-status-pending"></i>
+                                        <button class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between" onclick="selectStatus('PLACED', 'Placed')">
+                                            <span style="color: #133F53;">Placed</span>
+                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;" id="check-status-PLACED"></i>
                                         </button>
-                                        <button
-                                            class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between"
-                                            onclick="selectStatus('processing', 'Processing')">
+                                        <button class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between" onclick="selectStatus('CONFIRMED', 'Confirmed')">
+                                            <span style="color: #133F53;">Confirmed</span>
+                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;" id="check-status-CONFIRMED"></i>
+                                        </button>
+                                        <button class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between" onclick="selectStatus('PROCESSING', 'Processing')">
                                             <span style="color: #133F53;">Processing</span>
-                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;"
-                                                id="check-status-processing"></i>
+                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;" id="check-status-PROCESSING"></i>
                                         </button>
-                                        <button
-                                            class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between"
-                                            onclick="selectStatus('shipped', 'Shipped')">
+                                        <button class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between" onclick="selectStatus('SHIPPED', 'Shipped')">
                                             <span style="color: #133F53;">Shipped</span>
-                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;"
-                                                id="check-status-shipped"></i>
+                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;" id="check-status-SHIPPED"></i>
                                         </button>
-                                        <button
-                                            class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between"
-                                            onclick="selectStatus('delivered', 'Delivered')">
+                                        <button class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between" onclick="selectStatus('DELIVERED', 'Delivered')">
                                             <span style="color: #133F53;">Delivered</span>
-                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;"
-                                                id="check-status-delivered"></i>
+                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;" id="check-status-DELIVERED"></i>
                                         </button>
-                                        <button
-                                            class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between"
-                                            onclick="selectStatus('cancelled', 'Cancelled')">
+                                        <button class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between" onclick="selectStatus('CANCELLED', 'Cancelled')">
                                             <span style="color: #133F53;">Cancelled</span>
-                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;"
-                                                id="check-status-cancelled"></i>
+                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;" id="check-status-CANCELLED"></i>
                                         </button>
                                     </div>
                                 </div>
-
-                                <!-- Sort Dropdown -->
-                                <!-- <select id="sortOrders"
-                                    class="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#D89F34] bg-white w-full sm:w-40"
-                                    onchange="sortOrders()">
-                                    <option value="newest">Newest First</option>
-                                    <option value="oldest">Oldest First</option>
-                                    <option value="high-low">Amount: High to Low</option>
-                                    <option value="low-high">Amount: Low to High</option>
-                                </select> -->
-
-                                 
 
                                 <!-- Date Filter Button -->
                                 <button
@@ -402,27 +347,30 @@
                                     <i class="fa-regular fa-calendar" style="color: #957A54;"></i>
                                     <span class="hidden sm:inline ml-1">Date</span>
                                 </button>
+
+                                 <!-- Reset All Filters (hidden until a filter is active) -->
+                                <button id="resetFiltersBtn"
+                                    class="px-3 py-2 border border-gray-200 rounded-lg hover:bg-red-50 transition-colors whitespace-nowrap hidden"
+                                    onclick="resetAllFilters()" title="Reset all filters">
+                                    <i class="fa-solid fa-rotate-left text-xs" style="color:#EF4444;"></i>
+                                    <span class="hidden sm:inline ml-1 text-xs" style="color:#EF4444;">Reset</span>
+                                </button>
                             </div>
                         </div>
 
-                        <!-- Date Filter (Hidden by default) -->
+                        <!-- Date Filter -->
                         <div id="dateFilter" class="hidden mt-4 p-4 bg-[#F8F8EA] rounded-lg">
                             <div class="flex flex-wrap gap-4 items-center">
                                 <div>
                                     <label class="block text-xs mb-1" style="color: #133F53;">From</label>
-                                    <input type="date" id="dateFrom"
-                                        class="px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                                    <input type="date" id="dateFrom" class="px-3 py-2 border border-gray-200 rounded-lg text-sm">
                                 </div>
                                 <div>
                                     <label class="block text-xs mb-1" style="color: #133F53;">To</label>
-                                    <input type="date" id="dateTo"
-                                        class="px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                                    <input type="date" id="dateTo" class="px-3 py-2 border border-gray-200 rounded-lg text-sm">
                                 </div>
-                                <button class="px-4 py-2 rounded-lg text-sm"
-                                    style="background-color: #D89F34; color: #133F53;"
-                                    onclick="applyDateFilter()">Apply</button>
-                                <button class="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-white"
-                                    style="color: #957A54;" onclick="clearDateFilter()">Clear</button>
+                                <button class="px-4 py-2 rounded-lg text-sm" style="background-color: #D89F34; color: #133F53;" onclick="applyDateFilter()">Apply</button>
+                                <button class="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-white" style="color: #957A54;" onclick="clearDateFilter()">Clear</button>
                             </div>
                         </div>
                     </div>
@@ -447,29 +395,19 @@
                                     </tr>
                                 </thead>
                                 <tbody id="ordersTableBody">
-                                    <!-- Orders will be loaded here dynamically -->
                                 </tbody>
                             </table>
                         </div>
 
                         <!-- Pagination -->
                         <div class="px-4 py-3 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-3">
-                            <p class="text-sm" style="color: #957A54;" id="showingInfo">Showing 1-10 of 50 orders</p>
-                            <div class="flex gap-2">
-                                <button class="w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA]"
-                                    onclick="changePage('prev')">
+                            <p class="text-sm" style="color: #957A54;" id="showingInfo">Showing 0 orders</p>
+                            <div class="flex gap-2" id="paginationContainer">
+                                <button class="w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA]" onclick="changePage('prev')">
                                     <i class="fa-solid fa-chevron-left text-xs"></i>
                                 </button>
-                                <button class="w-8 h-8 rounded" style="background-color: #133F53; color: white;"
-                                    id="page1">1</button>
-                                <button class="w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA]" id="page2"
-                                    onclick="goToPage(2)">2</button>
-                                <button class="w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA]" id="page3"
-                                    onclick="goToPage(3)">3</button>
-                                <button class="w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA]" id="page4"
-                                    onclick="goToPage(4)">4</button>
-                                <button class="w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA]"
-                                    onclick="changePage('next')">
+                                <div id="pageButtons" class="flex gap-2"></div>
+                                <button class="w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA]" onclick="changePage('next')">
                                     <i class="fa-solid fa-chevron-right text-xs"></i>
                                 </button>
                             </div>
@@ -482,17 +420,6 @@
                         style="z-index: 40;">
                         <div class="flex items-center gap-4">
                             <span class="text-sm font-medium" id="selectedCount" style="color: #133F53;">0 selected</span>
-                            <select class="px-3 py-1 border border-gray-200 rounded-lg text-sm" id="bulkStatus">
-                                <option value="">Change Status</option>
-                                <option value="pending">Pending</option>
-                                <option value="processing">Processing</option>
-                                <option value="shipped">Shipped</option>
-                                <option value="delivered">Delivered</option>
-                                <option value="cancelled">Cancelled</option>
-                            </select>
-                            <button class="px-3 py-1 bg-red-600 text-white rounded-lg text-sm" onclick="bulkDelete()">
-                                <i class="fa-regular fa-trash-can"></i> Delete
-                            </button>
                             <button class="px-3 py-1 border border-gray-200 rounded-lg text-sm" onclick="clearSelection()">
                                 Cancel
                             </button>
@@ -506,119 +433,34 @@
     <!-- Modals Container -->
     <div id="modals-container"></div>
 
-    <!-- Edit Order Modal -->
-    <div id="editOrderModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto modal-enter">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold" style="color: #133F53;">Edit Order</h3>
-                <button onclick="closeEditOrderModal()" class="text-gray-500 hover:text-gray-700">
-                    <i class="fa-solid fa-times"></i>
-                </button>
-            </div>
-
-            <form id="editOrderForm" class="space-y-4" onsubmit="updateOrder(event)">
-                <input type="hidden" id="editOrderId">
-
-                <!-- Customer Information -->
-                <div class="border-b border-gray-200 pb-4">
-                    <h4 class="font-medium mb-3" style="color: #133F53;">Customer Information</h4>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs mb-1" style="color: #957A54;">Customer Name</label>
-                            <input type="text" id="editCustomerName" required
-                                class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
-                        </div>
-                        <div>
-                            <label class="block text-xs mb-1" style="color: #957A54;">Email</label>
-                            <input type="email" id="editEmail" required
-                                class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
-                        </div>
-                        <div class="col-span-2">
-                            <label class="block text-xs mb-1" style="color: #957A54;">Phone</label>
-                            <input type="tel" id="editPhone" required
-                                class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Order Details -->
-                <div class="border-b border-gray-200 pb-4">
-                    <h4 class="font-medium mb-3" style="color: #133F53;">Order Details</h4>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="col-span-2">
-                            <label class="block text-xs mb-1" style="color: #957A54;">Product</label>
-                            <input type="text" id="editProduct" required
-                                class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
-                        </div>
-                        <div>
-                            <label class="block text-xs mb-1" style="color: #957A54;">Amount ($)</label>
-                            <input type="number" id="editAmount" step="0.01" min="0" required
-                                class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
-                        </div>
-                        <div>
-                            <label class="block text-xs mb-1" style="color: #957A54;">Date</label>
-                            <input type="date" id="editDate" required
-                                class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Shipping Address -->
-                <div class="border-b border-gray-200 pb-4">
-                    <h4 class="font-medium mb-3" style="color: #133F53;">Shipping Address</h4>
-                    <textarea id="editAddress" rows="2"
-                        class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                        placeholder="Enter shipping address..."></textarea>
-                </div>
-
-                <!-- Status and Payment -->
-                <div>
-                    <h4 class="font-medium mb-3" style="color: #133F53;">Status & Payment</h4>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs mb-1" style="color: #957A54;">Order Status</label>
-                            <select id="editStatus" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
-                                <option value="pending">Pending</option>
-                                <option value="processing">Processing</option>
-                                <option value="shipped">Shipped</option>
-                                <option value="delivered">Delivered</option>
-                                <option value="cancelled">Cancelled</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs mb-1" style="color: #957A54;">Payment Status</label>
-                            <select id="editPayment" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
-                                <option value="pending">Pending</option>
-                                <option value="paid">Paid</option>
-                                <option value="refunded">Refunded</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Actions -->
-                <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
-                    <button type="button" onclick="closeEditOrderModal()"
-                        class="px-4 py-2 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">Cancel</button>
-                    <button type="submit" class="px-4 py-2 rounded-lg text-sm"
-                        style="background-color: #D89F34; color: #133F53;">Update Order</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <!-- View Order Details Modal -->
     <div id="viewOrderModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white rounded-xl p-6 max-w-2xl w-full mx-4 modal-enter">
-            <div class="flex justify-between items-center mb-4">
+        <div class="bg-white rounded-xl max-w-3xl w-full mx-4 modal-enter modal-inner" style="max-height:90vh; overflow-y:auto;">
+            <div class="sticky top-0 bg-white z-10 flex justify-between items-center px-6 pt-6 pb-4 border-b border-gray-100">
                 <h3 class="text-xl font-bold" style="color: #133F53;">Order Details</h3>
-                <button onclick="closeViewOrderModal()" class="text-gray-500 hover:text-gray-700">
-                    <i class="fa-solid fa-times"></i>
-                </button>
+                <div class="flex gap-2 items-center">
+                    <!-- Download Invoice Button -->
+                    <button onclick="downloadInvoice()" 
+                        class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"
+                        style="background-color: #133F53; color: white;"
+                        title="Download Invoice PDF">
+                        <i class="fa-solid fa-file-invoice"></i>
+                        Invoice
+                    </button>
+                    <button onclick="closeViewOrderModal()" class="text-gray-500 hover:text-gray-700 ml-2">
+                        <i class="fa-solid fa-times text-lg"></i>
+                    </button>
+                </div>
             </div>
 
-            <div id="orderDetails" class="space-y-4">
-                <!-- Order details will be loaded here -->
+            <!-- Loading state for view modal -->
+            <div id="viewOrderLoading" class="p-6 text-center hidden">
+                <i class="fa-solid fa-circle-notch fa-spin text-[#D89F34] text-2xl"></i>
+                <p class="text-sm mt-2" style="color: #957A54;">Loading order details...</p>
+            </div>
+
+            <div id="orderDetails" class="p-6 space-y-5">
+                <!-- Populated dynamically -->
             </div>
         </div>
     </div>
@@ -631,27 +473,20 @@
                     <i class="fa-solid fa-trash-can text-2xl text-red-600"></i>
                 </div>
                 <h3 class="text-xl font-bold mb-2" style="color: #133F53;">Delete Order</h3>
-                <p class="text-sm mb-6" style="color: #957A54;">Are you sure you want to delete this order? This action
-                    cannot be undone.</p>
-
+                <p class="text-sm mb-6" style="color: #957A54;">Are you sure you want to delete this order? This action cannot be undone.</p>
                 <div class="flex gap-3">
                     <button onclick="closeDeleteModal()"
                         class="flex-1 py-2 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                        style="color: #133F53;">
-                        Cancel
-                    </button>
+                        style="color: #133F53;">Cancel</button>
                     <button onclick="confirmDelete()"
-                        class="flex-1 py-2 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                        Delete
-                    </button>
+                        class="flex-1 py-2 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">Delete</button>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Success/Error Notification -->
-    <div id="notification" class="fixed top-4 right-4 px-4 py-2 rounded-lg shadow-lg z-50 hidden"
-        style="min-width: 250px;">
+    <div id="notification" class="fixed top-4 right-4 px-4 py-2 rounded-lg shadow-lg z-50 hidden" style="min-width: 250px;">
         <div class="flex items-center gap-2">
             <i id="notificationIcon" class=""></i>
             <span id="notificationMessage" class="text-sm"></span>
@@ -659,597 +494,550 @@
     </div>
 
     <script>
-        // Sample order data
-        let orders = [
-            {
-                id: 'ORD-7721',
-                customer: 'John Doe',
-                product: 'Wireless Headphones',
-                date: '2024-03-15',
-                amount: 99.00,
-                status: 'processing',
-                payment: 'paid',
-                email: 'john@email.com',
-                phone: '+1 234-567-8901',
-                address: '123 Main St, New York, NY 10001'
-            },
-            {
-                id: 'ORD-7722',
-                customer: 'Jane Smith',
-                product: 'Smart Watch Pro',
-                date: '2024-03-14',
-                amount: 149.00,
-                status: 'shipped',
-                payment: 'paid',
-                email: 'jane@email.com',
-                phone: '+1 234-567-8902',
-                address: '456 Oak Ave, Los Angeles, CA 90001'
-            },
-            {
-                id: 'ORD-7723',
-                customer: 'Mike Ross',
-                product: 'Leather Wallet',
-                date: '2024-03-14',
-                amount: 45.00,
-                status: 'delivered',
-                payment: 'paid',
-                email: 'mike@email.com',
-                phone: '+1 234-567-8903',
-                address: '789 Pine Rd, Chicago, IL 60601'
-            },
-            {
-                id: 'ORD-7724',
-                customer: 'Sarah Wilson',
-                product: 'Bluetooth Speaker',
-                date: '2024-03-13',
-                amount: 79.00,
-                status: 'pending',
-                payment: 'pending',
-                email: 'sarah@email.com',
-                phone: '+1 234-567-8904',
-                address: '321 Elm St, Houston, TX 77001'
-            },
-            {
-                id: 'ORD-7725',
-                customer: 'Tom Brady',
-                product: 'Phone Case, Screen Protector',
-                date: '2024-03-13',
-                amount: 45.00,
-                status: 'cancelled',
-                payment: 'refunded',
-                email: 'tom@email.com',
-                phone: '+1 234-567-8905',
-                address: '654 Maple Dr, Phoenix, AZ 85001'
-            },
-            {
-                id: 'ORD-7726',
-                customer: 'Emma Watson',
-                product: 'Wireless Earbuds',
-                date: '2024-03-12',
-                amount: 89.00,
-                status: 'processing',
-                payment: 'paid',
-                email: 'emma@email.com',
-                phone: '+1 234-567-8906',
-                address: '987 Cedar Ln, Philadelphia, PA 19101'
-            },
-            {
-                id: 'ORD-7727',
-                customer: 'James Bond',
-                product: 'Smart Watch, Leather Strap',
-                date: '2024-03-12',
-                amount: 199.00,
-                status: 'shipped',
-                payment: 'paid',
-                email: 'james@email.com',
-                phone: '+1 234-567-8907',
-                address: '147 Birch St, San Antonio, TX 78201'
-            },
-            {
-                id: 'ORD-7728',
-                customer: 'Lisa Ray',
-                product: 'Laptop Sleeve',
-                date: '2024-03-11',
-                amount: 35.00,
-                status: 'delivered',
-                payment: 'paid',
-                email: 'lisa@email.com',
-                phone: '+1 234-567-8908',
-                address: '258 Spruce Ave, San Diego, CA 92101'
-            },
-            {
-                id: 'ORD-7729',
-                customer: 'Robert Downey',
-                product: 'Mechanical Keyboard',
-                date: '2024-03-11',
-                amount: 129.00,
-                status: 'pending',
-                payment: 'pending',
-                email: 'robert@email.com',
-                phone: '+1 234-567-8909',
-                address: '369 Willow Rd, Dallas, TX 75201'
-            },
-            {
-                id: 'ORD-7730',
-                customer: 'Natasha Romanoff',
-                product: 'USB-C Hub',
-                date: '2024-03-10',
-                amount: 59.00,
-                status: 'processing',
-                payment: 'paid',
-                email: 'natasha@email.com',
-                phone: '+1 234-567-8910',
-                address: '741 Ash Dr, San Jose, CA 95101'
-            }
-        ];
+        // ==================== API CONFIG ====================
+        const API_BASE = 'http://localhost:8085';
+        const GET_ALL_ORDERS_URL = `${API_BASE}/api/orders/admin/get-all-orders`;
+        const GET_ORDER_BY_ID_URL = (orderId) => `${API_BASE}/api/orders/get-by-orderId/${orderId}`;
+        const PATCH_ORDER_URL     = (orderId)  => `${API_BASE}/api/orders/patch-by-orderId/${orderId}`;
 
-        // State variables
+
+        // ==================== STATE ====================
+        let orders = [];           // raw API data (list items)
+        let filteredOrders = [];   // after client-side filter/search
         let currentFilter = 'all';
         let selectedOrders = new Set();
         let currentPage = 1;
         const itemsPerPage = 10;
         let deleteId = null;
-        let currentEditId = null;
         let isStatusDropdownOpen = false;
         let searchTimeout = null;
-        const DEBOUNCE_DELAY = 500;
+        const DEBOUNCE_DELAY = 400;
+        let openEditDropId     = null;
 
-        // ==================== PAGE LOAD OPTIMIZATION ====================
-        document.addEventListener('DOMContentLoaded', function() {
-            // Show skeleton, hide actual content
-            document.getElementById('skeletonLoader').classList.remove('content-hidden');
-            document.getElementById('skeletonLoader').classList.add('content-visible');
-            document.getElementById('actualContent').classList.remove('content-visible');
-            document.getElementById('actualContent').classList.add('content-hidden');
-            
-            // Initialize dropdown
+        // Holds the full detail object of currently viewed order (from detail API)
+        let currentViewOrder = null;
+
+        // ==================== FORMAT HELPERS ====================
+        /** Format number as Indian Rupee — no rounding, exact value */
+        function formatINR(value) {
+            // Ensure we work with the exact number, no lossy conversion
+            const num = Number(value);
+            return '\u20B9' + num.toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        function formatDateTime(dateStr) {
+            if (!dateStr) return '-';
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })
+                + ' ' + d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // ==================== STATUS HELPERS ====================
+        function getStatusBadge(status) {
+            const s = (status || '').toUpperCase();
+            const map = {
+                PLACED:      { bg: '#FEF3C7', color: '#92400E', icon: 'fa-regular fa-clock',       label: 'Placed' },
+                CONFIRMED:   { bg: '#DBEAFE', color: '#1E40AF', icon: 'fa-solid fa-rotate',         label: 'Confirmed' },
+                PROCESSING:  { bg: '#E0E7FF', color: '#3730A3', icon: 'fa-solid fa-rotate',         label: 'Processing' },
+                SHIPPED:     { bg: '#E0E7FF', color: '#3730A3', icon: 'fa-solid fa-truck',           label: 'Shipped' },
+                DELIVERED:   { bg: '#D1FAE5', color: '#065F46', icon: 'fa-solid fa-circle-check',   label: 'Delivered' },
+                CANCELLED:   { bg: '#FEE2E2', color: '#991B1B', icon: 'fa-solid fa-circle-xmark',   label: 'Cancelled' },
+                PENDING:     { bg: '#FEF3C7', color: '#92400E', icon: 'fa-regular fa-clock',         label: 'Pending' },
+            };
+            const cfg = map[s] || { bg: '#F3F4F6', color: '#374151', icon: 'fa-solid fa-circle', label: status || 'Unknown' };
+            return `<span class="status-badge" style="background-color:${cfg.bg};color:${cfg.color};">
+                        <i class="${cfg.icon}"></i> ${cfg.label}
+                    </span>`;
+        }
+
+        function getPaymentBadge(status) {
+            const s = (status || '').toUpperCase();
+            const map = {
+                PAID:     { bg: '#D1FAE5', color: '#065F46', icon: 'fa-regular fa-circle-check', label: 'Paid' },
+                PENDING:  { bg: '#FEF3C7', color: '#92400E', icon: 'fa-regular fa-clock',        label: 'Pending' },
+                FAILED:   { bg: '#FEE2E2', color: '#991B1B', icon: 'fa-solid fa-circle-xmark',   label: 'Failed' },
+                REFUNDED: { bg: '#FEE2E2', color: '#991B1B', icon: 'fa-solid fa-rotate-left',    label: 'Refunded' },
+                COD:      { bg: '#FEF3C7', color: '#92400E', icon: 'fa-solid fa-money-bill',     label: 'COD' },
+            };
+            const cfg = map[s] || { bg: '#F3F4F6', color: '#374151', icon: 'fa-solid fa-circle', label: status || '-' };
+            return `<span class="status-badge" style="background-color:${cfg.bg};color:${cfg.color};">
+                        <i class="${cfg.icon}"></i> ${cfg.label}
+                    </span>`;
+        }
+
+        // ==================== PAGE LOAD ====================
+        document.addEventListener('DOMContentLoaded', function () {
             currentFilter = 'all';
             document.getElementById('selectedStatusText').textContent = 'All Orders';
             updateStatusCheckmarks();
-            
-            // Load data
             loadData();
         });
 
         async function loadData() {
             try {
-                // Simulate loading time (remove in production)
-                await new Promise(resolve => setTimeout(resolve, 800));
-                
-                // Initialize data
-                renderOrders();
-                initializePagination();
-                
-                // Hide skeleton, show actual content
-                document.getElementById('skeletonLoader').classList.remove('content-visible');
-                document.getElementById('skeletonLoader').classList.add('content-hidden');
-                document.getElementById('actualContent').classList.remove('content-hidden');
-                document.getElementById('actualContent').classList.add('content-visible');
+                showSkeleton(true);
+                const response = await fetch(GET_ALL_ORDERS_URL);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const json = await response.json();
+
+                // Extract array from paginated response
+                orders = (json.data && json.data.content) ? json.data.content : [];
+
+                updateStats();
+                applyFiltersAndRender();
+                showSkeleton(false);
             } catch (error) {
-                console.error('Error loading data:', error);
-                showNotification('Error loading orders', 'error');
+                console.error('Error loading orders:', error);
+                showNotification('Error loading orders: ' + error.message, 'error');
+                showSkeleton(false);
             }
         }
 
-        // ==================== RENDER FUNCTIONS ====================
+        function showSkeleton(show) {
+            const skeleton = document.getElementById('skeletonLoader');
+            const content = document.getElementById('actualContent');
+            if (show) {
+                skeleton.classList.remove('content-hidden');
+                skeleton.classList.add('content-visible');
+                content.classList.remove('content-visible');
+                content.classList.add('content-hidden');
+            } else {
+                skeleton.classList.remove('content-visible');
+                skeleton.classList.add('content-hidden');
+                content.classList.remove('content-hidden');
+                content.classList.add('content-visible');
+            }
+        }
+
+        // ==================== STATS ====================
+        function updateStats() {
+            document.getElementById('statTotal').textContent = orders.length;
+            document.getElementById('statPlaced').textContent = orders.filter(o =>
+                ['PLACED','CONFIRMED'].includes((o.orderStatus||'').toUpperCase())).length;
+            document.getElementById('statDelivered').textContent = orders.filter(o =>
+                (o.orderStatus||'').toUpperCase() === 'DELIVERED').length;
+        }
+
+        // ==================== FILTER & RENDER ====================
+        function applyFiltersAndRender() {
+            let result = [...orders];
+
+            if (currentFilter !== 'all') {
+                result = result.filter(o => (o.orderStatus||'').toUpperCase() === currentFilter.toUpperCase());
+            }
+
+            const term = (document.getElementById('searchOrder')?.value || '').toLowerCase().trim();
+            if (term.length >= 3) {
+                result = result.filter(o => {
+                    const prods = (o.orderItems||[]).map(i => (i.productName||'').toLowerCase()).join(' ');
+                    return (o.customerName||'').toLowerCase().includes(term) || prods.includes(term);
+                });
+            }
+
+            filteredOrders = result;
+            renderOrders();
+            updateResetBtn();
+        }
+
         function renderOrders() {
             const tbody = document.getElementById('ordersTableBody');
             if (!tbody) return;
-            
-            let filteredOrders = filterOrdersByStatus();
 
-            // Apply search filter
-            const searchTerm = document.getElementById('searchOrder')?.value.toLowerCase() || '';
-            if (searchTerm) {
-                filteredOrders = filteredOrders.filter(order =>
-                    order.id.toLowerCase().includes(searchTerm) ||
-                    order.customer.toLowerCase().includes(searchTerm) ||
-                    order.product.toLowerCase().includes(searchTerm)
-                );
-            }
-
-            // Apply sorting
-            const sortBy = document.getElementById('sortOrders')?.value || 'newest';
-            filteredOrders = sortOrdersData(filteredOrders, sortBy);
-
-            // Pagination
-            const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+            const total = filteredOrders.length;
+            const totalPages = Math.max(1, Math.ceil(total / itemsPerPage));
             if (currentPage > totalPages) currentPage = 1;
 
             const start = (currentPage - 1) * itemsPerPage;
-            const paginatedOrders = filteredOrders.slice(start, start + itemsPerPage);
+            const end = Math.min(start + itemsPerPage, total);
+            const pageData = filteredOrders.slice(start, end);
 
-            // Update showing info
             document.getElementById('showingInfo').textContent =
-                `Showing ${start + 1}-${Math.min(start + itemsPerPage, filteredOrders.length)} of ${filteredOrders.length} orders`;
+                total === 0
+                    ? 'No orders found'
+                    : `Showing ${start + 1}–${end} of ${total} orders`;
 
             tbody.innerHTML = '';
-            paginatedOrders.forEach(order => {
+
+            if (pageData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" class="text-center py-10 text-sm" style="color:#957A54;">No orders found.</td></tr>`;
+            } else {
+                pageData.forEach(order => {
+                const key = order.orderId;   // Long — the actual DB id
+                const productSummary = (order.orderItems || [])
+                    .map(i => i.productName)
+                    .filter(Boolean)
+                    .join(', ');
+            
                 const row = document.createElement('tr');
                 row.className = 'border-b border-gray-100 order-row';
                 row.innerHTML = `
                     <td class="py-2 px-4">
-                        <input type="checkbox" class="order-checkbox" value="${order.id}" onchange="updateSelection(this)">
+                        <input type="checkbox" class="order-checkbox" value="${order.orderId}" onchange="updateSelection(this)">
                     </td>
-                    <td class="py-2 px-4 text-sm font-medium" style="color: #133F53;">#${order.id}</td>
+                    <td class="py-2 px-4 text-sm font-medium" style="color: #133F53;">${order.orderStrId}</td>
                     <td class="py-2 px-4">
                         <div>
-                            <p class="text-sm font-medium" style="color: #133F53;">${order.customer}</p>
-                            <p class="text-xs" style="color: #957A54;">${order.email}</p>
+                            <p class="text-sm font-medium" style="color: #133F53;">${order.customerName || '-'}</p>
+                            <p class="text-xs" style="color: #957A54;">${order.customerPhone || ''}</p>
                         </div>
                     </td>
-                    <td class="py-2 px-4 text-sm">${order.product}</td>
-                    <td class="py-2 px-4 text-sm" style="color: #957A54;">${formatDate(order.date)}</td>
-                    <td class="py-2 px-4 text-sm font-medium" style="color: #133F53;">$${order.amount.toFixed(2)}</td>
-                    <td class="py-2 px-4">${getStatusBadge(order.status)}</td>
-                    <td class="py-2 px-4">${getPaymentBadge(order.payment)}</td>
+                    <td class="py-2 px-4 text-sm" style="color:#374151; max-width:180px;">
+                        <span title="${productSummary}" class="block truncate">${productSummary || '-'}</span>
+                    </td>
+                    <td class="py-2 px-4 text-sm" style="color: #957A54;">${formatDate(order.orderDate)}</td>
+                    <td class="py-2 px-4 text-sm font-medium" style="color: #133F53;">${formatINR(order.finalAmount)}</td>
+                    <td class="py-2 px-4">${getStatusBadge(order.orderStatus)}</td>
+                    <td class="py-2 px-4">${getPaymentBadge(order.paymentStatus)}</td>
                     <td class="py-2 px-4">
-                        <div class="flex gap-2">
-                            <button onclick="viewOrder('${order.id}')" class="text-[#957A54] hover:text-[#133F53]" title="View">
+                        <div class="flex gap-2 items-center">
+                            <button onclick="viewOrder('${key}')" class="text-[#957A54] hover:text-[#133F53]" title="View">
                                 <i class="fa-regular fa-eye"></i>
                             </button>
-                            <button onclick="openEditModal('${order.id}')" class="text-[#957A54] hover:text-[#D89F34]" title="Edit">
-                                <i class="fa-regular fa-pen-to-square"></i>
-                            </button>
-                            <button onclick="openDeleteModal('${order.id}')" class="text-[#957A54] hover:text-red-600" title="Delete">
+                            <div class="relative inline-block" id="editWrap_${key}">
+                                <button onclick="toggleEditDropdown('${key}','${order.orderStatus || ''}')"
+                                    class="text-[#957A54] hover:text-[#D89F34]" title="Edit Status">
+                                    <i class="fa-regular fa-pen-to-square"></i>
+                                </button>
+                                <div id="editDrop_${key}"
+                                    class="hidden absolute right-0 mt-1 bg-white rounded-lg shadow-xl border border-gray-100 z-50 py-1"
+                                    style="min-width:150px;"></div>
+                            </div>
+                            <!-- <button onclick="openDeleteModal('${key}')" class="text-[#957A54] hover:text-red-600" title="Delete">
                                 <i class="fa-regular fa-trash-can"></i>
-                            </button>
+                            </button> -->
                         </div>
                     </td>
                 `;
                 tbody.appendChild(row);
             });
+            }
 
-            // Update select all checkbox
-            updatePaginationButtons(filteredOrders.length);
+            renderPaginationButtons(totalPages);
             updateSelectAll();
         }
 
-        // Initialize pagination buttons
-        function initializePagination() {
-            updatePaginationButtons(orders.length);
-        }
+        function renderPaginationButtons(totalPages) {
+            const container = document.getElementById('pageButtons');
+            if (!container) return;
+            container.innerHTML = '';
 
-        // Update pagination buttons
-        function updatePaginationButtons(totalItems) {
-            const totalPages = Math.ceil(totalItems / itemsPerPage);
-
-            for (let i = 1; i <= 4; i++) {
-                const btn = document.getElementById(`page${i}`);
-                if (btn) {
-                    if (i <= totalPages) {
-                        btn.style.display = 'block';
-                        btn.textContent = i;
-                        btn.onclick = () => goToPage(i);
-                        btn.className = i === currentPage ?
-                            'w-8 h-8 rounded bg-[#133F53] text-white' :
-                            'w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA]';
-                    } else {
-                        btn.style.display = 'none';
-                    }
+            // Show max 5 page buttons with ellipsis logic
+            const maxVisible = 5;
+            let pages = [];
+            if (totalPages <= maxVisible) {
+                for (let i = 1; i <= totalPages; i++) pages.push(i);
+            } else {
+                if (currentPage <= 3) {
+                    pages = [1, 2, 3, 4, '...', totalPages];
+                } else if (currentPage >= totalPages - 2) {
+                    pages = [1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+                } else {
+                    pages = [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
                 }
             }
+
+            pages.forEach(p => {
+                if (p === '...') {
+                    const span = document.createElement('span');
+                    span.className = 'w-8 h-8 flex items-center justify-center text-xs text-gray-400';
+                    span.textContent = '...';
+                    container.appendChild(span);
+                } else {
+                    const btn = document.createElement('button');
+                    btn.textContent = p;
+                    btn.className = p === currentPage
+                        ? 'w-8 h-8 rounded bg-[#133F53] text-white text-sm'
+                        : 'w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA] text-sm';
+                    btn.onclick = () => goToPage(p);
+                    container.appendChild(btn);
+                }
+            });
         }
 
-        // Go to specific page
         function goToPage(page) {
             currentPage = page;
             renderOrders();
         }
 
-        // Get status badge HTML
-        function getStatusBadge(status) {
-            const badges = {
-                pending: '<span class="status-badge" style="background-color: #FEF3C7; color: #92400E;"><i class="fa-regular fa-clock"></i> Pending</span>',
-                processing: '<span class="status-badge" style="background-color: #DBEAFE; color: #1E40AF;"><i class="fa-solid fa-rotate"></i> Processing</span>',
-                shipped: '<span class="status-badge" style="background-color: #E0E7FF; color: #3730A3;"><i class="fa-solid fa-truck"></i> Shipped</span>',
-                delivered: '<span class="status-badge" style="background-color: #D1FAE5; color: #065F46;"><i class="fa-solid fa-circle-check"></i> Delivered</span>',
-                cancelled: '<span class="status-badge" style="background-color: #FEE2E2; color: #991B1B;"><i class="fa-solid fa-circle-xmark"></i> Cancelled</span>'
-            };
-            return badges[status] || badges.pending;
-        }
-
-        // Get payment badge HTML
-        function getPaymentBadge(status) {
-            const badges = {
-                paid: '<span class="status-badge" style="background-color: #D1FAE5; color: #065F46;"><i class="fa-regular fa-circle-check"></i> Paid</span>',
-                pending: '<span class="status-badge" style="background-color: #FEF3C7; color: #92400E;"><i class="fa-regular fa-clock"></i> Pending</span>',
-                refunded: '<span class="status-badge" style="background-color: #FEE2E2; color: #991B1B;"><i class="fa-solid fa-rotate-left"></i> Refunded</span>'
-            };
-            return badges[status] || badges.pending;
-        }
-
-        // Format date
-        function formatDate(dateStr) {
-            const options = { year: 'numeric', month: 'short', day: 'numeric' };
-            return new Date(dateStr).toLocaleDateString('en-US', options);
-        }
-
-        // Filter orders by status
-        function filterOrders(status) {
-            if (status) {
-                currentFilter = status;
-                // Update button text based on status
-                const statusTexts = {
-                    'all': 'All Orders',
-                    'pending': 'Pending',
-                    'processing': 'Processing',
-                    'shipped': 'Shipped',
-                    'delivered': 'Delivered',
-                    'cancelled': 'Cancelled'
-                };
-                document.getElementById('selectedStatusText').textContent = statusTexts[status] || 'All Orders';
-                updateStatusCheckmarks();
-            }
-
-            currentPage = 1;
+        function changePage(dir) {
+            const tp = Math.ceil(filteredOrders.length / itemsPerPage);
+            if (dir === 'prev' && currentPage > 1) currentPage--;
+            else if (dir === 'next' && currentPage < tp) currentPage++;
             renderOrders();
         }
 
-        // Filter orders by status for display
-        function filterOrdersByStatus() {
-            if (currentFilter === 'all') return orders;
-            return orders.filter(order => order.status === currentFilter);
-        }
+        // ==================== EDIT STATUS (PATCH) ====================
+        const ORDER_STATUSES = [
+            { value: 'PLACED',     label: 'Placed' },
+            { value: 'CONFIRMED',  label: 'Confirmed' },
+            { value: 'PROCESSING', label: 'Processing' },
+            { value: 'SHIPPED',    label: 'Shipped' },
+            { value: 'DELIVERED',  label: 'Delivered' },
+            { value: 'CANCELLED',  label: 'Cancelled' },
+        ];
 
-        // Sort orders data
-        function sortOrdersData(ordersArray, sortBy) {
-            const sorted = [...ordersArray];
-            switch (sortBy) {
-                case 'newest':
-                    return sorted.sort((a, b) => new Date(b.date) - new Date(a.date));
-                case 'oldest':
-                    return sorted.sort((a, b) => new Date(a.date) - new Date(b.date));
-                case 'high-low':
-                    return sorted.sort((a, b) => b.amount - a.amount);
-                case 'low-high':
-                    return sorted.sort((a, b) => a.amount - b.amount);
-                default:
-                    return sorted;
-            }
-        }
-
-        // Sort orders
-        function sortOrders() {
+        function changePage(direction) {
+            const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+            if (direction === 'prev' && currentPage > 1) currentPage--;
+            else if (direction === 'next' && currentPage < totalPages) currentPage++;
             renderOrders();
         }
 
-        // Toggle date filter
-        function toggleDateFilter() {
-            const filter = document.getElementById('dateFilter');
-            filter.classList.toggle('hidden');
+
+        
+        function toggleEditDropdown(key, currentStatus) {
+            if (openEditDropId && openEditDropId !== key) {
+                const prev = document.getElementById('editDrop_' + openEditDropId);
+                if (prev) prev.classList.add('hidden');
+            }
+            const drop = document.getElementById('editDrop_' + key);
+            if (!drop) return;
+
+            if (!drop.classList.contains('hidden')) {
+                drop.classList.add('hidden');
+                openEditDropId = null;
+                return;
+            }
+
+            drop.innerHTML = ORDER_STATUSES.map(s => {
+                const cur = s.value === (currentStatus||'').toUpperCase();
+                return `<button onclick="patchOrderStatus('${key}','${s.value}')"
+                    class="w-full text-left px-4 py-2 text-sm hover:bg-[#F8F8EA] flex items-center justify-between"
+                    style="color:#133F53;${cur ? 'font-weight:700;' : ''}">
+                    <span>${s.label}</span>
+                    ${cur ? '<i class="fa-solid fa-check text-xs" style="color:#D89F34;"></i>' : ''}
+                </button>`;
+            }).join('');
+
+            drop.classList.remove('hidden');
+            openEditDropId = key;
         }
 
-        // Apply date filter
-        function applyDateFilter() {
-            const from = document.getElementById('dateFrom').value;
-            const to = document.getElementById('dateTo').value;
+    
 
-            if (from && to) {
-                if (new Date(from) > new Date(to)) {
-                    showNotification('"From" date cannot be later than "To" date', 'error');
-                    return;
-                }
-
-                // Apply filter
-                orders = orders.filter(order => {
-                    const orderDate = new Date(order.date);
-                    return orderDate >= new Date(from) && orderDate <= new Date(to);
+       async function patchOrderStatus(key, newStatus) {
+            const drop = document.getElementById('editDrop_' + key);
+            if (drop) drop.classList.add('hidden');
+            openEditDropId = null;
+        
+            const order = orders.find(o => String(o.orderId) === String(key));
+            if (!order) { showNotification('Order not found locally', 'error'); return; }
+        
+            try {
+                const res = await fetch(PATCH_ORDER_URL(order.orderId), {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderStatus: newStatus })
                 });
-                renderOrders();
-                showNotification('Date filter applied', 'success');
-                toggleDateFilter();
-            } else {
-                showNotification('Please select both dates', 'error');
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        
+                const idx = orders.findIndex(o => String(o.orderId) === String(key));
+                if (idx !== -1) orders[idx] = { ...orders[idx], orderStatus: newStatus };
+        
+                updateStats();
+                applyFiltersAndRender();
+                showNotification(`Status updated to ${newStatus}`, 'success');
+            } catch (err) {
+                console.error('PATCH failed:', err);
+                showNotification('Failed to update status: ' + err.message, 'error');
             }
         }
 
-        // Clear date filter
-        function clearDateFilter() {
-            document.getElementById('dateFrom').value = '';
-            document.getElementById('dateTo').value = '';
-            // Reload original data (in real app, fetch from server)
-            location.reload();
-        }
-
-        // Toggle all checkboxes
-        function toggleAll() {
-            const selectAll = document.getElementById('selectAll');
-            const checkboxes = document.querySelectorAll('.order-checkbox');
-
-            checkboxes.forEach(cb => {
-                cb.checked = selectAll.checked;
-                if (selectAll.checked) {
-                    selectedOrders.add(cb.value);
-                } else {
-                    selectedOrders.delete(cb.value);
-                }
-            });
-
-            updateBulkActions();
-        }
-
-        // Update selection
-        function updateSelection(checkbox) {
-            if (checkbox.checked) {
-                selectedOrders.add(checkbox.value);
-            } else {
-                selectedOrders.delete(checkbox.value);
+        document.addEventListener('click', function (e) {
+            if (!openEditDropId) return;
+            const wrap = document.getElementById('editWrap_' + openEditDropId);
+            if (wrap && !wrap.contains(e.target)) {
+                const drop = document.getElementById('editDrop_' + openEditDropId);
+                if (drop) drop.classList.add('hidden');
+                openEditDropId = null;
             }
+        });
 
-            updateSelectAll();
-            updateBulkActions();
-        }
 
-        // Update select all checkbox
-        function updateSelectAll() {
-            const selectAll = document.getElementById('selectAll');
-            const checkboxes = document.querySelectorAll('.order-checkbox');
-
-            if (selectAll) {
-                selectAll.checked = checkboxes.length > 0 &&
-                    Array.from(checkboxes).every(cb => cb.checked);
-                selectAll.indeterminate = !selectAll.checked &&
-                    Array.from(checkboxes).some(cb => cb.checked);
-            }
-        }
-
-        // Update bulk actions visibility
-        function updateBulkActions() {
-            const bulkActions = document.getElementById('bulkActions');
-            const selectedCount = document.getElementById('selectedCount');
-
-            if (selectedOrders.size > 0) {
-                bulkActions.classList.remove('hidden');
-                selectedCount.textContent = `${selectedOrders.size} selected`;
-            } else {
-                bulkActions.classList.add('hidden');
-            }
-        }
-
-        // Clear selection
-        function clearSelection() {
-            selectedOrders.clear();
-            document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = false);
-            updateSelectAll();
-            updateBulkActions();
-        }
-
-        // Bulk delete
-        function bulkDelete() {
-            if (selectedOrders.size === 0) return;
-
-            if (confirm(`Delete ${selectedOrders.size} selected orders?`)) {
-                orders = orders.filter(order => !selectedOrders.has(order.id));
-                clearSelection();
-                renderOrders();
-                showNotification('Orders deleted successfully', 'success');
-            }
-        }
-
-        // ==================== VIEW ORDER FUNCTIONS ====================
-        function viewOrder(orderId) {
-            const order = orders.find(o => o.id === orderId);
-            if (!order) return;
+        // ==================== VIEW ORDER (fetch detail API) ====================
+        async function viewOrder(orderId) {
+            currentViewOrder = null;
 
             const modal = document.getElementById('viewOrderModal');
             const details = document.getElementById('orderDetails');
+            const loading = document.getElementById('viewOrderLoading');
 
-            details.innerHTML = `
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center pb-3 border-b">
-                        <span class="text-lg font-bold" style="color: #133F53;">Order #${order.id}</span>
-                        ${getStatusBadge(order.status)}
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <p class="text-xs" style="color: #957A54;">Customer</p>
-                            <p class="text-sm font-medium" style="color: #133F53;">${order.customer}</p>
+            details.innerHTML = '';
+            loading.classList.remove('hidden');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            try {
+                const res = await fetch(GET_ORDER_BY_ID_URL(orderId));
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const order = await res.json();
+                currentViewOrder = order;
+                loading.classList.add('hidden');
+                renderOrderDetails(order, details);
+            } catch (err) {
+                loading.classList.add('hidden');
+                details.innerHTML = `<p class="text-red-500 text-sm">Failed to load order details: ${err.message}</p>`;
+            }
+        }
+
+        function renderOrderDetails(order, container) {
+            const addr = [
+                order.shippingAddress1,
+                order.shippingAddress2,
+                order.shippingCity,
+                order.shippingState,
+                order.shippingPincode
+            ].filter(Boolean).join(', ');
+
+            const itemsHTML = (order.orderItems || []).map(item => `
+                <tr>
+                    <td class="py-2 px-3">
+                        <div class="flex items-center gap-3">
+                            <img src="${item.productImageUrl ? API_BASE + item.productImageUrl : ''}"
+                                onerror="this.style.display='none'"
+                                class="w-10 h-10 rounded object-cover border border-gray-100"
+                                alt="${item.productName}">
+                            <div>
+                                <p class="text-sm font-medium" style="color:#133F53;">${item.productName || '-'}</p>
+                                <p class="text-xs" style="color:#957A54;">SKU: ${item.sku || '-'} &bull; Color: ${item.color || '-'}</p>
+                            </div>
                         </div>
-                        <div>
-                            <p class="text-xs" style="color: #957A54;">Email</p>
-                            <p class="text-sm">${order.email}</p>
-                        </div>
-                        <div>
-                            <p class="text-xs" style="color: #957A54;">Phone</p>
-                            <p class="text-sm">${order.phone}</p>
-                        </div>
-                        <div>
-                            <p class="text-xs" style="color: #957A54;">Date</p>
-                            <p class="text-sm">${formatDate(order.date)}</p>
-                        </div>
-                    </div>
-                    
+                    </td>
+                    <td class="py-2 px-3 text-sm text-center">${item.quantity}</td>
+                    <td class="py-2 px-3 text-sm text-right">${formatINR(item.sellingPrice)}</td>
+                    <td class="py-2 px-3 text-sm text-right font-medium" style="color:#133F53;">${formatINR(item.itemTotal)}</td>
+                </tr>
+            `).join('');
+
+            container.innerHTML = `
+                <!-- Order Header -->
+                <div class="flex flex-wrap justify-between items-center pb-4 border-b border-gray-100 gap-2">
                     <div>
-                        <p class="text-xs" style="color: #957A54;">Product</p>
-                        <p class="text-sm font-medium" style="color: #133F53;">${order.product}</p>
+                        <p class="text-lg font-bold" style="color: #133F53;">#Order Id : ${order.orderStrId}</p>
+                        <span class="border border-[#D89F34] ml-2 text-xs px-2 py-1 rounded-lg" style="background:#F8F8EA;color:#957A54;">
+                            Order Date : ${formatDateTime(order.orderDate)}
+                        </span>
                     </div>
-                    
-                    <div>
-                        <p class="text-xs" style="color: #957A54;">Shipping Address</p>
-                        <p class="text-sm">${order.address}</p>
+                    <div class="flex gap-2">
+                        ${getStatusBadge(order.orderStatus)}
+                        ${getPaymentBadge(order.paymentStatus)}
                     </div>
-                    
-                    <div class="flex justify-between items-center pt-3 border-t">
-                        <div>
-                            <p class="text-xs" style="color: #957A54;">Payment</p>
-                            ${getPaymentBadge(order.payment)}
+                </div>
+
+                <!-- Customer & Shipping -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-[#F8F8EA] border border-[#D89F34] rounded-lg p-4">
+                        <p class="text-xs font-semibold mb-2" style="color:#133F53;">CUSTOMER INFO</p>
+                        <p class="text-sm font-medium" style="color:#133F53;">${order.customerName || '-'}</p>
+                        ${order.customerEmail ? `<p class="text-xs mt-1" style="color:#957A54;"><i class="fa-regular fa-envelope mr-1"></i>${order.customerEmail}</p>` : ''}
+                        ${order.customerPhone ? `<p class="text-xs mt-1" style="color:#957A54;"><i class="fa-solid fa-phone mr-1"></i>${order.customerPhone}</p>` : ''}
+                    </div>
+                    <div class="bg-[#F8F8EA] border border-[#D89F34] rounded-lg p-4">
+                        <p class="text-xs font-semibold mb-2" style="color:#133F53;">SHIPPING ADDRESS</p>
+                        <p class="text-sm" style="color:#374151;">${addr || '-'}</p>
+                        ${order.shippingStatus ? `<p class="text-xs mt-2" style="color:#957A54;">Shipping Status: <strong>${order.shippingStatus}</strong></p>` : ''}
+                        ${order.courierName ? `<p class="text-xs mt-1" style="color:#957A54;">Courier: <strong>${order.courierName}</strong></p>` : ''}
+                    </div>
+                </div>
+
+                <!-- Payment Info -->
+                <div class="bg-[#F8F8EA] border border-[#D89F34] rounded-lg p-4">
+                    <p class="text-xs font-semibold mb-2" style="color:#133F53;">PAYMENT INFO</p>
+                    <div class="flex flex-wrap gap-4 text-sm">
+                        <span><span style="color:#D89F34;" class="font-semibold">Method:</span> <span class="text-[#133F53] font-semibold bg-[#EDF0F7] rounded-lg px-1 border border-[#838f94]">${order.paymentMethod || '-'}</span></span>
+                        <span><span style="color:#D89F34;" class="font-semibold">Mode:</span> <span class="text-[#133F53] font-semibold bg-[#EDF0F7] rounded-lg px-1 border border-[#838f94]">${order.paymentMode || '-'}</span></span>
+                        <span><span style="color:#D89F34;" class="font-semibold">Order Flow:</span> <span class="text-[#133F53] font-semibold bg-[#EDF0F7] rounded-lg px-1 border border-[#838f94]">${order.orderFlow || '-'}</span></span>
+                    </div>
+                </div>
+
+                <!-- Order Items Table -->
+                <div class="">
+                    <p class="text-xs font-semibold mb-3 " style="color:#133F53;">ORDER ITEMS</p>
+                    <div class="overflow-x-auto rounded-lg border border-[#D89F34]">
+                        <table class="w-full inv-table">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th class="text-center">Qty</th>
+                                    <th class="text-right">Price</th>
+                                    <th class="text-right">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>${itemsHTML}</tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Price Breakdown -->
+                <div class="rounded-lg border border-[#D89F34] overflow-hidden">
+                    <div class="bg-[#F8F8EA] px-4 py-2">
+                        <p class="text-xs font-semibold" style="color:#133F53;">PRICE BREAKDOWN</p>
+                    </div>
+                    <div class="p-4 space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span style="color:#957A54;">Subtotal</span>
+                            <span>${formatINR(order.subTotal)}</span>
                         </div>
-                        <div class="text-right">
-                            <p class="text-xs" style="color: #957A54;">Total Amount</p>
-                            <p class="text-2xl font-bold" style="color: #133F53;">$${order.amount.toFixed(2)}</p>
+                        ${order.discountAmount ? `
+                        <div class="flex justify-between text-sm">
+                            <span style="color:#957A54;">Discount (${order.discountPercent}%)</span>
+                            <span class="text-red-500">- ${formatINR(order.discountAmount)}</span>
+                        </div>` : ''}
+                        ${order.couponDiscount ? `
+                        <div class="flex justify-between text-sm">
+                            <span style="color:#957A54;">Coupon Discount (${order.couponCode || ''})</span>
+                            <span class="text-red-500">- ${formatINR(order.couponDiscount)}</span>
+                        </div>` : ''}
+                        ${order.tax ? `
+                        <div class="flex justify-between text-sm">
+                            <span style="color:#957A54;">Tax</span>
+                            <span>${formatINR(order.tax)}</span>
+                        </div>` : ''}
+                        ${order.shippingCharges != null ? `
+                        <div class="flex justify-between text-sm">
+                            <span style="color:#957A54;">Shipping</span>
+                            <span>${Number(order.shippingCharges) === 0 ? '<span class="text-green-600">FREE</span>' : formatINR(order.shippingCharges)}</span>
+                        </div>` : ''}
+                        ${order.giftwrapCharges ? `
+                        <div class="flex justify-between text-sm">
+                            <span style="color:#957A54;">Gift Wrap</span>
+                            <span>${formatINR(order.giftwrapCharges)}</span>
+                        </div>` : ''}
+                        ${order.convenienceFee ? `
+                        <div class="flex justify-between text-sm">
+                            <span style="color:#957A54;">Convenience Fee</span>
+                            <span>${formatINR(order.convenienceFee)}</span>
+                        </div>` : ''}
+                        <div class="flex justify-between text-base font-bold border-t border-gray-200 pt-2 mt-2">
+                            <span style="color:#133F53;">Total Amount</span>
+                            <span style="color:#133F53;">${formatINR(order.finalAmount)}</span>
                         </div>
                     </div>
                 </div>
-            `;
 
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+                ${order.orderNotes ? `
+                <div class="bg-yellow-50  border border-[#D89F34] rounded-lg p-3 text-sm" style="color:#92400E;">
+                    <i class="fa-solid fa-note-sticky mr-2"></i><strong>Note:</strong> ${order.orderNotes}
+                </div>` : ''}
+            `;
         }
 
         function closeViewOrderModal() {
             document.getElementById('viewOrderModal').classList.add('hidden');
             document.getElementById('viewOrderModal').classList.remove('flex');
+            currentViewOrder = null;
         }
 
-        // ==================== EDIT ORDER FUNCTIONS ====================
-        function openEditModal(orderId) {
-            const order = orders.find(o => o.id === orderId);
-            if (!order) return;
-
-            currentEditId = orderId;
-
-            // Fill form with order data
-            document.getElementById('editOrderId').value = order.id;
-            document.getElementById('editCustomerName').value = order.customer;
-            document.getElementById('editEmail').value = order.email;
-            document.getElementById('editPhone').value = order.phone;
-            document.getElementById('editProduct').value = order.product;
-            document.getElementById('editAmount').value = order.amount;
-            document.getElementById('editDate').value = order.date;
-            document.getElementById('editAddress').value = order.address;
-            document.getElementById('editStatus').value = order.status;
-            document.getElementById('editPayment').value = order.payment;
-
-            document.getElementById('editOrderModal').classList.remove('hidden');
-            document.getElementById('editOrderModal').classList.add('flex');
-        }
-
-        function closeEditOrderModal() {
-            document.getElementById('editOrderModal').classList.add('hidden');
-            document.getElementById('editOrderModal').classList.remove('flex');
-            currentEditId = null;
-        }
-
-        function updateOrder(event) {
-            event.preventDefault();
-
-            if (!currentEditId) return;
-
-            // Find and update order
-            const index = orders.findIndex(o => o.id === currentEditId);
-            if (index !== -1) {
-                orders[index] = {
-                    id: currentEditId,
-                    customer: document.getElementById('editCustomerName').value,
-                    email: document.getElementById('editEmail').value,
-                    phone: document.getElementById('editPhone').value,
-                    product: document.getElementById('editProduct').value,
-                    amount: parseFloat(document.getElementById('editAmount').value),
-                    date: document.getElementById('editDate').value,
-                    address: document.getElementById('editAddress').value,
-                    status: document.getElementById('editStatus').value,
-                    payment: document.getElementById('editPayment').value
-                };
-            }
-
-            showNotification('Order updated successfully!', 'success');
-            closeEditOrderModal();
-            renderOrders();
-        }
-
-        // ==================== DELETE ORDER FUNCTIONS ====================
+        // ==================== DELETE ====================
         function openDeleteModal(orderId) {
             deleteId = orderId;
             document.getElementById('deleteModal').classList.remove('hidden');
@@ -1264,94 +1052,520 @@
 
         function confirmDelete() {
             if (deleteId) {
-                orders = orders.filter(o => o.id !== deleteId);
-                renderOrders();
-                showNotification('Order deleted successfully', 'success');
+                // Remove from local array (no delete API provided)
+                orders = orders.filter(o => o.orderId !== deleteId);
+                updateStats();
+                applyFiltersAndRender();
+                showNotification('Order removed from view', 'success');
             }
             closeDeleteModal();
         }
 
-        // ==================== EXPORT FUNCTION ====================
+        // ==================== EXPORT CSV ====================
+        // function exportOrders() {
+        //     // Priority: selected rows > current filteredOrders (which already respects date + status + search)
+        //     let toExport;
+        
+        //     if (selectedOrders && selectedOrders.size > 0) {
+        //         toExport = filteredOrders.filter(o => selectedOrders.has(o.orderId || o.orderStrId));
+        //     } else {
+        //         toExport = filteredOrders;
+        //     }
+        
+        //     if (toExport.length === 0) {
+        //         showNotification('No orders to export', 'error');
+        //         return;
+        //     }
+        
+        //     const headers = [
+        //         'Order ID', 'Customer', 'Phone', 'Products',
+        //         'Date', 'Amount (INR)', 'Order Status',
+        //         'Payment Status', 'Payment Method', 'Payment Mode'
+        //     ];
+        //     const rows = [headers.join(',')];
+        
+        //     toExport.forEach(order => {
+        //         const products = (order.orderItems || []).map(i => i.productName).join(' | ');
+        //         rows.push([
+        //             order.orderStrId || order.orderId || '',
+        //             `"${order.customerName || ''}"`,
+        //             order.customerPhone || '',
+        //             `"${products}"`,
+        //             order.orderDate ? order.orderDate.split('T')[0] : '',
+        //             order.finalAmount,
+        //             order.orderStatus || '',
+        //             order.paymentStatus || '',
+        //             order.paymentMethod || '',
+        //             order.paymentMode || ''
+        //         ].join(','));
+        //     });
+        
+        //     const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+        //     const url  = URL.createObjectURL(blob);
+        //     const a    = document.createElement('a');
+        //     a.href     = url;
+        //     a.download = `orders_${new Date().toISOString().split('T')[0]}.csv`;
+        //     a.click();
+        //     URL.revokeObjectURL(url);
+        //     showNotification(`${toExport.length} orders exported`, 'success');
+        // }
+
+
         function exportOrders() {
-            // Get current filtered orders
-            let filteredOrders = filterOrdersByStatus();
-
-            // Apply search filter
-            const searchTerm = document.getElementById('searchOrder')?.value.toLowerCase() || '';
-            if (searchTerm) {
-                filteredOrders = filteredOrders.filter(order =>
-                    order.id.toLowerCase().includes(searchTerm) ||
-                    order.customer.toLowerCase().includes(searchTerm) ||
-                    order.product.toLowerCase().includes(searchTerm)
-                );
+            let toExport;
+            let label;
+        
+            if (selectedOrders.size > 0) {
+                // Priority 1: checked rows
+                toExport = orders.filter(o => selectedOrders.has(String(o.orderId)));
+                label = `${toExport.length} selected`;
+            } else {
+                const from = document.getElementById('dateFrom')?.value || '';
+                const to   = document.getElementById('dateTo')?.value   || '';
+        
+                if (from && to) {
+                    // Priority 2: date range is set — export that filtered set
+                    toExport = orders.filter(o => {
+                        if (!o.orderDate) return false;
+                        const d = new Date(o.orderDate.split('T')[0]);
+                        return d >= new Date(from) && d <= new Date(to);
+                    });
+                    label = `${toExport.length} (date filtered)`;
+                } else {
+                    // Priority 3: export everything
+                    toExport = orders;
+                    label = `all ${orders.length}`;
+                }
             }
-
-            if (filteredOrders.length === 0) {
+        
+            if (toExport.length === 0) {
                 showNotification('No orders to export', 'error');
                 return;
             }
-
-            // Create CSV
-            const headers = ['Order ID', 'Customer', 'Email', 'Phone', 'Product', 'Date', 'Amount', 'Status', 'Payment', 'Address'];
-            const csvRows = [];
-
-            csvRows.push(headers.join(','));
-
-            filteredOrders.forEach(order => {
-                const row = [
-                    order.id,
-                    `"${order.customer}"`,
-                    order.email,
-                    order.phone,
-                    `"${order.product}"`,
-                    order.date,
-                    order.amount,
-                    order.status,
-                    order.payment,
-                    `"${order.address.replace(/"/g, '""')}"`
-                ];
-                csvRows.push(row.join(','));
+        
+            const headers = [
+                'Order ID', 'Customer', 'Phone', 'Products',
+                'Date', 'Amount (INR)', 'Order Status',
+                'Payment Status', 'Payment Method', 'Payment Mode'
+            ];
+            const rows = [headers.join(',')];
+        
+            toExport.forEach(o => {
+                const prods = (o.orderItems || []).map(i => i.productName).join(' | ');
+                rows.push([
+                    o.orderStrId || o.orderId || '',
+                    `"${o.customerName || ''}"`,
+                    o.customerPhone || '',
+                    `"${prods}"`,
+                    o.orderDate ? o.orderDate.split('T')[0] : '',
+                    o.finalAmount,
+                    o.orderStatus  || '',
+                    o.paymentStatus  || '',
+                    o.paymentMethod  || '',
+                    o.paymentMode    || ''
+                ].join(','));
             });
-
-            const csv = csvRows.join('\n');
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
+        
+            const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            a.href     = url;
             a.download = `orders_${new Date().toISOString().split('T')[0]}.csv`;
             a.click();
-            window.URL.revokeObjectURL(url);
-
-            showNotification(`${filteredOrders.length} orders exported successfully`, 'success');
+            URL.revokeObjectURL(url);
+            showNotification(`Exported ${label}`, 'success');
         }
 
-        // ==================== PAGINATION FUNCTIONS ====================
-        function changePage(direction) {
-            const filteredOrders = filterOrdersByStatus();
-            const searchTerm = document.getElementById('searchOrder')?.value.toLowerCase() || '';
-            const filtered = filteredOrders.filter(order =>
-                order.id.toLowerCase().includes(searchTerm) ||
-                order.customer.toLowerCase().includes(searchTerm) ||
-                order.product.toLowerCase().includes(searchTerm)
-            );
 
-            const totalPages = Math.ceil(filtered.length / itemsPerPage);
 
-            if (direction === 'prev' && currentPage > 1) {
-                currentPage--;
-            } else if (direction === 'next' && currentPage < totalPages) {
-                currentPage++;
+        // ==================== INVOICE PDF ====================
+        // ==================== FORMAT HELPERS ====================
+        /** Format number as Indian Rupee — no rounding, exact value */
+        function formatINR(value) {
+            const num = Number(value);
+            return 'Rs.' + num.toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        // formatINR used in UI (modal HTML) — uses rupee symbol
+        function formatINRDisplay(value) {
+            const num = Number(value);
+            return '\u20B9' + num.toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+
+        // ==================== INVOICE PDF ====================
+        function downloadInvoice() {
+            const order = currentViewOrder;
+            if (!order) {
+                showNotification('No order loaded', 'error');
+                return;
             }
-            renderOrders();
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+            const pageW = doc.internal.pageSize.getWidth();
+            const pageH = doc.internal.pageSize.getHeight();
+            const margin = 15;
+            const contentW = pageW - margin * 2;
+
+            // ---- Colours ----
+            const darkBlue  = [19, 63, 83];
+            const gold      = [216, 159, 52];
+            const lightBg   = [248, 248, 234];
+            const textGray  = [100, 100, 100];
+            const textDark  = [30, 30, 30];
+            const white     = [255, 255, 255];
+
+            // ---- Helper: gold border around a rect ----
+            function goldBorder(x, y, w, h, r = 2) {
+                doc.setDrawColor(...gold);
+                doc.setLineWidth(0.2);
+                doc.roundedRect(x, y, w, h, r, r, 'S');
+            }
+
+            // ---- Header bar ----
+            doc.setFillColor(...darkBlue);
+            doc.rect(0, 0, pageW, 38, 'F');
+
+            doc.setFillColor(...gold);
+            doc.roundedRect(margin, 7, 40, 16, 2, 2, 'F');
+            doc.setTextColor(...darkBlue);
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.addImage('/assets/Artezo-logo.jpg', 'PNG', margin, 7, 40, 16);
+
+            // Invoice title on right
+            doc.setTextColor(...white);
+            doc.setFontSize(20);
+            doc.setFont('helvetica', 'bold');
+            doc.text('INVOICE', pageW - margin, 18, { align: 'right' });
+
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Order: ' + order.orderStrId, pageW - margin, 25, { align: 'right' });
+            doc.text('Date: ' + formatDate(order.orderDate), pageW - margin, 30, { align: 'right' });
+
+            // ---- GSTIN below Order ID ----
+            doc.setFontSize(7);
+            doc.setTextColor(...gold);
+            doc.text('GSTIN: 27AABCU9603R1ZX', pageW - margin, 35, { align: 'right' });
+
+            let y = 46;
+
+            // ---- Info row: Customer | Shipping | Payment ----
+            const colW = contentW / 3;
+
+           // Customer Info box
+            doc.setFillColor(...lightBg);
+            doc.roundedRect(margin, y, colW - 3, 40, 2, 2, 'F');
+            goldBorder(margin, y, colW - 3, 40);
+            doc.setTextColor(...darkBlue);
+            doc.setFontSize(7);
+            doc.setFont('helvetica', 'bold');
+            doc.text('BILL TO', margin + 3, y + 6);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(...textDark);        // ← was textDark only for name
+            doc.setFontSize(8);
+            doc.text(order.customerName || '-', margin + 3, y + 13);
+            doc.setFontSize(7);
+            if (order.customerEmail) doc.text(order.customerEmail, margin + 3, y + 19, { maxWidth: colW - 8 });
+            if (order.customerPhone) doc.text(order.customerPhone, margin + 3, y + 25);
+
+            // Shipping box
+            const sx = margin + colW;
+            doc.setFillColor(...lightBg);
+            doc.roundedRect(sx, y, colW - 3, 40, 2, 2, 'F');
+            goldBorder(sx, y, colW - 3, 40);
+            doc.setTextColor(...darkBlue);
+            doc.setFontSize(7);
+            doc.setFont('helvetica', 'bold');
+            doc.text('SHIP TO', sx + 3, y + 6);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(...textDark);        // ← was textGray
+            doc.setFontSize(7);
+            const addrParts = [
+                order.shippingAddress1,
+                order.shippingAddress2,
+                order.shippingCity,
+                order.shippingState,
+                order.shippingPincode
+            ].filter(Boolean);
+
+            const addrLine1 = addrParts.slice(0, 2).join(', ') || '-';
+            const addrLine2 = addrParts.slice(2).join(', ');
+
+            doc.text(addrLine1, sx + 3, y + 13, { maxWidth: colW - 8 });
+            if (addrLine2) doc.text(addrLine2, sx + 3, y + 20, { maxWidth: colW - 8 });
+            if (order.courierName) doc.text('Courier: ' + order.courierName, sx + 3, y + 30);
+            // Payment box
+            const px = margin + colW * 2;
+            doc.setFillColor(...lightBg);
+            doc.roundedRect(px, y, colW, 40, 2, 2, 'F');
+            goldBorder(px, y, colW, 40);
+            doc.setTextColor(...darkBlue);
+            doc.setFontSize(7);
+            doc.setFont('helvetica', 'bold');
+            doc.text('PAYMENT INFO', px + 3, y + 6);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(...textDark);        // ← was textGray
+            doc.setFontSize(7);
+            doc.text('Method: ' + (order.paymentMethod || '-'), px + 3, y + 13);
+            doc.text('Mode:   ' + (order.paymentMode   || '-'), px + 3, y + 20);
+            doc.text('Status: ' + (order.paymentStatus || '-'), px + 3, y + 27);
+            if (order.couponCode) doc.text('Coupon: ' + order.couponCode, px + 3, y + 34);
+
+            y += 46;
+
+            // ---- Items Table ----
+            doc.setTextColor(...darkBlue);
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'bold');
+            doc.text('ORDER ITEMS', margin, y);
+            y += 4;
+
+            const tableHead = [['#', 'Product', 'SKU', 'Color', 'Qty', 'Unit Price', 'Total']];
+            const tableBody = (order.orderItems || []).map((item, idx) => [
+                String(idx + 1),
+                item.productName || '-',
+                item.sku || '-',
+                item.color || '-',
+                String(item.quantity),
+                formatINR(item.sellingPrice),
+                formatINR(item.itemTotal)
+            ]);
+
+            // store startY before the call
+        const tableStartY = y;
+
+        doc.autoTable({
+            startY: y,
+            head: tableHead,
+            body: tableBody,
+            theme: 'grid',
+            styles: { fontSize: 7.5, cellPadding: 2.5, textColor: textDark },
+            headStyles: { fillColor: darkBlue, textColor: white, fontStyle: 'bold', fontSize: 7.5 },
+            alternateRowStyles: { fillColor: lightBg },
+            columnStyles: {
+                0: { cellWidth: 7 },
+                4: { halign: 'center', cellWidth: 12 },
+                5: { halign: 'right', cellWidth: 28 },
+                6: { halign: 'right', cellWidth: 28 },
+            },
+            margin: { left: margin, right: margin },
+            // ← remove didDrawPage entirely
+        });
+
+        // draw gold border AFTER autoTable so finalY is settled
+        goldBorder(
+            margin,
+            tableStartY,
+            contentW,
+            doc.lastAutoTable.finalY - tableStartY,
+            2
+        );
+
+        y = doc.lastAutoTable.finalY + 6;
+
+            // ---- Price Summary (right-aligned box) ----
+            const summaryX = pageW - margin - 80;
+            const summaryW = 80;
+
+            const summaryRows = [];
+            summaryRows.push(['Subtotal', formatINR(order.subTotal)]);
+            if (order.discountAmount)
+                summaryRows.push(['Discount (' + order.discountPercent + '%)', '- ' + formatINR(order.discountAmount)]);
+            if (order.couponDiscount)
+                summaryRows.push(['Coupon (' + (order.couponCode || '') + ')', '- ' + formatINR(order.couponDiscount)]);
+            if (order.tax)
+                summaryRows.push(['Tax', formatINR(order.tax)]);
+            if (order.shippingCharges != null)
+                summaryRows.push(['Shipping', Number(order.shippingCharges) === 0 ? 'FREE' : formatINR(order.shippingCharges)]);
+            if (order.giftwrapCharges)
+                summaryRows.push(['Gift Wrap', formatINR(order.giftwrapCharges)]);
+            if (order.convenienceFee)
+                summaryRows.push(['Convenience Fee', formatINR(order.convenienceFee)]);
+
+            const rowH  = 6;
+            const boxH  = summaryRows.length * rowH + 8;
+
+            doc.setFillColor(...lightBg);
+            doc.roundedRect(summaryX, y, summaryW, boxH, 2, 2, 'F');
+            goldBorder(summaryX, y, summaryW, boxH);
+
+            let sy2 = y + 6;
+            summaryRows.forEach(([label, val]) => {
+                doc.setFontSize(7.5);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(...textDark);    // ← was textGray for label
+                doc.text(label, summaryX + 4, sy2);
+                doc.setTextColor(...textDark);
+                doc.text(val, summaryX + summaryW - 4, sy2, { align: 'right' });
+                sy2 += rowH;
+            });
+
+            // Total row
+            const totalBoxY = y + boxH + 2;
+            doc.setFillColor(...darkBlue);
+            doc.roundedRect(summaryX, totalBoxY, summaryW, 10, 2, 2, 'F');
+            goldBorder(summaryX, totalBoxY, summaryW, 10);
+            doc.setTextColor(...white);
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.text('TOTAL', summaryX + 4, totalBoxY + 6.5);
+            doc.text(formatINR(order.finalAmount), summaryX + summaryW - 4, totalBoxY + 6.5, { align: 'right' });
+
+            y = totalBoxY + 14;
+
+            // ---- Notes ----
+            doc.setFillColor(255, 251, 235);
+            doc.roundedRect(margin, y, contentW, 12, 2, 2, 'F');
+            goldBorder(margin, y, contentW, 12);
+            doc.setTextColor(146, 64, 14);
+            doc.setFontSize(7.5);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Note:', margin + 3, y + 7);
+            doc.setFont('helvetica', 'normal');
+            doc.text('For returns or exchanges, contact us within 7 days of delivery. Keep this invoice for your records.', margin + 14, y + 7, { maxWidth: contentW - 18 });
+            y += 16;
+
+            // ---- Footer ----
+            const footerY = pageH - 12;
+            doc.setFillColor(...darkBlue);
+            doc.rect(0, footerY - 2, pageW, 14, 'F');
+            doc.setTextColor(...gold);
+            doc.setFontSize(7);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Thank you for your order!', pageW / 2, footerY + 3, { align: 'center' });
+            doc.setTextColor(180, 180, 180);
+            doc.text('Generated on ' + new Date().toLocaleString('en-IN'), pageW / 2, footerY + 7, { align: 'center' });
+
+            doc.save('Invoice_' + order.orderStrId + '.pdf');
+            showNotification('Invoice downloaded!', 'success');
         }
 
-        // ==================== DROPDOWN FUNCTIONS ====================
+        // ==================== FILTER FUNCTIONS ====================
+        function filterOrders(status) {
+            currentFilter = status || 'all';
+            currentPage = 1;
+            applyFiltersAndRender();
+        }
+
+        function toggleDateFilter() {
+            document.getElementById('dateFilter').classList.toggle('hidden');
+        }
+
+        function applyDateFilter() {
+            const from = document.getElementById('dateFrom').value;
+            const to   = document.getElementById('dateTo').value;
+            if (!from || !to) { showNotification('Please select both dates', 'error'); return; }
+            if (new Date(from) > new Date(to)) { showNotification('"From" date cannot be later than "To" date', 'error'); return; }
+
+            filteredOrders = orders.filter(o => {
+                if (!o.orderDate) return false;
+                const d = new Date(o.orderDate.split('T')[0]);
+                return d >= new Date(from) && d <= new Date(to);
+            });
+            // also apply status filter on top
+            if (currentFilter !== 'all') {
+                filteredOrders = filteredOrders.filter(o =>
+                    (o.orderStatus||'').toUpperCase() === currentFilter.toUpperCase());
+            }
+            currentPage = 1;
+            renderOrders();
+            showNotification('Date filter applied', 'success');
+            toggleDateFilter();
+        }
+
+        function clearDateFilter() {
+            document.getElementById('dateFrom').value = '';
+            document.getElementById('dateTo').value = '';
+            applyFiltersAndRender();
+            showNotification('Date filter cleared', 'info');
+        }
+
+        // ==================== SELECTION ====================
+        function toggleAll() {
+    const selectAll  = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.order-checkbox');
+    checkboxes.forEach(cb => {
+        cb.checked = selectAll.checked;
+        selectAll.checked
+            ? selectedOrders.add(cb.value)
+            : selectedOrders.delete(cb.value);
+    });
+}
+
+        function updateSelection(checkbox) {
+    checkbox.checked
+        ? selectedOrders.add(checkbox.value)
+        : selectedOrders.delete(checkbox.value);
+    updateSelectAll();
+}
+
+        function updateSelectAll() {
+    const selectAll  = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.order-checkbox');
+    if (!selectAll) return;
+    selectAll.checked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
+    selectAll.indeterminate = !selectAll.checked && Array.from(checkboxes).some(cb => cb.checked);
+}
+
+        function updateBulkActions() {
+            const ba = document.getElementById('bulkActions');
+            const sc = document.getElementById('selectedCount');
+            if (selectedOrders.size > 0) { ba.classList.remove('hidden'); sc.textContent = `${selectedOrders.size} selected`; }
+            else { ba.classList.add('hidden'); }
+        }
+
+        function clearSelection() {
+            selectedOrders.clear();
+            document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = false);
+            updateSelectAll();
+            updateBulkActions();
+        }
+
+
+         // ==================== RESET ALL FILTERS ====================
+        function resetAllFilters() {
+            const s = document.getElementById('searchOrder');
+            if (s) s.value = '';
+
+            currentFilter = 'all';
+            document.getElementById('selectedStatusText').textContent = 'All Orders';
+            updateStatusCheckmarks();
+
+            document.getElementById('dateFrom').value = '';
+            document.getElementById('dateTo').value   = '';
+            const dp = document.getElementById('dateFilter');
+            if (dp && !dp.classList.contains('hidden')) dp.classList.add('hidden');
+
+            currentPage = 1;
+            applyFiltersAndRender();
+        }
+
+        function updateResetBtn() {
+            const btn = document.getElementById('resetFiltersBtn');
+            if (!btn) return;
+            const a = (document.getElementById('searchOrder')?.value||'').trim().length > 0;
+            const b = currentFilter !== 'all';
+            const c = (document.getElementById('dateFrom')?.value||'') !== '';
+            const d = (document.getElementById('dateTo')?.value||'') !== '';
+            (a||b||c||d) ? btn.classList.remove('hidden') : btn.classList.add('hidden');
+        }
+
+
+        // ==================== DROPDOWN ====================
         function toggleStatusDropdown() {
             const dropdown = document.getElementById('statusDropdown');
-            const arrow = document.getElementById('statusDropdownArrow');
-
+            const arrow    = document.getElementById('statusDropdownArrow');
             isStatusDropdownOpen = !isStatusDropdownOpen;
-
             if (isStatusDropdownOpen) {
                 dropdown.classList.remove('hidden');
                 arrow.style.transform = 'rotate(180deg)';
@@ -1364,86 +1578,81 @@
 
         function selectStatus(status, statusText) {
             document.getElementById('selectedStatusText').textContent = statusText;
+            currentFilter = status;
             toggleStatusDropdown();
             updateStatusCheckmarks();
             filterOrders(status);
         }
 
         function updateStatusCheckmarks() {
-            document.querySelectorAll('.status-item i').forEach(icon => {
-                icon.style.display = 'none';
-            });
-
-            const checkId = `check-status-${currentFilter}`;
+            document.querySelectorAll('.status-item i').forEach(icon => icon.style.display = 'none');
+            const checkId   = `check-status-${currentFilter}`;
             const checkIcon = document.getElementById(checkId);
-            if (checkIcon) {
-                checkIcon.style.display = 'inline-block';
-            }
+            if (checkIcon) checkIcon.style.display = 'inline-block';
         }
 
-        // Close dropdown when clicking outside
         document.addEventListener('click', function (e) {
             const dropdown = document.getElementById('statusDropdown');
-            const button = document.getElementById('statusDropdownButton');
-            const arrow = document.getElementById('statusDropdownArrow');
-
+            const button   = document.getElementById('statusDropdownButton');
+            const arrow    = document.getElementById('statusDropdownArrow');
             if (isStatusDropdownOpen && dropdown && button &&
                 !button.contains(e.target) && !dropdown.contains(e.target)) {
                 dropdown.classList.add('hidden');
-                arrow.style.transform = 'rotate(0deg)';
+                if (arrow) arrow.style.transform = 'rotate(0deg)';
                 isStatusDropdownOpen = false;
             }
         });
 
-        // ==================== DEBOUNCE SEARCH FUNCTIONS ====================
-        function debounceSearch() {
-            const loadingIndicator = document.getElementById('searchLoading');
-            if (loadingIndicator) {
-                loadingIndicator.classList.remove('hidden');
-            }
+        // ==================== DEBOUNCE SEARCH ====================
+        // function debounceSearch() {
+        //     const loading = document.getElementById('searchLoading');
+        //     if (loading) loading.classList.remove('hidden');
+        //     clearTimeout(searchTimeout);
+        //     searchTimeout = setTimeout(() => {
+        //         if (loading) loading.classList.add('hidden');
+        //         currentPage = 1;
+        //         applyFiltersAndRender();
+        //     }, DEBOUNCE_DELAY);
+        // }
 
-            if (searchTimeout) {
+         function debounceSearch() {
+            const loading = document.getElementById('searchLoading');
+            const val = (document.getElementById('searchOrder')?.value||'').trim();
+
+            if (val.length > 0 && val.length < 3) {
+                if (loading) loading.classList.remove('hidden');
                 clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => { if (loading) loading.classList.add('hidden'); }, 300);
+                return;
             }
 
+            if (loading) loading.classList.remove('hidden');
+            clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => {
-                performSearch();
+                if (loading) loading.classList.add('hidden');
+                currentPage = 1;
+                applyFiltersAndRender();
             }, DEBOUNCE_DELAY);
         }
 
-        function performSearch() {
-            const loadingIndicator = document.getElementById('searchLoading');
-            if (loadingIndicator) {
-                loadingIndicator.classList.add('hidden');
-            }
 
-            currentPage = 1;
-            renderOrders();
-        }
-
-        // ==================== NOTIFICATION FUNCTION ====================
+        // ==================== NOTIFICATION ====================
         function showNotification(message, type = 'info') {
             const notification = document.getElementById('notification');
-            const icon = document.getElementById('notificationIcon');
-            const messageEl = document.getElementById('notificationMessage');
-
-            // Set colors and icon based on type
+            const icon         = document.getElementById('notificationIcon');
+            const messageEl    = document.getElementById('notificationMessage');
             const colors = {
                 success: { bg: '#10B981', icon: 'fa-regular fa-circle-check' },
-                error: { bg: '#EF4444', icon: 'fa-solid fa-circle-exclamation' },
-                info: { bg: '#3B82F6', icon: 'fa-solid fa-circle-info' }
+                error:   { bg: '#EF4444', icon: 'fa-solid fa-circle-exclamation' },
+                info:    { bg: '#3B82F6', icon: 'fa-solid fa-circle-info' }
             };
-
-            notification.style.backgroundColor = colors[type].bg;
+            const cfg = colors[type] || colors.info;
+            notification.style.backgroundColor = cfg.bg;
             notification.style.color = 'white';
-            icon.className = colors[type].icon;
+            icon.className = cfg.icon;
             messageEl.textContent = message;
-
             notification.classList.remove('hidden');
-
-            setTimeout(() => {
-                notification.classList.add('hidden');
-            }, 3000);
+            setTimeout(() => notification.classList.add('hidden'), 3000);
         }
     </script>
 </body>

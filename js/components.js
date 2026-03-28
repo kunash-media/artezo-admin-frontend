@@ -66,7 +66,7 @@ class LayoutComponents {
                                  path.includes('/User_Management/') || path.includes('/products.html') 
                                  || path.includes("/Banner_Management/") || path.includes('/Inventory_Management/') 
                                  || path.includes("/ProductReview_Management/") || path.includes("/Report_Sales/")
-                                 || path.includes("/Contact_Management/");
+                                 || path.includes("/Contact_Management/") || path.includes("/Category_Management/");
                         
             // Load sidebar with correct path
             const sidebarPath = isInSubfolder ? '../sidebar.html' : 'sidebar.html';
@@ -95,7 +95,7 @@ class LayoutComponents {
                                  path.includes('/User_Management/') || path.includes('/products.html') 
                                  || path.includes("/Banner_Management/") || path.includes('/Inventory_Management/') 
                                  || path.includes("/ProductReview_Management/") || path.includes("/Report_Sales/")
-                                 || path.includes("/Contact_Management/");
+                                 || path.includes("/Contact_Management/") || path.includes("/Category_Management/");
             
             // Load modals with correct path
             const modalsPath = isInSubfolder ? '../modals.html' : 'modals.html';
