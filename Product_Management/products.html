@@ -35,6 +35,12 @@
             50%      { transform: scaleY(1.4); opacity: 1; background: linear-gradient(180deg, #D89F34 0%, #133F53 70%, #957A54 100%); }
         }
 
+        * { box-sizing: border-box; }
+        /* body { font-family: 'DM Sans', sans-serif; } */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #F2F2E8;  }
+        ::-webkit-scrollbar-thumb { background: #D89F34; border-radius: 10px; }
+
         /* Custom overrides for clean look */
         .table-container {
             max-height: 450px;
@@ -129,9 +135,12 @@
             <div id="header-container"></div>
 
             <!-- Content -->
-            <main class="flex-1 overflow-y-auto p-6 bg-gray-50">
+            <main class="flex-1 overflow-y-auto p-6">
+                <div class="mb-5">
+                    <h1 class="text-2xl font-semibold" style="color: #133F53;">Product Management</h1>
+                    <p class="text-sm" style="color: #957A54;">Create and manage products with their details. </p>
+                </div>
                 <div class="max-w-7xl mx-auto">
-
                     <!-- Stats Cards -->
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
                         <div class="bg-white p-6 rounded-xl shadow-sm border border-[#D89F34]">

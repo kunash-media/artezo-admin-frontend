@@ -217,7 +217,7 @@
                     <!-- Page Header -->
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                         <div>
-                            <h1 class="text-2xl font-bold" style="color: #133F53;">Order Management</h1>
+                            <h1 class="text-2xl font-semibold" style="color: #133F53;">Order Management</h1>
                             <p class="text-sm" style="color: #957A54;">Manage and track all customer orders</p>
                         </div>
                         <div class="flex gap-2">
@@ -290,7 +290,7 @@
                                 <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
                                 <input type="text" id="searchOrder"
                                     placeholder="Search by customer, or product..."
-                                    class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D89F34] text-sm"
+                                    class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#D89F34] text-sm"
                                     onkeyup="debounceSearch()">
                                 <div id="searchLoading" class="absolute right-3 top-1/2 transform -translate-y-1/2 hidden">
                                     <i class="fa-solid fa-circle-notch fa-spin text-[#D89F34]"></i>
@@ -373,6 +373,7 @@
                                 <button class="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-white" style="color: #957A54;" onclick="clearDateFilter()">Clear</button>
                             </div>
                         </div>
+                        <p class="text-sm m-1 text-xs" style="color: #957A54;" ><span class="text-red-600 text-xs">Note</span> : You can export excel sheet based on date selection apply.</p>
                     </div>
 
                     <!-- Orders Table -->

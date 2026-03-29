@@ -3,73 +3,896 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     <link rel="apple-touch-icon" sizes="180x180" href="/favicon_io/apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon_io/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon_io/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png">
-
-    <title>Dashboard</title>
+    <title>Custom Categories – Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="/css/components.css">
     <script src="/js/components.js"></script>
-    
+    <style>
+        /* ── Barcode Loader ── */
+        .barcode-loader { display:flex; align-items:flex-end; justify-content:center; height:80px; gap:4px; }
+        .bar { width:8px; background:linear-gradient(180deg,#133F53 0%,#D89F34 70%,#957A54 100%); border-radius:4px 4px 0 0; animation:scan-wave 1.2s ease-in-out infinite; transform-origin:bottom; }
+        @keyframes scan-wave {
+            0%,100%{ transform:scaleY(1); opacity:.8; background:linear-gradient(180deg,#133F53 0%,#D89F34 70%,#957A54 100%); }
+            50%{ transform:scaleY(1.4); opacity:1; background:linear-gradient(180deg,#D89F34 0%,#133F53 70%,#957A54 100%); }
+        }
+
+        /* ── Google / MS-style form inputs ── */
+        .field-wrap { position:relative; margin-bottom:1.1rem; }
+        .field-wrap input {
+            width:100%; border:1.5px solid #c8d6dd; border-radius:10px;
+            padding:15px 14px 7px 14px; font-size:.88rem; background:#f8fbfc;
+            color:#1a1a1a; outline:none; transition:border-color .2s,box-shadow .2s,background .2s;
+            font-family:'DM Sans',sans-serif;
+        }
+        .field-wrap input:focus { border-color:#133F53; box-shadow:0 0 0 3px rgba(19,63,83,.12); background:#fff; }
+        .field-wrap input[readonly] {
+            background:#f0f4f6; color:#6b7280; cursor:default;
+            border-color:#dde6ea; border-style:dashed;
+        }
+        .field-wrap input[readonly]:focus { box-shadow:none; border-color:#b0bec5; }
+        .field-wrap input.error-border { border-color:#ef4444; background:#fff8f8; }
+        .field-wrap label {
+            position:absolute; left:14px; top:50%; transform:translateY(-50%);
+            font-size:.84rem; color:#7a93a0; pointer-events:none;
+            transition:all .18s ease; background:transparent; padding:0 2px;
+        }
+        .field-wrap input:focus + label,
+        .field-wrap input:not(:placeholder-shown) + label {
+            top:0; transform:translateY(-50%); font-size:.69rem; color:#133F53; font-weight:600;
+            background:#fff; border-radius:4px;
+        }
+        .field-wrap input[readonly]:not(:placeholder-shown) + label,
+        .field-wrap input[readonly]:focus + label { color:#7a93a0; background:#f0f4f6; }
+        .field-wrap input.error-border:focus + label,
+        .field-wrap input.error-border:not(:placeholder-shown) + label { color:#ef4444; }
+        /* readonly badge */
+        .readonly-tag { position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:.62rem; font-weight:700; letter-spacing:.04em; color:#7a93a0; background:#dde6ea; border-radius:4px; padding:1px 6px; pointer-events:none; }
+        /* section label */
+        .form-section-label { font-size:.68rem; font-weight:700; color:#133F53; text-transform:uppercase; letter-spacing:.08em; margin-bottom:.6rem; margin-top:.2rem; display:flex; align-items:center; gap:.4rem; }
+        .form-section-label::before { content:''; display:block; width:3px; height:12px; background:linear-gradient(180deg,#133F53,#D89F34); border-radius:2px; }
+        /* subcategory grid */
+        .sub-grid { display:grid; grid-template-columns:1fr 1fr; gap:.6rem .8rem; }
+        .sub-grid .field-wrap:first-child { grid-column:1/-1; }
+
+        /* toggle switch */
+        .toggle-track { width:46px; height:25px; background:#d1d5db; border-radius:9999px; position:relative; cursor:pointer; transition:background .2s; flex-shrink:0; border:1.5px solid #c4cdd3; }
+        .toggle-track.on { background:#133F53; border-color:#0e2f3e; }
+        .toggle-thumb { position:absolute; top:2px; left:2px; width:17px; height:17px; background:#fff; border-radius:50%; transition:transform .2s; box-shadow:0 1px 4px rgba(0,0,0,.28); }
+        .toggle-track.on .toggle-thumb { transform:translateX(21px); }
+
+        /* toggle row */
+        .toggle-row {
+            display:flex; align-items:center; justify-content:space-between;
+            background:linear-gradient(135deg,#f0f6f8 0%,#e8f0f3 100%);
+            border:1.5px solid #c8d6dd; border-radius:11px;
+            padding:11px 14px; margin-bottom:.65rem; transition:border-color .2s;
+        }
+        .toggle-row:hover { border-color:#133F53; }
+
+        /* ── Table grid borders ── */
+        table { border-collapse:collapse; }
+        thead tr th { border-right:1px solid #d1d5db; border-bottom:2px solid #d1d5db; }
+        thead tr th:last-child { border-right:none; }
+        tbody tr td { border-right:1px solid #d1d5db; border-bottom:1px solid #d1d5db; }
+        tbody tr td:last-child { border-right:none; }
+        tbody tr:last-child td { border-bottom:none; }
+
+        /* ── Row highlight by approval state ── */
+        tbody tr.row-approved { background:#fffbeb; }
+        tbody tr.row-pending  { background:#f9f9f9; color:#9ca3af; }
+        tbody tr.row-approved:hover { background:#fef3c7; }
+        tbody tr.row-pending:hover  { background:#f3f3f0; }
+        tbody tr.row-pending td { color:#9ca3af; }
+        tbody tr.row-pending .cat-name { color:#aaa !important; }
+
+        /* compact chip in table */
+        .tbl-chip { display:inline-block; background:#e9edf1; border:1px solid #d1d5db; border-radius:4px; padding:1px 7px; font-size:.7rem; color:#4b5563; white-space:nowrap; }
+
+        /* overlay backdrop */
+        .overlay-backdrop {
+            position:fixed; inset:0; background:rgba(0,0,0,.48); z-index:50;
+            display:flex; align-items:center; justify-content:center;
+            opacity:0; pointer-events:none; transition:opacity .22s;
+        }
+        .overlay-backdrop.show { opacity:1; pointer-events:all; }
+        .modal-card {
+            background:#fff; border-radius:18px; width:100%; max-width:520px;
+            box-shadow:0 28px 70px rgba(0,0,0,.2),0 0 0 1px rgba(19,63,83,.08);
+            transform:translateY(20px) scale(.96);
+            transition:transform .24s cubic-bezier(.34,1.56,.64,1), opacity .22s; opacity:0; padding:0; overflow:hidden;
+        }
+        .overlay-backdrop.show .modal-card { transform:translateY(0) scale(1); opacity:1; }
+        /* modal themed header */
+        .modal-header-themed {
+            background:linear-gradient(135deg,#133F53 0%,#1a5570 60%,#0f3344 100%);
+            padding:18px 22px 16px;
+            position:relative; overflow:hidden;
+        }
+        /* .modal-header-themed::after {
+            content:''; position:absolute; right:-20px; top:-20px;
+            width:100px; height:100px; border-radius:50%;
+            background:rgba(216,159,52,.15); pointer-events:none;
+        } */
+        .modal-header-themed h2 { color:#fff; font-size:.95rem; font-weight:700; }
+        .modal-header-themed p  { color:rgba(255,255,255,.6); font-size:.72rem; margin-top:2px; }
+        .modal-header-themed .close-btn {
+            position:absolute; right:16px; top:50%; transform:translateY(-50%);
+            width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,.15);
+            display:flex; align-items:center; justify-content:center; cursor:pointer;
+            color:#fff; transition:background .15s; border:none;
+        }
+        .modal-header-themed .close-btn:hover { background:rgba(255,255,255,.28); }
+
+        /* toast */
+        #toast-container { position:fixed; top:1.25rem; right:1.25rem; z-index:9999; display:flex; flex-direction:column; gap:.5rem; }
+        .toast {
+            display:flex; align-items:center; gap:.75rem; padding:.8rem 1.1rem;
+            border-radius:10px; font-size:.85rem; font-weight:500; min-width:280px;
+            box-shadow:0 4px 20px rgba(0,0,0,.14); animation:slideIn .3s ease;
+            color:#1a1a1a; border-left:4px solid transparent;
+        }
+        .toast.success { background:#f0fdf4; border-color:#22c55e; }
+        .toast.error   { background:#fef2f2; border-color:#ef4444; }
+        .toast.info    { background:#eff6ff; border-color:#3b82f6; }
+        @keyframes slideIn { from { transform:translateX(60px); opacity:0; } to { transform:translateX(0); opacity:1; } }
+
+        /* view detail overlay extras */
+        .detail-chip { display:inline-block; background:#f0f4f8; border:1px solid #abadb0; border-radius:6px; padding:3px 10px; font-size:.78rem; color:#374151; }
+        .badge-yes { background:#dcfce7; color:#16a34a; border-radius:6px; padding:2px 10px; font-size:.75rem; font-weight:600; }
+        .badge-no  { background:#fee2e2; color:#dc2626; border-radius:6px; padding:2px 10px; font-size:.75rem; font-weight:600; }
+
+        /* approved overlay pill buttons */
+        .pill-btn { border-radius:999px; padding:8px 26px; font-size:.88rem; font-weight:600; cursor:pointer; border:2px solid transparent; transition:all .18s; }
+        .pill-yes { background:#133F53; color:#fff; }
+        .pill-yes:hover { background:#0e2f3e; }
+        .pill-no  { background:#fff; color:#ef4444; border-color:#ef4444; }
+        .pill-no:hover { background:#fef2f2; }
+
+        /* pagination btn */
+        .pg-btn { width:34px; height:34px; display:flex; align-items:center; justify-content:center; border-radius:8px; font-size:.82rem; font-weight:600; cursor:pointer; transition:all .15s; border:1.5px solid #e5e7eb; background:#fff; color:#374151; }
+        .pg-btn:hover:not(:disabled) { background:#133F53; color:#fff; border-color:#133F53; }
+        .pg-btn.active { background:#133F53; color:#fff; border-color:#133F53; }
+        .pg-btn:disabled { opacity:.4; cursor:not-allowed; }
+
+        /* disabled add btn */
+        .btn-disabled { background:#9ca3af !important; cursor:not-allowed !important; }
+
+        /* subtle scrollbar */
+        ::-webkit-scrollbar { width:5px; } ::-webkit-scrollbar-thumb { background:#c7c7b8; border-radius:4px; }
+
+        /* smooth spin */
+        .spin { animation:spin 1s linear infinite; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+        body, * { font-family:'DM Sans',ui-sans-serif,system-ui,sans-serif; }
+    </style>
 </head>
-<style>
-   /* Barcode Loader CSS */
-.barcode-loader {
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    height: 80px;
-    gap: 4px;
-}
-
-.bar {
-    width: 8px;
-    background: linear-gradient(180deg, #133F53 0%, #D89F34 70%, #957A54 100%);
-    border-radius: 4px 4px 0 0;
-    animation: scan-wave 1.2s ease-in-out infinite;
-    transform-origin: bottom;
-}
-
-@keyframes scan-wave {
-    0%, 100% {
-        transform: scaleY(1);
-        opacity: 0.8;
-        background: linear-gradient(180deg, #133F53 0%, #D89F34 70%, #957A54 100%);
-    }
-    50% {
-        transform: scaleY(1.4);
-        opacity: 1;
-        background: linear-gradient(180deg, #D89F34 0%, #133F53 70%, #957A54 100%);
-    }
-}
-</style>
 <body class="bg-[#F2F2E8]">
 
+<div class="flex h-screen overflow-hidden">
+    <!-- Sidebar -->
+    <div id="sidebar-container"></div>
 
-    <div class="flex h-screen overflow-hidden">
-        <!-- Sidebar will be loaded here -->
-        <div id="sidebar-container"></div>
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Header -->
+        <div id="header-container"></div>
 
-        <!-- Main Content Area -->
-        <div class="flex-1 flex flex-col overflow-hidden">
-            <!-- Header will be loaded here -->
-            <div id="header-container"></div>
+        <!-- Main -->
+        <main class="flex-1 overflow-y-auto p-6">
 
-            <!-- Main Content -->
-            <main class="flex-1 overflow-y-auto p-6">
-              <h1>
-                custom category management
-              </h1>
-     
-            </main>
+            <!-- Page Header -->
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                <div>
+                    <h1 class="text-2xl font-700 font-semibold text-[#133F53] tracking-tight">Custom Category Management</h1>
+                    <p class="text-sm text-gray-500 mt-0.5">Manage product categories, sub-categories and redirect links</p>
+                </div>
+                <div class="flex flex-col items-end gap-1">
+                    <button id="addCatBtn" onclick="openCreateModal()"
+                        class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-600 text-white transition-all"
+                        style="background:#133F53;">
+                        <i class="fas fa-plus text-xs"></i> Add Category
+                    </button>
+                    <p id="limitNote" class="text-xs text-gray-400 hidden">
+                        <i class="fas fa-info-circle mr-1"></i>Limit reached — <a href="#" class="underline text-[#D89F34]">contact support</a> to upgrade your plan
+                    </p>
+                </div>
+            </div>
+
+            <!-- Filters Bar -->
+            <div class="bg-white rounded-2xl border border-gray-400 p-4 mb-5 flex flex-col sm:flex-row gap-3 items-center">
+                <div class="relative flex-1 w-full">
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                    <input id="searchInput" type="text" placeholder="Search categories… (min 3 chars)"
+                        class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#133F53] focus:ring-2 focus:ring-[#133F53]/10 transition"
+                        oninput="handleSearch(this.value)">
+                </div>
+                <button onclick="resetFilters()"
+                    class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition font-500 whitespace-nowrap">
+                    <i class="fas fa-rotate-left text-xs"></i> Reset
+                </button>
+            </div>
+
+            <!-- Table Card -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-400 overflow-hidden">
+                <div class="overflow-x-auto ">
+                    <table class="w-full text-sm ">
+                        <thead>
+                            <tr class="bg-[#eaf0f3]">
+                                <th class="text-left px-3 py-3 font-700 text-[#133F53] text-xs uppercase tracking-wide w-10">Sr.</th>
+                                <th class="text-left px-3 py-3 font-700 text-[#133F53] text-xs uppercase tracking-wide">Product Category</th>
+                                <th class="text-left px-3 py-3 font-700 text-[#133F53] text-xs uppercase tracking-wide">Sub-Categories</th>
+                                <th class="text-left px-3 py-3 font-700 text-[#133F53] text-xs uppercase tracking-wide">Cat. Redirect</th>
+                                <th class="text-center px-3 py-3 font-700 text-[#133F53] text-xs uppercase tracking-wide w-24">Approved</th>
+                                <th class="text-center px-3 py-3 font-700 text-[#133F53] text-xs uppercase tracking-wide w-22">Trending</th>
+                                <th class="text-left px-3 py-3 font-700 text-[#133F53] text-xs uppercase tracking-wide w-32">Created</th>
+                                <th class="text-center px-3 py-3 font-700 text-[#133F53] text-xs uppercase tracking-wide w-28">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr><td colspan="8" class="text-center py-16 text-gray-400">
+                                <div class="barcode-loader mx-auto mb-3" id="initLoader">
+                                    <div class="bar" style="height:30px;animation-delay:0s"></div>
+                                    <div class="bar" style="height:50px;animation-delay:.1s"></div>
+                                    <div class="bar" style="height:40px;animation-delay:.2s"></div>
+                                    <div class="bar" style="height:60px;animation-delay:.3s"></div>
+                                    <div class="bar" style="height:35px;animation-delay:.4s"></div>
+                                    <div class="bar" style="height:55px;animation-delay:.5s"></div>
+                                </div>
+                                <span>Loading categories…</span>
+                            </td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div id="paginationWrap" class="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-4 border-t border-gray-100 hidden">
+                    <span id="paginationInfo" class="text-xs text-gray-500"></span>
+                    <div id="paginationBtns" class="flex items-center gap-1.5"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  CREATE / EDIT MODAL                        -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="formOverlay" class="overlay-backdrop" onclick="handleBackdropClick(event,'formOverlay')">
+    <div class="modal-card mx-4">
+        <!-- Themed Header -->
+        <div class="modal-header-themed">
+            <div class="pr-10">
+                <h2 id="formTitle">Add New Category</h2>
+                <p id="formSubtitle">Fill all fields to create a category</p>
+            </div>
+            <button class="close-btn" onclick="closeModal('formOverlay')">
+                <i class="fas fa-times text-xs"></i>
+            </button>
+        </div>
+
+        <!-- Body -->
+        <div class="px-5 py-4 overflow-y-auto max-h-[68vh]" style="background:linear-gradient(180deg,#f8fbfc 0%,#fff 60%);">
+            <form id="categoryForm" onsubmit="handleFormSubmit(event)" novalidate>
+                <input type="hidden" id="editCategoryId">
+
+                <!-- Product Category -->
+                <div class="form-section-label">Main Category</div>
+                <div class="field-wrap">
+                    <input type="text" id="productCategory" placeholder=" " autocomplete="off">
+                    <label for="productCategory">Product Category *</label>
+                    <p class="text-red-500 text-xs mt-1 hidden error-msg" id="err-productCategory"><i class="fas fa-exclamation-circle mr-1"></i>This field is required</p>
+                </div>
+
+                <!-- Sub-categories 2-col grid -->
+                <div class="form-section-label">Sub-Categories <span style="font-weight:400;color:#7a93a0;font-size:.63rem;text-transform:none;letter-spacing:0">(up to 3)</span></div>
+                <div class="sub-grid">
+                    <div class="field-wrap">
+                        <input type="text" id="subCat1" placeholder=" " autocomplete="off">
+                        <label for="subCat1">Sub-category 1</label>
+                    </div>
+                    <div class="field-wrap">
+                        <input type="text" id="subCat2" placeholder=" " autocomplete="off">
+                        <label for="subCat2">Sub-category 2</label>
+                    </div>
+                    <div class="field-wrap" style="grid-column:1/-1">
+                        <input type="text" id="subCat3" placeholder=" " autocomplete="off">
+                        <label for="subCat3">Sub-category 3</label>
+                    </div>
+                </div>
+
+                <!-- Redirects (readonly) -->
+                <div class="form-section-label">Redirect Links <span style="font-weight:400;color:#7a93a0;font-size:.63rem;text-transform:none;letter-spacing:0">(read-only defaults)</span></div>
+                <div class="field-wrap" style="position:relative">
+                    <input type="text" id="productCategoryRedirect" placeholder=" " readonly value="/Product-Details/product-detail.html">
+                    <label for="productCategoryRedirect">Product Category Redirect</label>
+                    <span class="readonly-tag">locked</span>
+                </div>
+                <div class="field-wrap" style="position:relative">
+                    <input type="text" id="categoryPathRedirect" placeholder=" " readonly value="/Product-Details/product-detail.html">
+                    <label for="categoryPathRedirect">Category Path Redirect</label>
+                    <span class="readonly-tag">locked</span>
+                </div>
+
+                <!-- Toggles -->
+                <div class="form-section-label">Settings</div>
+                <div class="toggle-row">
+                    <div>
+                        <p class="text-sm font-600 text-[#133F53]">Approved</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Mark this category as approved</p>
+                    </div>
+                    <div id="toggleApproved" class="toggle-track" onclick="toggleSwitch('toggleApproved','approvedVal')">
+                        <div class="toggle-thumb"></div>
+                    </div>
+                    <input type="hidden" id="approvedVal" value="false">
+                </div>
+                <div class="toggle-row">
+                    <div>
+                        <p class="text-sm font-600 text-[#133F53]">Trending Mark</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Feature this category as trending</p>
+                    </div>
+                    <div id="toggleTrending" class="toggle-track" onclick="toggleSwitch('toggleTrending','trendingVal')">
+                        <div class="toggle-thumb"></div>
+                    </div>
+                    <input type="hidden" id="trendingVal" value="false">
+                </div>
+            </form>
+        </div>
+
+        <!-- Footer -->
+        <div class="flex items-center justify-between gap-3 px-5 py-3.5 border-t border-gray-100" style="background:#f0f4f6;">
+            <p class="text-xs text-gray-400"><i class="fas fa-lock mr-1 text-[#D89F34]"></i>Redirect fields are system defaults</p>
+            <div class="flex gap-2">
+                <button onclick="closeModal('formOverlay')" class="px-4 py-2 rounded-lg text-sm font-500 text-gray-600 border border-gray-200 hover:bg-gray-50 transition bg-white">Cancel</button>
+                <button id="formSubmitBtn" onclick="handleFormSubmit(event)"
+                    class="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-600 text-white transition-all"
+                    style="background:linear-gradient(135deg,#133F53,#1a5570);">
+                    <i class="fas fa-check text-xs"></i>
+                    <span id="formSubmitLabel">Create Category</span>
+                </button>
+            </div>
         </div>
     </div>
-<!-- Modals will be loaded here dynamically -->
-    <div id="modals-container"></div>
-    
+</div>
 
-    
+<!-- ═══════════════════════════════════════════ -->
+<!--  VIEW DETAIL MODAL                          -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="viewOverlay" class="overlay-backdrop" onclick="handleBackdropClick(event,'viewOverlay')">
+    <div class="modal-card mx-4" style="max-width:560px;">
+        <div class="modal-header-themed">
+            <div class="pr-10">
+                <h2>Category Details</h2>
+                <p id="viewCatId"></p>
+            </div>
+            <button class="close-btn" onclick="closeModal('viewOverlay')">
+                <i class="fas fa-times text-xs"></i>
+            </button>
+        </div>
+        <div class="px-5 py-4 overflow-y-auto max-h-[75vh] space-y-3" id="viewBody"></div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  APPROVED TOGGLE OVERLAY                    -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="approvalOverlay" class="overlay-backdrop" onclick="handleBackdropClick(event,'approvalOverlay')">
+    <div class="modal-card mx-4" style="max-width:400px;">
+        <div class="px-6 py-6 text-center">
+            <div class="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" id="approvalIcon" style="background:#dcfce7;">
+                <i class="fas fa-shield-check text-2xl text-green-500"></i>
+            </div>
+            <h3 id="approvalTitle" class="text-lg font-700 text-[#133F53] mb-1">Approve Category?</h3>
+            <p id="approvalDesc" class="text-sm text-gray-500 mb-6">This category will be marked as approved and visible to users.</p>
+            <div class="flex justify-center gap-3">
+                <button onclick="closeModal('approvalOverlay')" class="pill-btn pill-no">No, Cancel</button>
+                <button id="approvalConfirmBtn" class="pill-btn pill-yes">Yes, Approve</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  DELETE CONFIRM OVERLAY                     -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="deleteOverlay" class="overlay-backdrop" onclick="handleBackdropClick(event,'deleteOverlay')">
+    <div class="modal-card mx-4" style="max-width:400px;">
+        <div class="px-6 py-6 text-center">
+            <div class="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style="background:#fee2e2;">
+                <i class="fas fa-trash-alt text-2xl text-red-500"></i>
+            </div>
+            <h3 class="text-lg font-700 text-[#133F53] mb-1">Delete Category?</h3>
+            <p class="text-sm text-gray-500 mb-6">This action cannot be undone. The category will be permanently removed.</p>
+            <div class="flex justify-center gap-3">
+                <button onclick="closeModal('deleteOverlay')" class="pill-btn pill-no">Cancel</button>
+                <button id="deleteConfirmBtn" class="pill-btn pill-yes" style="background:#ef4444;">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  SCRIPT                                     -->
+<!-- ═══════════════════════════════════════════ -->
+<script>
+const BASE = 'http://localhost:8085/api/v1/custom-categories';
+const PAGE_SIZE = 10;
+
+let allCategories = [];
+let filteredCategories = [];
+let currentPage = 1;
+let searchDebounce = null;
+let pendingDeleteId = null;
+let pendingApprovalId = null;
+let pendingApprovalState = null;
+
+/* ── INIT ── */
+document.addEventListener('DOMContentLoaded', fetchCategories);
+
+/* ── FETCH ALL ── */
+async function fetchCategories() {
+    showTableLoading();
+    try {
+        const res = await fetch(`${BASE}/get-all-categories`);
+        if (!res.ok) throw new Error('Failed to load categories');
+        allCategories = await res.json();
+        filteredCategories = [...allCategories];
+        currentPage = 1;
+        renderTable();
+        updateAddButton();
+    } catch (e) {
+        showTableError(e.message);
+        showToast('error', e.message || 'Could not load categories');
+    }
+}
+
+/* ── ADD BTN STATE ── */
+function updateAddButton() {
+    const btn = document.getElementById('addCatBtn');
+    const note = document.getElementById('limitNote');
+    if (allCategories.length >= 10) {
+        btn.classList.add('btn-disabled');
+        btn.onclick = null;
+        note.classList.remove('hidden');
+    } else {
+        btn.classList.remove('btn-disabled');
+        btn.onclick = openCreateModal;
+        note.classList.add('hidden');
+    }
+}
+
+/* ── SEARCH / DEBOUNCE ── */
+function handleSearch(val) {
+    clearTimeout(searchDebounce);
+    if (val.length === 0) { filteredCategories = [...allCategories]; currentPage = 1; renderTable(); return; }
+    if (val.length < 3) return;
+    searchDebounce = setTimeout(() => {
+        const q = val.toLowerCase();
+        filteredCategories = allCategories.filter(c =>
+            c.productCategory?.toLowerCase().includes(q) ||
+            (c.categoryPath || []).some(p => p.toLowerCase().includes(q)) ||
+            c.productCategoryRedirect?.toLowerCase().includes(q)
+        );
+        currentPage = 1;
+        renderTable();
+    }, 300);
+}
+
+function resetFilters() {
+    document.getElementById('searchInput').value = '';
+    filteredCategories = [...allCategories];
+    currentPage = 1;
+    renderTable();
+}
+
+/* ── RENDER TABLE ── */
+function renderTable() {
+    const tbody = document.getElementById('tableBody');
+    const wrap = document.getElementById('paginationWrap');
+
+    if (!filteredCategories.length) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-16 text-gray-400 text-sm">
+            <i class="fas fa-folder-open text-4xl block mb-3 text-gray-300"></i>No categories found
+        </td></tr>`;
+        wrap.classList.add('hidden');
+        return;
+    }
+
+    const total = filteredCategories.length;
+    const totalPages = Math.ceil(total / PAGE_SIZE);
+    if (currentPage > totalPages) currentPage = totalPages;
+
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const slice = filteredCategories.slice(start, start + PAGE_SIZE);
+
+    tbody.innerHTML = slice.map((c, i) => {
+        const rowClass = c.approved ? 'row-approved' : 'row-pending';
+        const nameClass = c.approved ? 'font-600 text-[#133F53]' : 'font-600 cat-name text-gray-400';
+        return `
+        <tr class="${rowClass}">
+            <td class="px-3 py-2.5 text-gray-600 font-500 text-xs text-center">${start + i + 1}</td>
+            <td class="px-3 py-2.5 font-semibold">
+                <span class="${nameClass} text-sm">${esc(c.productCategory)}</span>
+            </td>
+            <td class="px-3 py-2.5">
+                <div class="flex flex-wrap gap-1">
+                    ${(c.categoryPath || []).slice(0,3).map(p => `<span class="tbl-chip border border-[#415b67]">${esc(p)}</span>`).join('')}
+                    ${(c.categoryPath||[]).length > 3 ? `<span class="tbl-chip" style="color:#D89F34;border-color:#D89F34;">+${c.categoryPath.length-3}</span>` : ''}
+                    ${!(c.categoryPath||[]).length ? `<span class="text-xs text-gray-300 italic">—</span>` : ''}
+                </div>
+            </td>
+            <td class="px-3 py-2.5 text-xs max-w-[130px]">
+                <span class="block truncate text-gray-400" title="${esc(c.categoryPathRedirect)}">${esc(c.categoryPathRedirect)}</span>
+            </td>
+            <td class="px-3 py-2.5 text-center">
+                <button onclick="openApprovalOverlay(${c.categoryId}, ${c.approved})"
+                    class="focus:outline-none" title="${c.approved ? 'Click to revoke' : 'Click to approve'}">
+                    <span class="${c.approved ? 'badge-yes' : 'badge-no'}">${c.approved ? '✓ Yes' : '✗ No'}</span>
+                </button>
+            </td>
+            <td class="px-3 py-2.5 text-center">
+                <span class="${c.trendingMark ? 'badge-yes' : 'badge-no'}">${c.trendingMark ? '✓' : '✗'}</span>
+            </td>
+            <td class="px-3 py-2.5 text-xs whitespace-nowrap" style="color:${c.approved?'#6b7280':'#b0b8be'}">${formatDate(c.createdAt)}</td>
+            <td class="px-3 py-2.5">
+                <div class="flex items-center justify-center gap-1.5">
+                    <button onclick="openViewModal(${c.categoryId})" title="View"
+                        class="w-7 h-7 border border-[#415b67] flex items-center justify-center rounded-lg bg-blue-50 text-blue-500 hover:bg-blue-100 transition">
+                        <i class="fas fa-eye text-xs"></i>
+                    </button>
+                    <button onclick="openEditModal(${c.categoryId})" title="Edit"
+                        class="w-7 h-7 flex border border-[#415b67] items-center justify-center rounded-lg bg-amber-50 text-amber-500 hover:bg-amber-100 transition">
+                        <i class="fas fa-pen text-xs"></i>
+                    </button>
+                    <button onclick="openDeleteOverlay(${c.categoryId})" title="Delete"
+                        class="w-7 h-7 flex border border-[#415b67] items-center justify-center rounded-lg bg-red-50 text-red-400 hover:bg-red-100 transition">
+                        <i class="fas fa-trash text-xs"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+
+    // pagination info
+    wrap.classList.remove('hidden');
+    document.getElementById('paginationInfo').textContent =
+        `Showing ${start + 1}–${Math.min(start + PAGE_SIZE, total)} of ${total} entries`;
+    renderPagination(totalPages);
+}
+
+function renderPagination(totalPages) {
+    const cont = document.getElementById('paginationBtns');
+    let html = `<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>
+                    <i class="fas fa-chevron-left text-xs"></i></button>`;
+    for (let p = 1; p <= totalPages; p++) {
+        if (totalPages > 7 && p > 3 && p < totalPages - 1 && Math.abs(p - currentPage) > 1) {
+            if (p === 4 || p === totalPages - 2) html += `<span class="px-1 text-gray-400 text-sm">…</span>`;
+            continue;
+        }
+        html += `<button class="pg-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
+    }
+    html += `<button class="pg-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>
+                 <i class="fas fa-chevron-right text-xs"></i></button>`;
+    cont.innerHTML = html;
+}
+
+function goPage(p) {
+    const tp = Math.ceil(filteredCategories.length / PAGE_SIZE);
+    if (p < 1 || p > tp) return;
+    currentPage = p;
+    renderTable();
+}
+
+/* ── TABLE STATES ── */
+function showTableLoading() {
+    document.getElementById('tableBody').innerHTML = `<tr><td colspan="8" class="text-center py-16 text-gray-400">
+        <div class="barcode-loader mx-auto mb-3">
+            ${[30,50,40,60,35,55].map((h,i) => `<div class="bar" style="height:${h}px;animation-delay:${i*.1}s"></div>`).join('')}
+        </div><span class="text-sm">Loading…</span></td></tr>`;
+    document.getElementById('paginationWrap').classList.add('hidden');
+}
+
+function showTableError(msg) {
+    document.getElementById('tableBody').innerHTML = `<tr><td colspan="8" class="text-center py-16 text-red-400 text-sm">
+        <i class="fas fa-exclamation-circle text-3xl block mb-2"></i>${esc(msg)}</td></tr>`;
+}
+
+/* ── TOGGLE SWITCH ── */
+function toggleSwitch(trackId, hiddenId) {
+    const track = document.getElementById(trackId);
+    const inp = document.getElementById(hiddenId);
+    const isOn = track.classList.contains('on');
+    if (isOn) { track.classList.remove('on'); inp.value = 'false'; }
+    else       { track.classList.add('on');    inp.value = 'true';  }
+}
+
+function setToggle(trackId, hiddenId, val) {
+    const track = document.getElementById(trackId);
+    const inp   = document.getElementById(hiddenId);
+    if (val) { track.classList.add('on');    inp.value = 'true';  }
+    else      { track.classList.remove('on'); inp.value = 'false'; }
+}
+
+/* ── CREATE MODAL ── */
+function openCreateModal() {
+    if (allCategories.length >= 10) return;
+    resetForm();
+    document.getElementById('formTitle').textContent    = 'Add New Category';
+    document.getElementById('formSubtitle').textContent = 'Fill all fields to create a category';
+    document.getElementById('formSubmitLabel').textContent = 'Create Category';
+    document.getElementById('editCategoryId').value = '';
+    openModal('formOverlay');
+}
+
+/* ── EDIT MODAL ── */
+function openEditModal(id) {
+    const cat = allCategories.find(c => c.categoryId === id);
+    if (!cat) return;
+    resetForm();
+    document.getElementById('formTitle').textContent    = 'Edit Category';
+    document.getElementById('formSubtitle').textContent = `Editing: ${cat.productCategory}`;
+    document.getElementById('formSubmitLabel').textContent = 'Save Changes';
+    document.getElementById('editCategoryId').value    = id;
+    document.getElementById('productCategory').value   = cat.productCategory || '';
+    const paths = cat.categoryPath || [];
+    document.getElementById('subCat1').value = paths[0] || '';
+    document.getElementById('subCat2').value = paths[1] || '';
+    document.getElementById('subCat3').value = paths[2] || '';
+    document.getElementById('productCategoryRedirect').value = cat.productCategoryRedirect || '';
+    document.getElementById('categoryPathRedirect').value    = cat.categoryPathRedirect || '';
+    setToggle('toggleApproved', 'approvedVal',  cat.approved);
+    setToggle('toggleTrending', 'trendingVal',  cat.trendingMark);
+    openModal('formOverlay');
+}
+
+/* ── FORM SUBMIT ── */
+async function handleFormSubmit(e) {
+    e && e.preventDefault();
+    if (!validateForm()) return;
+
+    const isEdit = !!document.getElementById('editCategoryId').value;
+    const id     = document.getElementById('editCategoryId').value;
+
+    const categoryPath = [
+        document.getElementById('subCat1').value.trim(),
+        document.getElementById('subCat2').value.trim(),
+        document.getElementById('subCat3').value.trim(),
+    ].filter(Boolean);
+
+    const payload = {
+        productCategory:         document.getElementById('productCategory').value.trim(),
+        categoryPath,
+        productCategoryRedirect: document.getElementById('productCategoryRedirect').value.trim(),
+        categoryPathRedirect:    document.getElementById('categoryPathRedirect').value.trim(),
+        approved:                document.getElementById('approvedVal').value === 'true',
+        trendingMark:            document.getElementById('trendingVal').value === 'true',
+    };
+
+    const btn  = document.getElementById('formSubmitBtn');
+    const lbl  = document.getElementById('formSubmitLabel');
+    btn.disabled = true;
+    lbl.innerHTML = '<i class="fas fa-circle-notch spin text-xs"></i> Saving…';
+
+    try {
+        const url = isEdit ? `${BASE}/patch-category/${id}` : `${BASE}/adhoc/create`;
+        const method = isEdit ? 'PATCH' : 'POST';
+        const res = await fetch(url, {
+            method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error(isEdit ? 'Update failed' : 'Create failed');
+        closeModal('formOverlay');
+        showToast('success', isEdit ? 'Category updated successfully!' : 'Category created successfully!');
+        await fetchCategories();
+    } catch (err) {
+        showToast('error', err.message || 'Something went wrong');
+    } finally {
+        btn.disabled = false;
+        lbl.textContent = isEdit ? 'Save Changes' : 'Create Category';
+    }
+}
+
+/* ── VALIDATE ── */
+function validateForm() {
+    let ok = true;
+    const required = ['productCategory'];
+    required.forEach(id => {
+        const inp = document.getElementById(id);
+        const err = document.getElementById('err-' + id);
+        if (!inp.value.trim()) {
+            inp.classList.add('error-border'); err.classList.remove('hidden'); ok = false;
+        } else {
+            inp.classList.remove('error-border'); err.classList.add('hidden');
+        }
+    });
+    return ok;
+}
+
+function resetForm() {
+    ['productCategory','subCat1','subCat2','subCat3']
+        .forEach(id => { document.getElementById(id).value = ''; document.getElementById(id).classList.remove('error-border'); });
+    // restore readonly defaults
+    document.getElementById('productCategoryRedirect').value = '/HomeCategory/homecategory.html';
+    document.getElementById('categoryPathRedirect').value    = '/HomeSub/homesubcategory.html';
+    document.querySelectorAll('.error-msg').forEach(el => el.classList.add('hidden'));
+    setToggle('toggleApproved','approvedVal',false);
+    setToggle('toggleTrending','trendingVal',false);
+}
+
+/* ── VIEW MODAL ── */
+function openViewModal(id) {
+    const cat = allCategories.find(c => c.categoryId === id);
+    if (!cat) return;
+    document.getElementById('viewCatId').textContent = `Category ID: ${cat.categoryId}`;
+    document.getElementById('viewBody').innerHTML = `
+        <div class="bg-[#f7f7f0] rounded-xl p-4 space-y-1 border border-[#D89F34]">
+            <p class="text-xs font-700 text-gray-800 font-semibold tracking-wide">Product Main Category :</p>
+            <p class="text-base font-semibold font-700 text-[#133F53]">${esc(cat.productCategory)}</p>
+        </div>
+        <div class="bg-[#f7f7f0] rounded-xl p-4 border border-[#D89F34]">
+            <p class="text-xs font-700 text-gray-800 font-semibold tracking-wide mb-2">Sub-Categories List :</p>
+            <div class="flex flex-wrap gap-2">
+                ${(cat.categoryPath||[]).length
+                    ? (cat.categoryPath).map(p => `<span class="detail-chip font-semibold">${esc(p)}</span>`).join('')
+                    : '<span class="text-sm text-gray-400">None</span>'}
+            </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+            <div class="bg-[#f7f7f0] rounded-xl p-4 border border-[#D89F34]">
+                <p class="text-xs font-700 font-semibold text-gray-800  tracking-wide mb-1">Product Redirect Link :</p>
+                <p class="text-xs text-[#133F53] break-all">${esc(cat.productCategoryRedirect)}</p>
+            </div>
+            <div class="bg-[#f7f7f0] rounded-xl p-4 border border-[#D89F34]">
+                <p class="text-xs font-700 font-semibold text-gray-800  tracking-wide mb-1">Category Path Redirect :</p>
+                <p class="text-xs text-[#133F53] break-all">${esc(cat.categoryPathRedirect)}</p>
+            </div>
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+            <div class="bg-[#f7f7f0] rounded-xl p-4 text-center border border-[#D89F34]">
+                <p class="text-xs font-700 text-gray-800 font-semibold  tracking-wide mb-2">Approved</p>
+                <span class="${cat.approved ? 'badge-yes' : 'badge-no'}">${cat.approved ? '✓ Yes' : '✗ No'}</span>
+            </div>
+            <div class="bg-[#f7f7f0] rounded-xl font-semibold p-4 text-center border border-[#D89F34]">
+                <p class="text-xs font-700 text-gray-800  tracking-wide mb-2">Trending</p>
+                <span class="${cat.trendingMark ? 'badge-yes' : 'badge-no'}">${cat.trendingMark ? '✓ Yes' : '✗ No'}</span>
+            </div>
+            <div class="bg-[#f7f7f0] rounded-xl p-4 text-center border border-[#D89F34]">
+                <p class="text-xs font-700 text-gray-800  tracking-wide mb-1">Created At</p>
+                <p class="text-xs text-gray-800 mt-1">${formatDate(cat.createdAt)}</p>
+            </div>
+        </div>
+        <div class="flex justify-end gap-2 pt-1">
+            <button onclick="closeModal('viewOverlay'); openEditModal(${cat.categoryId})"
+                class="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-500 border border-amber-200 bg-amber-50 text-amber-600 hover:bg-amber-100 transition">
+                <i class="fas fa-pen text-xs"></i> Edit
+            </button>
+            <button onclick="closeModal('viewOverlay'); openDeleteOverlay(${cat.categoryId})"
+                class="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-500 border border-red-200 bg-red-50 text-red-500 hover:bg-red-100 transition">
+                <i class="fas fa-trash text-xs"></i> Delete
+            </button>
+        </div>
+    `;
+    openModal('viewOverlay');
+}
+
+/* ── APPROVAL OVERLAY ── */
+function openApprovalOverlay(id, currentApproved) {
+    pendingApprovalId    = id;
+    pendingApprovalState = !currentApproved;
+
+    const icon  = document.getElementById('approvalIcon');
+    const title = document.getElementById('approvalTitle');
+    const desc  = document.getElementById('approvalDesc');
+    const btn   = document.getElementById('approvalConfirmBtn');
+
+    if (pendingApprovalState) {
+        icon.style.background = '#dcfce7';
+        icon.innerHTML = '<i class="fas fa-shield-check text-2xl text-green-500"></i>';
+        title.textContent = 'Approve Category?';
+        desc.textContent  = 'This category will be marked as approved and visible to users.';
+        btn.textContent   = 'Yes, Approve';
+        btn.className     = 'pill-btn pill-yes';
+    } else {
+        icon.style.background = '#fee2e2';
+        icon.innerHTML = '<i class="fas fa-ban text-2xl text-red-500"></i>';
+        title.textContent = 'Revoke Approval?';
+        desc.textContent  = 'This category will be marked as not approved and hidden from users.';
+        btn.textContent   = 'Yes, Revoke';
+        btn.className     = 'pill-btn';
+        btn.style.cssText = 'background:#ef4444;color:#fff;border-radius:999px;padding:8px 26px;font-size:.88rem;font-weight:600;cursor:pointer;';
+    }
+    btn.onclick = confirmApproval;
+    openModal('approvalOverlay');
+}
+
+async function confirmApproval() {
+    const cat = allCategories.find(c => c.categoryId === pendingApprovalId);
+    if (!cat) return;
+    const btn = document.getElementById('approvalConfirmBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-circle-notch spin text-xs mr-1"></i> Updating…';
+    try {
+        const payload = { ...cat, approved: pendingApprovalState };
+        delete payload.categoryId; delete payload.createdAt;
+        const res = await fetch(`${BASE}/patch-category/${pendingApprovalId}`, {
+            method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error('Update failed');
+        closeModal('approvalOverlay');
+        showToast('success', `Category ${pendingApprovalState ? 'approved' : 'approval revoked'} successfully!`);
+        await fetchCategories();
+    } catch(e) {
+        showToast('error', e.message || 'Failed to update approval');
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+/* ── DELETE ── */
+function openDeleteOverlay(id) {
+    pendingDeleteId = id;
+    const btn = document.getElementById('deleteConfirmBtn');
+    btn.onclick = confirmDelete;
+    openModal('deleteOverlay');
+}
+
+async function confirmDelete() {
+    const btn = document.getElementById('deleteConfirmBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-circle-notch spin text-xs mr-1"></i> Deleting…';
+    try {
+        const res = await fetch(`${BASE}/delete-category/${pendingDeleteId}`, { method:'DELETE' });
+        if (!res.ok) throw new Error('Delete failed');
+        closeModal('deleteOverlay');
+        showToast('success', 'Category deleted successfully!');
+        await fetchCategories();
+    } catch(e) {
+        showToast('error', e.message || 'Delete failed');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Delete';
+    }
+}
+
+/* ── MODAL HELPERS ── */
+function openModal(id) { document.getElementById(id).classList.add('show'); document.body.style.overflow='hidden'; }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); document.body.style.overflow=''; }
+function handleBackdropClick(e, id) { if (e.target.id === id) closeModal(id); }
+
+/* ── TOAST ── */
+function showToast(type, msg) {
+    const icons = { success:'fa-check-circle text-green-500', error:'fa-times-circle text-red-500', info:'fa-info-circle text-blue-500' };
+    const cont = document.getElementById('toast-container');
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.innerHTML = `<i class="fas ${icons[type] || icons.info} text-lg flex-shrink-0"></i><span>${esc(msg)}</span>`;
+    cont.appendChild(el);
+    setTimeout(() => { el.style.opacity='0'; el.style.transform='translateX(60px)'; el.style.transition='.3s'; setTimeout(() => el.remove(), 300); }, 3500);
+}
+
+/* ── UTILS ── */
+function esc(str) { return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function formatDate(dt) {
+    if (!dt) return '—';
+    const d = new Date(dt);
+    return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) + ' ' +
+           d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+}
+
+/* ── Clear error on input ── */
+document.addEventListener('input', e => {
+    if (e.target.tagName === 'INPUT' && e.target.id) {
+        e.target.classList.remove('error-border');
+        const err = document.getElementById('err-'+e.target.id);
+        if (err) err.classList.add('hidden');
+    }
+});
+</script>
 </body>
 </html>
