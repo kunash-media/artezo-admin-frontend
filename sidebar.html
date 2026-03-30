@@ -1,11 +1,9 @@
 <aside id="sidebar" class="bg-[#F8F8EA] h-screen fixed left-0 top-0 transition-all duration-300 z-30 shadow-xl"
     style="width: 288px;">
+    
     <!-- Logo Area -->
     <div class="flex items-center justify-between px-6 py-3 border-b border-[#e2dccd]">
-        <!-- Logo -->
         <img src="/assets/Artezo-logo.jpg" alt="Artezo Logo" class="h-10 w-auto">
-
-        <!-- Collapse Button -->
         <button id="collapse-btn" class="p-2 rounded-lg hover:bg-[#e5e0d1] transition-colors">
             <i class="fa-solid fa-chevron-left text-[#957A54] transition-transform duration-300" id="collapse-icon"></i>
         </button>
@@ -13,79 +11,81 @@
 
     <!-- Navigation Menu -->
     <nav class="px-4 py-8 space-y-1 overflow-y-auto h-[calc(100vh-60px)]">
-        <!-- Dashboard -->
+        
+        <!-- 1. Dashboard -->
         <a href="/dashboard.html" class="nav-link active flex items-center gap-4 px-4 py-3 rounded-lg transition-colors"
             data-active="true">
             <i class="fa-solid fa-chart-pie w-5 text-center flex-shrink-0" style="color: #957A54;"></i>
             <span class="nav-text whitespace-nowrap transition-opacity duration-300">Dashboard</span>
         </a>
 
-        <!-- Product Management -->
-        <a href="/Product_Management/products.html"
-            class="nav-link flex items-center gap-4 px-4 py-3 rounded-lg transition-colors text-[#1e2f3a] hover:bg-[#e5e0d1]">
-            <i class="fa-solid fa-cubes w-5 text-center flex-shrink-0" style="color: #957A54;"></i>
-            <span class="nav-text whitespace-nowrap transition-opacity duration-300">Product Management</span>
-        </a>
-
-        <!-- Inventory Management -->
-        <a href="/Inventory_Management/inventory.html"
-            class="nav-link flex items-center gap-4 px-4 py-3 rounded-lg transition-colors text-[#1e2f3a] hover:bg-[#e5e0d1]">
-            <i class="fa-solid fa-warehouse w-5 text-center flex-shrink-0" style="color: #957A54;"></i>
-            <span class="nav-text whitespace-nowrap transition-opacity duration-300">Inventory Management</span>
-        </a>
-
-        <a href="/ProductReview_Management/productReview.html"
-            class="nav-link flex items-center gap-4 px-4 py-3 rounded-lg transition-colors text-[#1e2f3a] hover:bg-[#e5e0d1]">
-<i class="fa-solid fa-star w-5 text-center flex-shrink-0" style="color: #957A54;"></i>            <span class="nav-text whitespace-nowrap transition-opacity duration-300">Product-Review Management</span>
-        </a>
-
-
-        <!-- Order Management -->
+        <!-- 2. Order Management (Highest priority after Dashboard) -->
         <a href="/Order_Management/orders.html"
             class="nav-link flex items-center gap-4 px-4 py-3 rounded-lg transition-colors text-[#1e2f3a] hover:bg-[#e5e0d1]">
             <i class="fa-solid fa-truck-fast w-5 text-center flex-shrink-0" style="color: #957A54;"></i>
             <span class="nav-text whitespace-nowrap transition-opacity duration-300">Order Management</span>
         </a>
 
-        <!-- Coupon/Discount -->
+        <!-- 3. Product Management -->
+        <a href="/Product_Management/products.html"
+            class="nav-link flex items-center gap-4 px-4 py-3 rounded-lg transition-colors text-[#1e2f3a] hover:bg-[#e5e0d1]">
+            <i class="fa-solid fa-cubes w-5 text-center flex-shrink-0" style="color: #957A54;"></i>
+            <span class="nav-text whitespace-nowrap transition-opacity duration-300">Product Management</span>
+        </a>
+
+        <!-- 4. Inventory Management -->
+        <a href="/Inventory_Management/inventory.html"
+            class="nav-link flex items-center gap-4 px-4 py-3 rounded-lg transition-colors text-[#1e2f3a] hover:bg-[#e5e0d1]">
+            <i class="fa-solid fa-warehouse w-5 text-center flex-shrink-0" style="color: #957A54;"></i>
+            <span class="nav-text whitespace-nowrap transition-opacity duration-300">Inventory Management</span>
+        </a>
+
+        <!-- 5. Marketing & Promotions -->
         <a href="/Coupon_Management/coupon.html"
             class="nav-link flex items-center gap-4 px-4 py-3 rounded-lg transition-colors text-[#1e2f3a] hover:bg-[#e5e0d1]">
             <i class="fa-solid fa-tags w-5 text-center flex-shrink-0" style="color: #957A54;"></i>
-            <span class="nav-text whitespace-nowrap transition-opacity duration-300">Coupon/Discount</span>
+            <span class="nav-text whitespace-nowrap transition-opacity duration-300">Coupons & Discounts</span>
         </a>
 
-        <!-- Banner Management -->
         <a href="/Banner_Management/banner.html"
             class="nav-link flex items-center gap-4 px-4 py-3 rounded-lg transition-colors text-[#1e2f3a] hover:bg-[#e5e0d1]">
             <i class="fa-solid fa-flag w-5 text-center flex-shrink-0" style="color: #957A54;"></i>
             <span class="nav-text whitespace-nowrap transition-opacity duration-300">Banner Management</span>
         </a>
 
+        <!-- 6. Catalog Organization -->
         <a href="/Category_Management/custom-category.html"
             class="nav-link flex items-center gap-4 px-4 py-3 rounded-lg transition-colors text-[#1e2f3a] hover:bg-[#e5e0d1]">
-            <i class="fa-solid fa-solidLarge fa-clipboard w-5 text-center flex-shrink-0" style="color: #957A54;"></i>
+            <i class="fa-solid fa-clipboard w-5 text-center flex-shrink-0" style="color: #957A54;"></i>
             <span class="nav-text whitespace-nowrap transition-opacity duration-300">Category Management</span>
         </a>
 
-        <!-- User Management -->
+        <!-- 7. Customer & Feedback -->
         <a href="/User_Management/user.html"
             class="nav-link flex items-center gap-4 px-4 py-3 rounded-lg transition-colors text-[#1e2f3a] hover:bg-[#e5e0d1]">
             <i class="fa-solid fa-users w-5 text-center flex-shrink-0" style="color: #957A54;"></i>
             <span class="nav-text whitespace-nowrap transition-opacity duration-300">User Management</span>
         </a>
 
-        <!-- Report Sales -->
-       <a href="/Report_Sales/reports.html"
+        <a href="/ProductReview_Management/productReview.html"
             class="nav-link flex items-center gap-4 px-4 py-3 rounded-lg transition-colors text-[#1e2f3a] hover:bg-[#e5e0d1]">
-            <i class="fa-solid fa-chart-bar w-5 text-center flex-shrink-0" style="color: #957A54;"></i>
-            <span class="nav-text whitespace-nowrap transition-opacity duration-300">Report Sales</span>
+            <i class="fa-solid fa-star w-5 text-center flex-shrink-0" style="color: #957A54;"></i>
+            <span class="nav-text whitespace-nowrap transition-opacity duration-300">Product Reviews</span>
         </a>
 
-        <!-- Contact -->
+        <!-- 8. Support -->
         <a href="/Contact_Management/contact.html"
             class="nav-link flex items-center gap-4 px-4 py-3 rounded-lg transition-colors text-[#1e2f3a] hover:bg-[#e5e0d1]">
             <i class="fa-solid fa-headset w-5 text-center flex-shrink-0" style="color: #957A54;"></i>
-            <span class="nav-text whitespace-nowrap transition-opacity duration-300">Contact</span>
+            <span class="nav-text whitespace-nowrap transition-opacity duration-300">Contact Inquiries</span>
         </a>
+
+        <!-- 9. Analytics / Reports (Last among main items) -->
+        <a href="/Report_Sales/reports.html"
+            class="nav-link flex items-center gap-4 px-4 py-3 rounded-lg transition-colors text-[#1e2f3a] hover:bg-[#e5e0d1]">
+            <i class="fa-solid fa-chart-bar w-5 text-center flex-shrink-0" style="color: #957A54;"></i>
+            <span class="nav-text whitespace-nowrap transition-opacity duration-300">Sales Reports</span>
+        </a>
+
     </nav>
 </aside>

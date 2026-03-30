@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>login/signup · redirect to dashboard</title>
+  <title>Admin Login · Artezo</title>
   <style>
     * {
       margin: 0;
@@ -21,27 +21,24 @@
       padding: 1.5rem;
     }
 
-    /* main card – using the four colours */
     .card {
       width: 100%;
       max-width: 480px;
       background: #F8F8EA;
       border-radius: 2.5rem;
-      box-shadow: 
+      box-shadow:
         0 25px 45px -12px rgba(19, 63, 83, 0.3),
         inset 0 1px 3px rgba(255,255,255,0.9);
       overflow: hidden;
       border: 1px solid rgba(216, 159, 52, 0.2);
-      transition: box-shadow 0.3s;
       animation: cardEnter 0.6s ease-out;
     }
 
     @keyframes cardEnter {
-      0% { opacity: 0; transform: scale(0.96) translateY(15px); }
-      100% { opacity: 1; transform: scale(1) translateY(0); }
+      0%   { opacity: 0; transform: scale(0.96) translateY(15px); }
+      100% { opacity: 1; transform: scale(1)    translateY(0);     }
     }
 
-    /* panel with warm clay background */
     .form-panel {
       background: #F8F8EA;
       padding: 2.8rem 2.2rem 2.5rem;
@@ -88,30 +85,23 @@
       transition: width 0.3s ease;
     }
 
-    .form-panel:hover .gold-line {
-      width: 130px;
-    }
+    .form-panel:hover .gold-line { width: 130px; }
 
     .form-container {
-      transition: opacity 0.3s ease, transform 0.3s ease;
-      min-height: 290px;
+      min-height: 240px;
       display: flex;
       flex-direction: column;
       justify-content: center;
     }
 
-    .form-container.fade-swap {
-      animation: formSwap 0.4s ease;
-    }
-
     @keyframes formSwap {
-      0% { opacity: 0.2; transform: translateX(6px); }
-      100% { opacity: 1; transform: translateX(0); }
+      0%   { opacity: 0.2; transform: translateX(6px); }
+      100% { opacity: 1;   transform: translateX(0);   }
     }
 
-    .input-group {
-      margin-bottom: 1.5rem;
-    }
+    .fade-swap { animation: formSwap 0.4s ease; }
+
+    .input-group { margin-bottom: 1.5rem; }
 
     .input-group input {
       width: 100%;
@@ -123,8 +113,6 @@
       color: #957A54;
       outline: none;
       transition: all 0.25s;
-      backdrop-filter: blur(4px);
-      
     }
 
     .input-group input:focus {
@@ -133,9 +121,12 @@
       box-shadow: 0 0 0 4px rgba(216, 159, 52, 0.25);
     }
 
-    .input-group input::placeholder {
-      color:#133F53;
-      font-weight: 300;
+    .input-group input::placeholder { color: #133F53; font-weight: 300; }
+
+    /* disabled state while loading */
+    .input-group input:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
     .btn {
@@ -152,57 +143,60 @@
       box-shadow: 0 6px 0 #8b621f, 0 8px 18px rgba(0,0,0,0.2);
       letter-spacing: 0.3px;
       margin-top: 0.8rem;
+      position: relative;
     }
 
-    .btn:hover {
+    .btn:hover:not(:disabled) {
       background: #e0ae47;
       transform: translateY(-2px);
       box-shadow: 0 8px 0 #8b621f, 0 12px 24px rgba(0,0,0,0.2);
     }
 
-    .btn:active {
+    .btn:active:not(:disabled) {
       transform: translateY(4px);
       box-shadow: 0 2px 0 #8b621f, 0 5px 12px rgba(0,0,0,0.15);
     }
 
-    .toggle-link {
-      text-align: center;
-      margin-top: 2rem;
-      font-weight: 400;
-      color: rgba(58, 58, 54, 0.9);
-      font-size: 1.05rem;
-    }
-
-    .toggle-link a {
-      color: #D89F34;
-      font-weight: 700;
-      cursor: pointer;
-      text-decoration: none;
-      border-bottom: 2px solid transparent;
-      transition: 0.2s;
-      margin-left: 0.4rem;
-      white-space: nowrap;
-    }
-
-    .toggle-link a:hover {
-      border-bottom-color: #D89F34;
-    }
-
-    .form-footer {
-      margin-top: 1.2rem;
-      font-size: 0.9rem;
-      text-align: center;
+    .btn:disabled {
       opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
     }
 
-    /* Modal Styles */
+    .btn .spinner {
+      display: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(19,63,83,0.3);
+      border-top-color: #133F53;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto;
+    }
+
+    .btn.loading .btn-text { display: none; }
+    .btn.loading .spinner  { display: block; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* error message under inputs */
+    .error-msg {
+      color: #c0392b;
+      font-size: 0.88rem;
+      margin-top: 1rem;
+      text-align: center;
+      min-height: 1.2rem;
+      font-weight: 500;
+      display: none;
+    }
+
+    .error-msg.visible { display: block; }
+
+    /* Modal */
     .modal-overlay {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: rgba(0, 0, 0, 0.5);
+      inset: 0;
+      background: rgba(0,0,0,0.5);
       display: none;
       align-items: center;
       justify-content: center;
@@ -210,9 +204,7 @@
       backdrop-filter: blur(4px);
     }
 
-    .modal-overlay.active {
-      display: flex;
-    }
+    .modal-overlay.active { display: flex; }
 
     .modal-content {
       background: #F8F8EA;
@@ -220,19 +212,13 @@
       padding: 2rem;
       max-width: 400px;
       width: 90%;
-      box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 25px 45px -12px rgba(0,0,0,0.3);
       animation: modalSlideIn 0.3s ease;
     }
 
     @keyframes modalSlideIn {
-      0% {
-        opacity: 0;
-        transform: translateY(-20px);
-      }
-      100% {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      0%   { opacity: 0; transform: translateY(-20px); }
+      100% { opacity: 1; transform: translateY(0);     }
     }
 
     .modal-header {
@@ -242,11 +228,7 @@
       margin-bottom: 1.5rem;
     }
 
-    .modal-header h3 {
-      color: #133F53;
-      font-size: 1.5rem;
-      font-weight: 600;
-    }
+    .modal-header h3 { color: #133F53; font-size: 1.5rem; font-weight: 600; }
 
     .modal-close {
       background: none;
@@ -257,9 +239,7 @@
       transition: color 0.2s;
     }
 
-    .modal-close:hover {
-      color: #133F53;
-    }
+    .modal-close:hover { color: #133F53; }
 
     .modal-body {
       color: #133F53;
@@ -269,10 +249,7 @@
       text-align: center;
     }
 
-    .modal-footer {
-      display: flex;
-      justify-content: center;
-    }
+    .modal-footer { display: flex; justify-content: center; }
 
     .modal-btn {
       background: #D89F34;
@@ -293,11 +270,6 @@
       box-shadow: 0 6px 0 #8b621f;
     }
 
-    .modal-btn:active {
-      transform: translateY(2px);
-      box-shadow: 0 2px 0 #8b621f;
-    }
-
     @media (max-width: 500px) {
       .form-panel { padding: 2rem 1.5rem; }
       h2 { font-size: 1.9rem; }
@@ -305,252 +277,158 @@
   </style>
 </head>
 <body>
+
   <div class="card">
-    <div class="form-panel" id="formPanel">
-      <h2 id="panelHeading">welcome<span>back</span></h2>
+    <div class="form-panel">
+      <h2>welcome<span>back</span></h2>
       <div class="gold-line"></div>
 
-      <!-- form container: dynamic injection -->
-      <div class="form-container" id="formContainer"></div>
+      <div class="form-container fade-swap">
+        <form id="loginForm">
 
-      <!-- toggle text & link -->
-      <div class="toggle-link" id="toggleWrapper">
-        <span id="togglePreText">no account?</span>
-        <a id="toggleAction" href="#">create account →</a>
+          <div class="input-group">
+            <input
+              type="tel"
+              id="mobile"
+              name="mobile"
+              placeholder="mobile number"
+              maxlength="10"
+              pattern="[0-9]{10}"
+              required
+            />
+          </div>
+
+          <div class="input-group">
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="password"
+              required
+            />
+          </div>
+
+          <!-- inline error message -->
+          <div class="error-msg" id="errorMsg"></div>
+
+          <button type="submit" class="btn" id="loginBtn">
+            <span class="btn-text">sign in</span>
+            <span class="spinner"></span>
+          </button>
+
+        </form>
       </div>
-     
+
     </div>
   </div>
 
-  <!-- Message Modal -->
+  <!-- Modal for errors/success -->
   <div class="modal-overlay" id="messageModal">
     <div class="modal-content">
       <div class="modal-header">
         <h3 id="modalTitle">Message</h3>
         <button class="modal-close" id="modalClose">&times;</button>
       </div>
-      <div class="modal-body" id="modalMessage">
-        Your message here
-      </div>
+      <div class="modal-body" id="modalMessage">Your message here</div>
       <div class="modal-footer">
         <button class="modal-btn" id="modalOk">OK</button>
       </div>
     </div>
   </div>
 
+  <!-- ① load auth.js first -->
+  <script src="/js/auth.js"></script>
+
+  <!-- ② login page logic -->
   <script>
-    (function() {
-      // ----- colour palette used: #957A54, #133F53, #F8F8EA, #D89F34 -----
+    // ── redirect away if already logged in ──
+    document.addEventListener('DOMContentLoaded', () => {
+      Auth.redirectIfLoggedIn();
+    });
+    const loginForm  = document.getElementById('loginForm');
+    const mobileInput = document.getElementById('mobile');
+    const passwordInput = document.getElementById('password');
+    const loginBtn   = document.getElementById('loginBtn');
+    const errorMsg   = document.getElementById('errorMsg');
 
-      // DOM elements
-      const heading = document.getElementById('panelHeading');
-      const formContainer = document.getElementById('formContainer');
-      const togglePre = document.getElementById('togglePreText');
-      const toggleLink = document.getElementById('toggleAction');
+    // modal
+    const modal      = document.getElementById('messageModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalMsg   = document.getElementById('modalMessage');
+    const modalClose = document.getElementById('modalClose');
+    const modalOk    = document.getElementById('modalOk');
 
-      // Modal elements
-      const modalOverlay = document.getElementById('messageModal');
-      const modalTitle = document.getElementById('modalTitle');
-      const modalMessage = document.getElementById('modalMessage');
-      const modalClose = document.getElementById('modalClose');
-      const modalOk = document.getElementById('modalOk');
+    function showModal(title, message) {
+      modalTitle.textContent = title;
+      modalMsg.textContent   = message;
+      modal.classList.add('active');
+    }
 
-      // state: true = login showing, false = signup showing
-      let isLogin = true;   // initial: login
+    function hideModal() { modal.classList.remove('active'); }
 
-      // Store the last signed up email for auto-fill
-      let lastSignedUpEmail = '';
+    modalClose.addEventListener('click', hideModal);
+    modalOk.addEventListener('click', hideModal);
+    modal.addEventListener('click', e => { if (e.target === modal) hideModal(); });
 
-      // Modal functions
-      function showModal(title, message) {
-        modalTitle.textContent = title;
-        modalMessage.textContent = message;
-        modalOverlay.classList.add('active');
-        document.body.style.overflow = 'hidden';
+    function showError(msg) {
+      errorMsg.textContent = msg;
+      errorMsg.classList.add('visible');
+    }
+
+    function clearError() {
+      errorMsg.textContent = '';
+      errorMsg.classList.remove('visible');
+    }
+
+    function setLoading(loading) {
+      loginBtn.classList.toggle('loading', loading);
+      loginBtn.disabled = loading;
+      mobileInput.disabled  = loading;
+      passwordInput.disabled = loading;
+    }
+
+    // ── form submit ──
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearError();
+
+      const mobile   = mobileInput.value.trim();
+      const password = passwordInput.value;
+
+      // basic client-side validation
+      if (mobile.length !== 10 || !/^\d{10}$/.test(mobile)) {
+        showError('Enter a valid 10-digit mobile number');
+        return;
       }
 
-      function hideModal() {
-        modalOverlay.classList.remove('active');
-        document.body.style.overflow = '';
+      if (password.length < 6) {
+        showError('Password must be at least 6 characters');
+        return;
       }
 
-      // Close modal events
-      modalClose.addEventListener('click', hideModal);
-      modalOk.addEventListener('click', hideModal);
-      modalOverlay.addEventListener('click', (e) => {
-        if (e.target === modalOverlay) {
-          hideModal();
-        }
-      });
+      setLoading(true);
 
-      // ----- form HTML builders with onsubmit logic -----
-      function getLoginForm() {
-        return `
-          <form id="dynamicForm" onsubmit="event.preventDefault(); handleLogin(this);" class="fade-swap">
-            <div class="input-group">
-              <input type="email" name="email" placeholder="work email" required value="${lastSignedUpEmail}">
-            </div>
-            <div class="input-group">
-              <input type="password" name="password" placeholder="password" required>
-            </div>
-            <button type="submit" class="btn">sign in</button>
-          </form>
-        `;
-      }
+      // ── call backend via auth.js ──
+      const result = await Auth.login(mobile, password);
 
-      function getSignupForm() {
-        return `
-          <form id="dynamicForm" onsubmit="event.preventDefault(); handleSignup(this);" class="fade-swap">
-            <div class="input-group">
-              <input type="text" name="fullName" placeholder="full name" required>
-            </div>
-            <div class="input-group">
-              <input type="email" name="email" placeholder="email" required>
-            </div>
-            <div class="input-group">
-              <input type="password" name="password" placeholder="create password" required>
-            </div>
-            <button type="submit" class="btn">sign up</button>
-          </form>
-        `;
-      }
+      setLoading(false);
 
-      // ----- global functions (called from form submit) -----
-      window.handleSignup = function(form) {
-        // get values
-        const fullName = form.fullName.value;
-        const email = form.email.value;
-        const password = form.password.value;
-
-        if (!fullName || !email || !password) {
-          showModal('Error', 'Please fill in all fields');
-          return;
-        }
-
-        // Get existing users from localStorage
-        const users = JSON.parse(localStorage.getItem('users') || '[]');
-        
-        // Check if user already exists
-        const existingUser = users.find(u => u.email === email);
-        if (existingUser) {
-          showModal('Error', 'User with this email already exists');
-          return;
-        }
-
-        // Create new user
-        const newUser = {
-          name: fullName,
-          email: email,
-          password: password,
-          createdAt: new Date().toISOString()
-        };
-
-        // Add to users array
-        users.push(newUser);
-        localStorage.setItem('users', JSON.stringify(users));
-
-        // Store the email for auto-fill in login form
-        lastSignedUpEmail = email;
-
-        // Show success modal
-        showModal('Success', 'Account created successfully! Please login with your credentials.');
-
-        // Switch to login form after modal is closed
-        const checkModalClosed = setInterval(() => {
-          if (!modalOverlay.classList.contains('active')) {
-            clearInterval(checkModalClosed);
-            isLogin = true;
-            renderForm();
-          }
-        }, 100);
-      };
-
-      window.handleLogin = function(form) {
-        const email = form.email.value;
-        const password = form.password.value;
-
-        // Get existing users from localStorage
-        const users = JSON.parse(localStorage.getItem('users') || '[]');
-        
-        // Find user with matching email and password
-        const user = users.find(u => u.email === email && u.password === password);
-        
-        if (user) {
-          // Store current user data
-          const currentUser = {
-            name: user.name,
-            email: user.email,
-            initials: user.name.charAt(0).toUpperCase()
-          };
-
-          // Save to localStorage
-          localStorage.setItem('currentUser', JSON.stringify(currentUser));
-          localStorage.setItem('isLoggedIn', 'true');
-          localStorage.setItem('userName', user.name);
-          localStorage.setItem('lastLoggedInEmail', user.email);
-
-          // Show success modal before redirect
-          showModal('Welcome!', `Welcome back, ${user.name}! Redirecting to dashboard...`);
-
-          // Redirect to dashboard after a short delay
-          setTimeout(() => {
-            window.location.href = '/dashboard.html';
-          }, 1500);
-        } else {
-          showModal('Error', 'Invalid email or password');
-        }
-      };
-
-      // function to update UI based on current state (isLogin)
-      function renderForm() {
-        // add fade animation class
-        formContainer.classList.add('fade-swap');
-
-        if (isLogin) {
-          // login view
-          formContainer.innerHTML = getLoginForm();
-          heading.innerHTML = 'welcome<span>back</span>';
-          togglePre.innerText = 'no account?';
-          toggleLink.innerText = 'create account →';
-        } else {
-          // signup view
-          formContainer.innerHTML = getSignupForm();
-          heading.innerHTML = 'join<span>now</span>';
-          togglePre.innerText = 'already member?';
-          toggleLink.innerText = 'sign in →';
-        }
-
-        // remove animation class after a short while
+      if (result.success) {
+        // short success flash before redirect
+        showModal('Welcome!', 'Login successful. Redirecting to dashboard...');
         setTimeout(() => {
-          formContainer.classList.remove('fade-swap');
-        }, 400);
+          window.location.href = '/dashboard.html';
+        }, 1200);
+      } else {
+        showError(result.message);
       }
+    });
 
-      // initial render (login)
-      renderForm();
-
-      // toggle click handler – swap between login / signup
-      toggleLink.addEventListener('click', function(e) {
-        e.preventDefault();
-
-        // flip the state
-        isLogin = !isLogin;
-        renderForm();
-
-        // subtle card feedback
-        document.querySelector('.card').style.boxShadow = '0 25px 45px -8px rgba(216,159,52,0.5), inset 0 1px 3px #fff4df';
-        setTimeout(() => {
-          document.querySelector('.card').style.boxShadow = '0 25px 45px -12px rgba(19, 63, 83, 0.3), inset 0 1px 3px rgba(255,255,255,0.9)';
-        }, 200);
-      });
-
-    })();
+    // only allow digits in mobile field
+    mobileInput.addEventListener('input', () => {
+      mobileInput.value = mobileInput.value.replace(/\D/g, '');
+    });
   </script>
 
-  <style>
-    .toggle-link a { cursor: pointer; }
-    .form-container { will-change: transform, opacity; }
-    ::placeholder { opacity: 0.8; }
-  </style>
 </body>
 </html>
