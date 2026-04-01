@@ -47,6 +47,12 @@ function resetForm() {
     bannerCounter = 0;
     stepCounter = 0;
 
+    //custom fields patch
+    customFieldCounter = 0;
+    safeClear('custom-fields-container');
+    document.getElementById('custom-fields-section').classList.add('hidden');
+
+
     document.getElementById('variants-section').classList.add('hidden');
     document.getElementById('has-variants').checked = false;
 
@@ -137,6 +143,37 @@ async function openForm(mode = 'create', product = null, readOnly = false) {
             document.getElementById('global-tags').value = (full.globalTags || []).join(', ');
             document.getElementById('addon-keys').value = (full.addonKeys || []).join(', ');
             document.getElementById('youtube-url').value = full.youtubeUrl || '';
+
+            // PATCH: Populate custom fields on edit/view
+            if (full.customFields) {
+                let fields = full.customFields;
+                // Handle if stored as JSON string in DB
+                if (typeof fields === 'string') {
+                    try { fields = JSON.parse(fields); } catch { fields = []; }
+                }
+                if (Array.isArray(fields) && fields.length > 0) {
+                    document.getElementById('is-customizable').checked = true;
+                    document.getElementById('custom-fields-section').classList.remove('hidden');
+                    fields.forEach(f => {
+                        addCustomField();
+                        const blocks = document.querySelectorAll('.custom-field-block');
+                        const last = blocks[blocks.length - 1];
+
+                        last.querySelector('.cf-fieldname').value = f.fieldName || '';
+                        const typeEl = last.querySelector('.cf-fieldtype');
+                        typeEl.value = f.fieldInputType || 'text';
+                        last.querySelector('.cf-note').value = f.note || '';
+
+                        // PATCH: restore dropdown options if type is dropdown
+                        if (f.fieldInputType === 'dropdown') {
+                            last.querySelector('.cf-dropdown-options').classList.remove('hidden');
+                            const opts = Array.isArray(f.dropdownOptions) ? f.dropdownOptions : [];
+                            opts.forEach(opt => last._addDropdownOption && last._addDropdownOption(opt));
+                        }
+                    });
+                }
+            }
+            // END PATCH populate
 
             // Previews
             if (full.mainImage) {
@@ -318,6 +355,41 @@ const installationStepTemplate = `
     </div>
 </div>`;
 
+// PATCH: Custom field template
+const customFieldTemplate = `
+<div class="custom-field-block p-4 border border-gray-200 rounded-lg space-y-3 bg-gray-50">
+    <div class="flex justify-between items-center">
+        <h4 class="font-medium text-gray-900 text-sm">Field <span class="field-index"></span></h4>
+        <button type="button" class="remove-custom-field text-red-500 hover:text-red-700 text-sm">Remove</button>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Field Name <span class="text-red-400">*</span></label>
+            <input type="text" class="cf-fieldname w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#D89F34]/30 focus:border-[#957A54]" placeholder="e.g. Size, Color, upload Imgae">
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Input Type</label>
+            <select class="cf-fieldtype w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#D89F34]/30 focus:border-[#957A54] bg-white">
+                <option value="text">✏️  Text</option>
+                <option value="number">🔢  Number</option>
+                <option value="checkbox">☑️  Checkbox</option>
+                <option value="radio">🔘  Yes / No (Radio)</option>
+                <option value="image">🖼️  Image Upload</option>
+                <option value="dropdown">📋  Dropdown</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Note (optional)</label>
+            <input type="text" class="cf-note w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#D89F34]/30 focus:border-[#957A54]" placeholder="e.g. in cm">
+        </div>
+        <div class="cf-dropdown-options hidden space-y-2 pt-1">
+            <label class="block text-xs font-medium text-gray-600 mb-1">Dropdown Options</label>
+            <div class="cf-options-list space-y-2"></div>
+            <button type="button" class="cf-add-option mt-1 px-3 py-1.5 text-xs bg-[#957A54]/10 text-[#957A54] rounded-lg hover:bg-[#957A54]/20">+ Add Option</button>
+        </div>
+    </div>`;
+// END PATCH template
+
 // Add functions
 function addVariant() {
     variantCounter++;
@@ -329,28 +401,6 @@ function addVariant() {
     container.appendChild(block);
     block.querySelector('.remove-variant').addEventListener('click', () => block.remove());
 }
-
-// function addHeroBanner() {
-//     bannerCounter++;
-//     const container = document.getElementById('hero-banners-container');
-//     const temp = document.createElement('div');
-//     temp.innerHTML = heroBannerTemplate;
-//     const block = temp.firstElementChild;
-//     block.querySelector('.banner-index').textContent = bannerCounter;
-//     container.appendChild(block);
-//     block.querySelector('.remove-banner').addEventListener('click', () => block.remove());
-// }
-
-// function addInstallationStep() {
-//     stepCounter++;
-//     const container = document.getElementById('installation-steps-container');
-//     const temp = document.createElement('div');
-//     temp.innerHTML = installationStepTemplate;
-//     const block = temp.firstElementChild;
-//     block.querySelector('.step-index').textContent = stepCounter;
-//     container.appendChild(block);
-//     block.querySelector('.remove-step').addEventListener('click', () => block.remove());
-// }
 
 
 function addHeroBanner() {
@@ -377,11 +427,72 @@ function addInstallationStep() {
     block.querySelector('.remove-step').addEventListener('click', () => block.remove());
 }
 
+
+// PATCH: Custom fields counter and add function
+let customFieldCounter = 0;
+
+function addCustomField() {
+    customFieldCounter++;
+    const container = document.getElementById('custom-fields-container');
+    const temp = document.createElement('div');
+    temp.innerHTML = customFieldTemplate;
+    const block = temp.firstElementChild;
+    block.querySelector('.field-index').textContent = customFieldCounter;
+    container.appendChild(block);
+   block.querySelector('.remove-custom-field').addEventListener('click', () => {
+        block.remove();
+        document.querySelectorAll('.custom-field-block .field-index').forEach((el, i) => {
+            el.textContent = i + 1;
+        });
+    });
+
+    // PATCH: show/hide dropdown options panel based on selected type
+    const typeSelect = block.querySelector('.cf-fieldtype');
+    const optionsPanel = block.querySelector('.cf-dropdown-options');
+    const optionsList = block.querySelector('.cf-options-list');
+    const addOptionBtn = block.querySelector('.cf-add-option');
+
+    function addDropdownOption(value = '') {
+        const row = document.createElement('div');
+        row.className = 'flex items-center gap-2';
+        row.innerHTML = `
+            <input type="text" class="cf-option-value flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#D89F34]/30 focus:border-[#957A54]" placeholder="e.g. Small">
+            <button type="button" class="cf-remove-option text-red-400 hover:text-red-600 text-xs px-2 py-1.5 border border-red-200 rounded-lg hover:bg-red-50">✕</button>`;
+        row.querySelector('.cf-remove-option').addEventListener('click', () => row.remove());
+        if (value) row.querySelector('.cf-option-value').value = value;
+        optionsList.appendChild(row);
+    }
+
+    typeSelect.addEventListener('change', () => {
+        const isDropdown = typeSelect.value === 'dropdown';
+        optionsPanel.classList.toggle('hidden', !isDropdown);
+        if (isDropdown && optionsList.children.length === 0) {
+            addDropdownOption();
+            addDropdownOption();
+        }
+    });
+
+    addOptionBtn.addEventListener('click', () => addDropdownOption());
+
+    // expose helper on block for populate use
+    block._addDropdownOption = addDropdownOption;
+}
+// END PATCH addCustomField
+
 // Variants toggle
 document.getElementById('has-variants').addEventListener('change', e => {
     document.getElementById('variants-section').classList.toggle('hidden', !e.target.checked);
     if (e.target.checked && variantCounter === 0) addVariant();
 });
+
+// PATCH: Toggle custom fields section when isCustomizable is checked
+document.getElementById('is-customizable').addEventListener('change', e => {
+    document.getElementById('custom-fields-section').classList.toggle('hidden', !e.target.checked);
+    if (e.target.checked && customFieldCounter === 0) addCustomField();
+});
+
+document.getElementById('add-custom-field-btn').addEventListener('click', addCustomField);
+// END PATCH toggle
 
 // File preview
 document.addEventListener('change', e => {
@@ -625,7 +736,7 @@ function renderTable(data, state = 'empty') {
                 const isOut = v.stock === 0;
                 const badgeColor = isOut ? 'bg-red-100 text-red-700 border-red-300' : isLow ? 'bg-yellow-100 text-yellow-700 border-yellow-300' : 'bg-green-100 text-green-700 border-green-300';
                 const label = v.titleName || v.color || v.sku;
-                return `<div class="flex items-center justify-between gap-2 px-2 py-1 rounded border text-xs ${badgeColor}">
+                return `<div class="flex items-center justify-between gap-2 px-2 py-1 rounded border text-xs border border-[#D89F34] rounded-md bg-gray-100">
                     <span class="font-medium truncate max-w-[80px]" title="${v.color || ''} - ${v.sku}">${label}</span>
                     <span class="font-bold whitespace-nowrap"> : ${v.stock}</span>
                 </div>`;
@@ -633,32 +744,32 @@ function renderTable(data, state = 'empty') {
         }
 
         tr.innerHTML = `
-    <td class="px-4 py-3" style="min-width:70px;">${mainImg}</td>
-    <td class="px-4 py-3" style="min-width:200px;">
-        <div style="font-size:13.5px;font-weight:500;color:#1a1a14;line-height:1.4;">${p.productName || '—'}</div>
-    </td>
-    <td class="px-4 py-3" style="white-space:nowrap;">
-        <span style="font-family:monospace;font-size:12px;">${p.currentSku || '—'}</span>
-    </td>
-    <td class="px-4 py-3" style="text-align:center;white-space:nowrap;">
-        <span class="inline-flex items-center px-2 py-1 rounded border text-xs font-bold ${p.currentStock === 0 ? 'bg-red-100 text-red-700 border-red-300' : p.currentStock <= 10 ? 'bg-yellow-100 text-yellow-700 border-yellow-300' : 'bg-green-100 text-green-700 border-green-300'}">
-            ${p.currentStock || 0}
-        </span>
-    </td>
-    <td class="px-4 py-3" style="min-width:180px;">
-        <div class="flex flex-wrap gap-1">${variantStockHtml}</div>
-    </td>
-    <td class="px-4 py-3" style="white-space:nowrap;">${p.productCategory || 'Main Category'}</td>
-    <td class="px-4 py-3" style="white-space:nowrap;">${p.productSubCategory || 'Sub Category'}</td>
-    <td class="px-4 py-3" style="white-space:nowrap;text-align:right;">₹${(p.currentSellingPrice || 0).toFixed(2)}</td>
-    <td class="px-4 py-3" style="white-space:nowrap;text-align:right;">₹${(p.currentMrpPrice || 0).toFixed(2)}</td>
-    <td class="px-4 py-3" style="white-space:nowrap;text-align:center;">
-        <div style="display:flex;gap:10px;justify-content:center;align-items:center;">
-            <button onclick="viewProduct(${p.productId})" class="text-[#D89F33] hover:text-[#133F53]"><i class="fas fa-eye"></i></button>
-            <button onclick="editProduct(${p.productId})" class="text-green-600 hover:text-green-800"><i class="fas fa-edit"></i></button>
-            <button onclick="confirmDelete(${p.productId})" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
-        </div>
-    </td>`;
+            <td class="px-4 py-3" style="min-width:70px;">${mainImg}</td>
+            <td class="px-4 py-3" style="min-width:200px;">
+                <div style="font-size:13.5px;font-weight:500;color:#1a1a14;line-height:1.4;">${p.productName || '—'}</div>
+            </td>
+            <td class="px-4 py-3" style="white-space:nowrap;">
+                <span style="font-family:monospace;font-size:12px;">${p.currentSku || '—'}</span>
+            </td>
+            <td class="px-4 py-3" style="text-align:center;white-space:nowrap;">
+                <span class="inline-flex items-center px-2 py-1 rounded border text-xs font-bold ${p.currentStock === 0 ? 'bg-red-100 text-red-700 border-red-300' : p.currentStock <= 10 ? 'bg-yellow-100 text-yellow-700 border-yellow-300' : 'bg-green-100 text-green-700 border-green-300'}">
+                    ${p.currentStock || 0}
+                </span>
+            </td>
+            <td class="px-4 py-3" style="min-width:180px;">
+                <div class="flex  flex-wrap gap-1">${variantStockHtml}</div>
+            </td>
+            <td class="px-4 py-3" style="white-space:nowrap;">${p.productCategory || 'Main Category'}</td>
+            <td class="px-4 py-3" style="white-space:nowrap;">${p.productSubCategory || 'Sub Category'}</td>
+            <td class="px-4 py-3" style="white-space:nowrap;text-align:right;">₹${(p.currentSellingPrice || 0).toFixed(2)}</td>
+            <td class="px-4 py-3" style="white-space:nowrap;text-align:right;">₹${(p.currentMrpPrice || 0).toFixed(2)}</td>
+            <td class="px-4 py-3" style="white-space:nowrap;text-align:center;">
+                <div style="display:flex;gap:10px;justify-content:center;align-items:center;">
+                    <button onclick="viewProduct(${p.productId})" class="text-[#D89F33] hover:text-[#133F53]"><i class="fas fa-eye"></i></button>
+                    <button onclick="editProduct(${p.productId})" class="text-green-600 hover:text-green-800"><i class="fas fa-edit"></i></button>
+                    <button onclick="confirmDelete(${p.productId})" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
+                </div>
+            </td>`;
         tbody.appendChild(tr);
     });
 }
@@ -772,7 +883,34 @@ document.getElementById('product-form').addEventListener('submit', async e => {
         variants: [],
         heroBanners: [],
         installationSteps: [],
-        youtubeUrl: document.getElementById('youtube-url').value.trim()
+        youtubeUrl: document.getElementById('youtube-url').value.trim(),
+
+        // PATCH: Collect custom fields
+        customFields: (() => {
+            const fields = [];
+            document.querySelectorAll('.custom-field-block').forEach((b, i) => {
+                const name = b.querySelector('.cf-fieldname').value.trim();
+                if (!name) return; // skip empty
+                const fieldType = b.querySelector('.cf-fieldtype').value;
+                const entry = {
+                    fieldId: i + 1,
+                    fieldName: name,
+                    fieldInputType: fieldType,
+                    note: b.querySelector('.cf-note').value.trim()
+                };
+
+                // PATCH: collect dropdown options only when type is dropdown
+                if (fieldType === 'dropdown') {
+                    entry.dropdownOptions = Array.from(
+                        b.querySelectorAll('.cf-option-value')
+                    ).map(el => el.value.trim()).filter(Boolean);
+                }
+
+                fields.push(entry);
+            });
+            return fields;
+        })()
+        // END PATCH collect        
     };
 
     const formData = new FormData();
@@ -824,24 +962,6 @@ document.querySelectorAll('.hero-banner-block').forEach((b, i) => {
 // Steps without files are NOT included in JSON so queue index stays correct
 const allStepBlocks = document.querySelectorAll('.step-block');
 
-// allStepBlocks.forEach((b, i) => {
-//     const stepNum = parseInt(b.dataset.step) || (i + 1);
-//     const imgInput = b.querySelector('.step-image');
-//     const vidInput = b.querySelector('.step-video');
-//     const hasNewImg = imgInput && imgInput.files[0];
-//     const hasNewVid = vidInput && vidInput.files[0];
-
-//     // ✅ Always push ALL steps for text field updates
-//     payload.installationSteps.push({
-//         step: stepNum,
-//         title: b.querySelector('.step-title').value.trim(),
-//         shortDescription: b.querySelector('.step-shortdesc').value.trim(),
-//         shortNote: b.querySelector('.step-shortnote').value.trim()
-//     });
-
-//     if (hasNewImg) formData.append('installationStepsImages', imgInput.files[0]);
-//     if (hasNewVid) formData.append('installationStepsVideos', vidInput.files[0]);
-// });
 
 
 allStepBlocks.forEach((b, i) => {
@@ -1075,4 +1195,3 @@ document.getElementById('btn-confirm-delete').addEventListener('click', deletePr
 
 // Start
 document.addEventListener('DOMContentLoaded', () => loadProducts(0));
-// document.addEventListener('DOMContentLoaded', loadProducts());

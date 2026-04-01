@@ -2,13 +2,23 @@
     --aside-bg: #F8F8EA;
     --active-blue: #133F53;
     --golden-btn: #D89F34;
+    --temp-color:#bc8827;
     --muted-brown: #957A54;
+}
+
+#sidebar-logo {
+    transition: all 0.3s ease;
+}
+
+.sidebar-collapsed #sidebar-logo {
+    margin: 0 auto;
 }
 
 /* Sidebar Styles */
 .nav-link.active {
-    background-color: var(--active-blue) !important;
+    /* background-color: var(--active-blue) !important; */
     color: var(--aside-bg) !important;
+    background:linear-gradient(135deg,#133F53 0%,#1a5570 60%,#0f3344 100%);
 }
 
 .nav-link.active i {

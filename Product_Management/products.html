@@ -142,17 +142,17 @@
                 <div class="max-w-7xl mx-auto">
                     <!-- Stats Cards -->
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
-                        <div class="bg-white p-6 rounded-xl shadow-sm border border-[#D89F34]">
+                        <div class="bg-white p-3 rounded-xl shadow-sm border border-[#D89F34]">
                             <p class="text-sm text-gray-600">Total Products</p>
-                            <p id="total-products" class="text-3xl font-semibold mt-1">—</p>
+                            <p id="total-products" class="text-xl font-semibold mt-1">—</p>
                         </div>
-                        <div class="bg-white p-6 rounded-xl shadow-sm border border-[#D89F34]">
+                        <div class="bg-white p-3 rounded-xl shadow-sm border border-[#D89F34]">
                             <p class="text-sm text-gray-600">Low Stock (≤10)</p>
-                            <p id="low-stock-count" class="text-3xl font-semibold mt-1 text-red-600">—</p>
+                            <p id="low-stock-count" class="text-xl font-semibold mt-1 text-red-600">—</p>
                         </div>
-                        <div class="bg-white p-6 rounded-xl shadow-sm border border-[#D89F34]">
+                        <div class="bg-white p-3 rounded-xl shadow-sm border border-[#D89F34]">
                             <p class="text-sm text-gray-600">Out of Stock</p>
-                            <p id="out-of-stock-count" class="text-3xl font-semibold mt-1 text-gray-800">—</p>
+                            <p id="out-of-stock-count" class="text-xl font-semibold mt-1 text-gray-800">—</p>
                         </div>
                     </div>
 
@@ -187,7 +187,7 @@
                                         <th class="px-6 py-4">Main Image</th>
                                         <th class="px-6 py-4">Product</th>
                                         <th class="px-6 py-4">SKU</th>
-                                        <th class="px-6 py-4">Stock</th>
+                                        <th class="px-6 py-4">Main Stock</th>
                                         <th class="px-6 py-4">Variant Stock</th>
                                         <th class="px-6 py-4">Category</th>
                                         <th class="px-6 py-4">Sub-Category</th>
@@ -409,6 +409,15 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- PATCH: Custom Fields Section (shown when isCustomizable is toggled ON) -->
+                <div id="custom-fields-section" class="space-y-6 hidden">
+                    <h3 class="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-3">Custom Fields</h3>
+                    <p class="text-sm font-semibold text-[#bc8827]">- Define input fields customers must fill for custom ordering (e.g. Upload Image, size in inch/cm/m).</p>
+                    <div id="custom-fields-container" class="space-y-4"></div>
+                    <button type="button" id="add-custom-field-btn" class="px-4 py-2 bg-[#957A54]/10 text-[#957A54] rounded-lg hover:bg-[#957A54]/20">+ Add Custom Field</button>
+                </div>
+                <!-- END PATCH -->
 
                 <!-- 5. Variants (Conditional - Hidden by default) -->
                 <div id="variants-section" class="space-y-6 hidden">

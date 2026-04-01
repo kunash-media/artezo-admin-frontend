@@ -157,6 +157,18 @@
 
         .inv-table tr:last-child td { border-bottom: none; }
         .inv-table tr:nth-child(even) td { background: #F8F8EA; }
+
+
+
+
+/* Make sure sticky header stays on top */
+thead th {
+    position: sticky;
+    top: 0;
+    z-index: 50;            /* Higher than dropdown's z-40 */
+    background: #faf2e4;      /* Important for sticky */
+    box-shadow: 0 1px 0 rgba(0,0,0,0.1);
+}
     </style>
 </head>
 
@@ -225,6 +237,13 @@
                         </div>
                         <div class="flex gap-2">
                             <div>
+                                <a href="https://accounts.razorpay.com/auth/?x-country-code=IN" target="_blank" rel="noopener noreferrer" title="go to razorpay">
+                                    <button class="px-4 py-2 rounded-lg text-sm flex items-center gap-2 border bg-white text-white" style="border-color: #D89F34; color: #133F53;">
+                                        <img class="h-6 w-20 object-contain" src="/assets/Razorpay_Logo.png" alt="">
+                                    </button>
+                                </a>
+                            </div>
+                            <div>
                                 <a href="https://app.shiprocket.in/newlogin" target="_blank" rel="noopener noreferrer" title="go to shiprocket">
                                     <button class="px-4 py-2 rounded-lg text-sm flex items-center gap-2 border bg-white text-white" style="border-color: #D89F34; color: #133F53;">
                                         <img class="h-6 w-20 object-contain" src="/assets/Shiprocket_logo.png" alt="">
@@ -287,7 +306,7 @@
                     </div>
 
                     <!-- Filters and Search -->
-                    <div class="bg-white p-4 rounded-lg shadow-sm mb-6">
+                    <div class="bg-white p-4 rounded-lg shadow-sm mb-6 border border-gray-300">
                         <div class="flex flex-col lg:flex-row gap-4 items-center justify-between">
                             <div class="relative w-full lg:w-96">
                                 <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
@@ -380,11 +399,11 @@
                     </div>
 
                     <!-- Orders Table -->
-                    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-                        <div class="overflow-x-auto">
+                    <div class="bg-white rounded-lg overflow-hidden border border-gray-300">
+                        <div class="overflow-x-auto h-[400px] ">
                             <table class="w-full" id="ordersTable">
-                                <thead>
-                                    <tr class="border-b border-gray-200" style="background-color: #F8F8EA;">
+                                <thead class="sticky top-0">
+                                    <tr class="border-b border-gray-300" style="background-color: #f4f4d3;">
                                         <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">
                                             <input type="checkbox" id="selectAll" onclick="toggleAll()">
                                         </th>
@@ -706,14 +725,19 @@
                             <button onclick="viewOrder('${key}')" class="text-[#957A54] hover:text-[#133F53]" title="View">
                                 <i class="fa-regular fa-eye"></i>
                             </button>
+                            
                             <div class="relative inline-block" id="editWrap_${key}">
-                                <button onclick="toggleEditDropdown('${key}','${order.orderStatus || ''}')"
-                                    class="text-[#957A54] hover:text-[#D89F34]" title="Edit Status">
+                                <button onclick="toggleEditDropdown('${key}','${order.orderStatus || ''}')" 
+                                        class="text-[#957A54] hover:text-[#D89F34] p-1.5 rounded hover:bg-gray-100 transition-colors" 
+                                        title="Edit Status">
                                     <i class="fa-regular fa-pen-to-square"></i>
                                 </button>
+                                
+                                <!-- Dropdown with LOWER z-index + better positioning -->
                                 <div id="editDrop_${key}"
-                                    class="hidden absolute right-0 mt-1 bg-white rounded-lg shadow-xl border border-gray-100 z-50 py-1"
-                                    style="min-width:150px;"></div>
+                                    class="hidden absolute right-0 mt-2 bg-white rounded-lg shadow-2xl border border-gray-200 z-40 py-1 w-48"
+                                    style="top: 100%;">
+                                </div>
                             </div>
                             <!-- <button onclick="openDeleteModal('${key}')" class="text-[#957A54] hover:text-red-600" title="Delete">
                                 <i class="fa-regular fa-trash-can"></i>
@@ -1066,53 +1090,6 @@
         }
 
         // ==================== EXPORT CSV ====================
-        // function exportOrders() {
-        //     // Priority: selected rows > current filteredOrders (which already respects date + status + search)
-        //     let toExport;
-        
-        //     if (selectedOrders && selectedOrders.size > 0) {
-        //         toExport = filteredOrders.filter(o => selectedOrders.has(o.orderId || o.orderStrId));
-        //     } else {
-        //         toExport = filteredOrders;
-        //     }
-        
-        //     if (toExport.length === 0) {
-        //         showNotification('No orders to export', 'error');
-        //         return;
-        //     }
-        
-        //     const headers = [
-        //         'Order ID', 'Customer', 'Phone', 'Products',
-        //         'Date', 'Amount (INR)', 'Order Status',
-        //         'Payment Status', 'Payment Method', 'Payment Mode'
-        //     ];
-        //     const rows = [headers.join(',')];
-        
-        //     toExport.forEach(order => {
-        //         const products = (order.orderItems || []).map(i => i.productName).join(' | ');
-        //         rows.push([
-        //             order.orderStrId || order.orderId || '',
-        //             `"${order.customerName || ''}"`,
-        //             order.customerPhone || '',
-        //             `"${products}"`,
-        //             order.orderDate ? order.orderDate.split('T')[0] : '',
-        //             order.finalAmount,
-        //             order.orderStatus || '',
-        //             order.paymentStatus || '',
-        //             order.paymentMethod || '',
-        //             order.paymentMode || ''
-        //         ].join(','));
-        //     });
-        
-        //     const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
-        //     const url  = URL.createObjectURL(blob);
-        //     const a    = document.createElement('a');
-        //     a.href     = url;
-        //     a.download = `orders_${new Date().toISOString().split('T')[0]}.csv`;
-        //     a.click();
-        //     URL.revokeObjectURL(url);
-        //     showNotification(`${toExport.length} orders exported`, 'success');
-        // }
 
 
         function exportOrders() {
@@ -1608,16 +1585,7 @@
         });
 
         // ==================== DEBOUNCE SEARCH ====================
-        // function debounceSearch() {
-        //     const loading = document.getElementById('searchLoading');
-        //     if (loading) loading.classList.remove('hidden');
-        //     clearTimeout(searchTimeout);
-        //     searchTimeout = setTimeout(() => {
-        //         if (loading) loading.classList.add('hidden');
-        //         currentPage = 1;
-        //         applyFiltersAndRender();
-        //     }, DEBOUNCE_DELAY);
-        // }
+       
 
          function debounceSearch() {
             const loading = document.getElementById('searchLoading');

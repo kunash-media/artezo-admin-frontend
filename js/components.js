@@ -33,6 +33,7 @@ class LayoutComponents {
         await this.loadComponents();    // header/sidebar HTML loaded here
         await this.loadModals();
         this.initializeElements();
+        this.initSidebarState();
         this.attachEvents();
         this.checkActiveLink();
         this.handleResize();
@@ -131,7 +132,7 @@ class LayoutComponents {
         if (sidebarContainer) {
             sidebarContainer.innerHTML = `
                 <aside class="bg-[#F8F8EA] w-72 h-screen fixed left-0 top-0 p-4">
-                    <div class="text-[#133F53] font-bold">E-COMMERCE</div>
+                    <div class="text-[#133F53] font-bold">Artezo</div>
                 </aside>`;
         }
 
@@ -151,6 +152,7 @@ class LayoutComponents {
         this.mainContent  = document.querySelector('.flex-1');
         this.navLinks     = document.querySelectorAll('.nav-link');
         this.pageTitle    = document.getElementById('page-title');
+        this.logo          = document.getElementById('sidebar-logo');
     }
 
     attachEvents() {
@@ -186,6 +188,41 @@ class LayoutComponents {
         });
     }
 
+    initSidebarState() {
+        const savedState = localStorage.getItem('sidebarCollapsed');
+        
+        if (savedState === 'true') {
+            this.isCollapsed = true;
+            
+            // Apply collapsed state
+            this.sidebar.classList.add('sidebar-collapsed');
+            this.collapseIcon.classList.replace('fa-chevron-left', 'fa-chevron-right');
+            this.mainContent.classList.add('main-content-expanded');
+            this.mainContent.classList.remove('main-content-normal');
+            
+            // Show favicon
+            this.updateLogo(true);
+        } else {
+            this.isCollapsed = false;
+            this.updateLogo(false);   // Show full logo
+        }
+    }
+
+    // New helper method to handle logo change
+    updateLogo(isCollapsed) {
+        if (!this.logo) return;
+        
+        if (isCollapsed) {
+            this.logo.classList.remove('h-10');
+            this.logo.src = '/assets/artezo_fevicon.jpeg';
+            this.logo.classList.add('h-8', 'w-8');
+        } else {
+            this.logo.src = '/assets/Artezo-logo.jpg';
+            this.logo.classList.remove('h-8', 'w-8');
+            this.logo.classList.add('h-10');
+        }
+    }
+
     toggleSidebar() {
         this.isCollapsed = !this.isCollapsed;
 
@@ -194,12 +231,16 @@ class LayoutComponents {
             this.collapseIcon.classList.replace('fa-chevron-left', 'fa-chevron-right');
             this.mainContent.classList.add('main-content-expanded');
             this.mainContent.classList.remove('main-content-normal');
+            
+            this.updateLogo(true);                    // ← Changed to favicon
             localStorage.setItem('sidebarCollapsed', 'true');
         } else {
             this.sidebar.classList.remove('sidebar-collapsed');
             this.collapseIcon.classList.replace('fa-chevron-right', 'fa-chevron-left');
             this.mainContent.classList.remove('main-content-expanded');
             this.mainContent.classList.add('main-content-normal');
+            
+            this.updateLogo(false);                   // ← Changed to full logo
             localStorage.setItem('sidebarCollapsed', 'false');
         }
 
@@ -229,10 +270,10 @@ class LayoutComponents {
         clickedLink.classList.add('active');
         clickedLink.setAttribute('data-active', 'true');
 
-        const linkText = clickedLink.querySelector('.nav-text')?.textContent || 'Dashboard';
+        const linkText = clickedLink.querySelector('.nav-text')?.textContent;
         if (this.pageTitle) this.pageTitle.textContent = `${linkText} / Overview`;
 
-        localStorage.setItem('activeLink', linkText);
+        // localStorage.setItem('activeLink', linkText);
     }
 
     checkActiveLink() {

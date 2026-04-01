@@ -1,0 +1,2354 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon_io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png">
+
+    <title>Banner Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <style>
+        .banner-card {
+            transition: all 0.2s ease;
+        }
+
+        .banner-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .filter-btn.active {
+            background-color: #133F53;
+            color: #F8F8EA;
+        }
+
+        .banner-row {
+            transition: background-color 0.2s ease;
+        }
+
+        .banner-row:hover {
+            background-color: #F8F8EA;
+        }
+
+        /* Skeleton Loading Styles */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .skeleton-text {
+            height: 1rem;
+            border-radius: 0.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .skeleton-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+
+        .skeleton-button {
+            width: 80px;
+            height: 32px;
+            border-radius: 0.375rem;
+        }
+
+        .content-hidden {
+            display: none !important;
+        }
+
+        .content-visible {
+            display: block !important;
+        }
+
+        /* Banner Preview Styles */
+        .banner-preview {
+            width: 80px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 0.375rem;
+            border: 1px solid #e5e7eb;
+        }
+
+        /* Drag and Drop Styles */
+        .draggable {
+            cursor: move;
+        }
+
+        .draggable.dragging {
+            opacity: 0.5;
+            background-color: #F8F8EA;
+        }
+
+        .drag-over {
+            border-top: 2px solid #D89F34;
+        }
+
+        /* Image Upload Styles */
+        .upload-area {
+            border: 2px dashed #e5e7eb;
+            transition: all 0.2s ease;
+        }
+
+        .upload-area:hover {
+            border-color: #D89F34;
+            background-color: #F8F8EA;
+        }
+
+        .upload-area.dragover {
+            border-color: #133F53;
+            background-color: #F8F8EA;
+        }
+
+        /* Modal Animations */
+        .modal-enter {
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Dropdown Styles */
+        #filterDropdown {
+            transform-origin: top;
+            animation: dropdownFade 0.2s ease;
+            max-height: 300px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #D89F34 #F8F8EA;
+        }
+
+        #filterDropdown::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        #filterDropdown::-webkit-scrollbar-track {
+            background: #F8F8EA;
+        }
+
+        #filterDropdown::-webkit-scrollbar-thumb {
+            background: #D89F34;
+            border-radius: 4px;
+        }
+
+        @keyframes dropdownFade {
+            from {
+                opacity: 0;
+                transform: translateY(-10px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Position Sort Controls */
+        .position-controls {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .position-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 0.25rem;
+            border: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .position-btn:hover:not(:disabled) {
+            background-color: #F8F8EA;
+            border-color: #D89F34;
+            color: #133F53;
+        }
+
+        .position-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Section Layout Styles */
+        .section-container {
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            background-color: #f9fafb;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+            color: #133F53;
+            border-bottom: 2px solid #D89F34;
+            padding-bottom: 0.5rem;
+        }
+
+        .slider-container {
+            margin-bottom: 2rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 1.25rem;
+            background-color: white;
+        }
+
+        .slider-container:last-child {
+            margin-bottom: 0;
+        }
+
+        .slider-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #133F53;
+            background-color: #F8F8EA;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            display: inline-block;
+        }
+
+        /* Hero Layout - Matching Frontend */
+        .hero-layout {
+            display: flex;
+            gap: 1.5rem;
+            min-height: 300px;
+        }
+
+        .main-banner-area {
+            flex: 2;
+            /* Larger area for main banner */
+        }
+
+        .sub-banners-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .sub-banner-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .banner-slot {
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            background-color: #f9fafb;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .banner-slot-label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 0.75rem;
+            color: #133F53;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .banner-slot-label i {
+            color: #D89F34;
+        }
+
+        .two-column-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .single-banner-layout {
+            padding: 0.5rem;
+        }
+
+        /* Upload slot styling */
+        .upload-slot {
+            margin-top: 0.5rem;
+        }
+
+        /* Toggle between image and text */
+        .banner-type-toggle {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            background-color: #f1f5f9;
+            padding: 0.25rem;
+            border-radius: 0.375rem;
+            width: fit-content;
+        }
+
+        .banner-type-btn {
+            padding: 0.25rem 1rem;
+            border-radius: 0.375rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .banner-type-btn.active {
+            background-color: #D89F34;
+            color: #133F53;
+        }
+
+        .banner-type-btn:not(.active) {
+            background-color: transparent;
+            color: #64748b;
+        }
+
+        .banner-type-btn:not(.active):hover {
+            background-color: #e2e8f0;
+        }
+
+        .text-banner-fields {
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: #f8fafc;
+            border-radius: 0.375rem;
+            border-left: 3px solid #D89F34;
+        }
+
+        .text-field {
+            margin-bottom: 0.75rem;
+        }
+
+        .text-field label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #64748b;
+            margin-bottom: 0.25rem;
+            display: block;
+        }
+
+        .text-field input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.375rem;
+            font-size: 0.85rem;
+        }
+
+        .text-field input:focus {
+            outline: none;
+            border-color: #D89F34;
+            ring: 2px solid #D89F34;
+        }
+    </style>
+</head>
+
+<body class="bg-[#F2F2E8]">
+
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar container - linking to existing sidebar.html -->
+        <div id="sidebar-container"></div>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Header container - linking to existing header.html -->
+            <div id="header-container"></div>
+
+            <!-- Banner Management Content -->
+            <main class="flex-1 overflow-y-auto p-6">
+                <!-- Skeleton Loading -->
+                <div id="skeletonLoader" class="content-visible">
+                    <!-- Statistics Cards Skeleton -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <div class="skeleton skeleton-text w-24 h-4 mb-2"></div>
+                            <div class="skeleton skeleton-text w-16 h-8 mb-2"></div>
+                            <div class="skeleton skeleton-text w-32 h-3"></div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <div class="skeleton skeleton-text w-24 h-4 mb-2"></div>
+                            <div class="skeleton skeleton-text w-16 h-8 mb-2"></div>
+                            <div class="skeleton skeleton-text w-32 h-3"></div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <div class="skeleton skeleton-text w-24 h-4 mb-2"></div>
+                            <div class="skeleton skeleton-text w-16 h-8 mb-2"></div>
+                            <div class="skeleton skeleton-text w-32 h-3"></div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <div class="skeleton skeleton-text w-24 h-4 mb-2"></div>
+                            <div class="skeleton skeleton-text w-16 h-8 mb-2"></div>
+                            <div class="skeleton skeleton-text w-32 h-3"></div>
+                        </div>
+                    </div>
+
+                    <!-- Filters Skeleton -->
+                    <div class="bg-white p-4 rounded-lg shadow-sm mb-6">
+                        <div class="flex flex-wrap gap-4">
+                            <div class="skeleton skeleton-text w-96 h-10"></div>
+                            <div class="skeleton skeleton-text w-48 h-10"></div>
+                            <div class="skeleton skeleton-text w-40 h-10"></div>
+                        </div>
+                    </div>
+
+                    <!-- Table Skeleton -->
+                    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                        <div class="p-4 space-y-2">
+                            <div class="skeleton skeleton-text w-full h-12"></div>
+                            <div class="skeleton skeleton-text w-full h-12"></div>
+                            <div class="skeleton skeleton-text w-full h-12"></div>
+                            <div class="skeleton skeleton-text w-full h-12"></div>
+                            <div class="skeleton skeleton-text w-full h-12"></div>
+                            <div class="skeleton skeleton-text w-full h-12"></div>
+                        </div>
+                    </div>
+
+                    <!-- Pagination Skeleton -->
+                    <div class="mt-4 flex justify-between items-center">
+                        <div class="skeleton skeleton-text w-48 h-8"></div>
+                        <div class="flex gap-2">
+                            <div class="skeleton skeleton-text w-8 h-8"></div>
+                            <div class="skeleton skeleton-text w-8 h-8"></div>
+                            <div class="skeleton skeleton-text w-8 h-8"></div>
+                            <div class="skeleton skeleton-text w-8 h-8"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actual Content -->
+                <div id="actualContent" class="content-hidden">
+                    <!-- Page Header -->
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                        <div>
+                            <h1 class="text-2xl font-semibold" style="color: #133F53;">Banner Management</h1>
+                            <p class="text-sm" style="color: #957A54;">Create and manage promotional banners for your store</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="px-4 py-2 rounded-lg text-sm flex items-center gap-2 border"
+                                style="border-color: #D89F34; color: #133F53;" onclick="exportBanners()">
+                                <i class="fa-solid fa-download"></i>
+                                Export
+                            </button>
+                            <button class="px-4 py-2 rounded-lg text-sm flex items-center gap-2"
+                                style="background-color: #D89F34; color: #133F53;" onclick="openCreateBannerModal()">
+                                <i class="fa-solid fa-plus"></i>
+                                New Banner
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Banner Statistics Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        <!-- Total Banners -->
+                        <div class="bg-white p-4 rounded-lg shadow-sm banner-card">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs text-gray-500">Total Banners</p>
+                                    <p class="text-xl font-bold" style="color: #133F53;">48</p>
+                                </div>
+                                <div class="w-10 h-10 rounded-full bg-[#F8F8EA] flex items-center justify-center">
+                                    <i class="fa-solid fa-images" style="color: #D89F34;"></i>
+                                </div>
+                            </div>
+                            <div class="mt-2 flex items-center text-xs">
+                                <span class="text-green-600">↑ 5</span>
+                                <span class="text-gray-400 ml-2">this month</span>
+                            </div>
+                        </div>
+
+                        <!-- Active Banners -->
+                        <div class="bg-white p-4 rounded-lg shadow-sm banner-card">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs text-gray-500">Active</p>
+                                    <p class="text-xl font-bold" style="color: #133F53;">32</p>
+                                </div>
+                                <div class="w-10 h-10 rounded-full bg-[#F8F8EA] flex items-center justify-center">
+                                    <i class="fa-regular fa-circle-check" style="color: #10B981;"></i>
+                                </div>
+                            </div>
+                            <div class="mt-2 flex items-center text-xs">
+                                <span class="text-green-600">67%</span>
+                                <span class="text-gray-400 ml-2">of total</span>
+                            </div>
+                        </div>
+
+                        <!-- Scheduled Banners -->
+                        <div class="bg-white p-4 rounded-lg shadow-sm banner-card">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs text-gray-500">Scheduled</p>
+                                    <p class="text-xl font-bold" style="color: #133F53;">10</p>
+                                </div>
+                                <div class="w-10 h-10 rounded-full bg-[#F8F8EA] flex items-center justify-center">
+                                    <i class="fa-regular fa-calendar" style="color: #F59E0B;"></i>
+                                </div>
+                            </div>
+                            <div class="mt-2 flex items-center text-xs">
+                                <span class="text-orange-600">21%</span>
+                                <span class="text-gray-400 ml-2">upcoming</span>
+                            </div>
+                        </div>
+
+                        <!-- Total Clicks -->
+                        <div class="bg-white p-4 rounded-lg shadow-sm banner-card">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs text-gray-500">Total Clicks</p>
+                                    <p class="text-xl font-bold" style="color: #133F53;">12.5K</p>
+                                </div>
+                                <div class="w-10 h-10 rounded-full bg-[#F8F8EA] flex items-center justify-center">
+                                    <i class="fa-solid fa-mouse-pointer" style="color: #D89F34;"></i>
+                                </div>
+                            </div>
+                            <div class="mt-2 flex items-center text-xs">
+                                <span class="text-green-600">↑ 18%</span>
+                                <span class="text-gray-400 ml-2">vs last month</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filters and Search -->
+                    <div class="bg-white p-4 rounded-lg shadow-sm mb-6">
+                        <div class="flex flex-col lg:flex-row gap-4 items-center justify-between">
+                            <!-- Search -->
+                            <div class="relative w-full lg:w-96">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
+                                <input type="text" id="searchBanner" placeholder="Search by title, description, or position..."
+                                    class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D89F34] text-sm"
+                                    onkeyup="debounceSearch()">
+                                <div id="searchLoading" class="absolute right-3 top-1/2 transform -translate-y-1/2 hidden">
+                                    <i class="fa-solid fa-circle-notch fa-spin text-[#D89F34]"></i>
+                                </div>
+                            </div>
+
+                            <!-- Filter and Sort Section -->
+                            <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+                                <!-- Status Filter Dropdown -->
+                                <div class="relative w-full sm:w-40">
+                                    <button id="filterDropdownButton"
+                                        class="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm flex items-center justify-between bg-white hover:bg-[#F8F8EA] transition-colors"
+                                        style="color: #133F53;" onclick="toggleFilterDropdown()">
+                                        <span id="selectedFilterText">All Banners</span>
+                                        <i class="fa-solid fa-chevron-down text-xs transition-transform duration-200"
+                                            id="filterDropdownArrow" style="color: #957A54;"></i>
+                                    </button>
+
+                                    <div id="filterDropdown"
+                                        class="absolute right-0 mt-1 w-full bg-white rounded-lg shadow-lg py-1 hidden z-50 border border-gray-100">
+                                        <button
+                                            class="filter-dropdown-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between"
+                                            onclick="selectFilter('all', 'All Banners')">
+                                            <span style="color: #133F53;">All Banners</span>
+                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;"
+                                                id="check-all"></i>
+                                        </button>
+                                        <button
+                                            class="filter-dropdown-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between"
+                                            onclick="selectFilter('active', 'Active')">
+                                            <span style="color: #133F53;">Active</span>
+                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;"
+                                                id="check-active"></i>
+                                        </button>
+                                        <button
+                                            class="filter-dropdown-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between"
+                                            onclick="selectFilter('scheduled', 'Scheduled')">
+                                            <span style="color: #133F53;">Scheduled</span>
+                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;"
+                                                id="check-scheduled"></i>
+                                        </button>
+                                        <button
+                                            class="filter-dropdown-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between"
+                                            onclick="selectFilter('expired', 'Expired')">
+                                            <span style="color: #133F53;">Expired</span>
+                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;"
+                                                id="check-expired"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Page Name Filter and Sort -->
+                                <div class="flex gap-2 w-full sm:w-auto">
+                                    <select id="pageNameFilter"
+                                        class="flex-1 sm:flex-none px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#D89F34] bg-white"
+                                        onchange="filterByPageName()">
+                                        <option value="all">All Pages</option>
+                                        <option value="home">Home Page</option>
+                                        <option value="photo_frames">Photo Frames</option>
+                                        <option value="wall_decor">Wall Decor</option>
+                                        <option value="home_decor">Home Decor</option>
+                                        <option value="nameplates">Nameplates</option>
+                                        <option value="corporate_gifting">Corporate Gifting</option>
+                                        <option value="personalised_gifts">Personalised Gifts</option>
+                                        <option value="trophies">Trophies and Mementos</option>
+                                        <option value="trending">Trending Products</option>
+                                    </select>
+
+                                    <select id="sortBanners"
+                                        class="flex-1 sm:flex-none px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#D89F34] bg-white"
+                                        onchange="sortBanners()">
+                                        <option value="position">Position (Low to High)</option>
+                                        <option value="position-desc">Position (High to Low)</option>
+                                        <option value="newest">Newest First</option>
+                                        <option value="oldest">Oldest First</option>
+                                        <option value="clicks-high">Most Clicked</option>
+                                        <option value="name">Name A-Z</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Page Filters -->
+                        <div class="flex flex-wrap gap-2 mt-3">
+                            <span class="text-xs" style="color: #957A54;">Quick filter:</span>
+                            <button onclick="filterByPageNameQuick('home')" class="text-xs px-2 py-1 rounded-full border border-gray-200 hover:bg-[#F8F8EA]">Home</button>
+                            <button onclick="filterByPageNameQuick('corporate_gifting')" class="text-xs px-2 py-1 rounded-full border border-gray-200 hover:bg-[#F8F8EA]">Corporate</button>
+                            <button onclick="filterByPageNameQuick('trending')" class="text-xs px-2 py-1 rounded-full border border-gray-200 hover:bg-[#F8F8EA]">Trending</button>
+                            <button onclick="clearPageNameFilter()" class="text-xs px-2 py-1 rounded-full border border-gray-200 hover:bg-[#F8F8EA]">
+                                <i class="fa-solid fa-xmark"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Banners Table -->
+                    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full" id="bannersTable">
+                                <thead>
+                                    <tr class="border-b border-gray-200" style="background-color: #F8F8EA;">
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">
+                                            <input type="checkbox" id="selectAll" onclick="toggleAll()">
+                                        </th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">PREVIEW</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">TITLE</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">PAGE</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">SLOT</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">CLICKS</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">CTR</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">STATUS</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">ACTIONS</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bannersTableBody" class="sortable">
+                                    <!-- Banners will be loaded here dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        <div class="px-4 py-3 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-3">
+                            <p class="text-sm" style="color: #957A54;" id="showingInfo">Showing 1-10 of 48 banners</p>
+                            <div class="flex gap-2">
+                                <button class="w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA]" onclick="changePage('prev')">
+                                    <i class="fa-solid fa-chevron-left text-xs"></i>
+                                </button>
+                                <button class="w-8 h-8 rounded" style="background-color: #133F53; color: white;" id="page1">1</button>
+                                <button class="w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA]" id="page2" onclick="goToPage(2)">2</button>
+                                <button class="w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA]" id="page3" onclick="goToPage(3)">3</button>
+                                <button class="w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA]" id="page4" onclick="goToPage(4)">4</button>
+                                <button class="w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA]" id="page5" onclick="goToPage(5)">5</button>
+                                <button class="w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA]" onclick="changePage('next')">
+                                    <i class="fa-solid fa-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bulk Actions -->
+                    <div id="bulkActions"
+                        class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-white rounded-lg shadow-lg p-3 hidden"
+                        style="z-index: 40;">
+                        <div class="flex items-center gap-4">
+                            <span class="text-sm font-medium" id="selectedCount" style="color: #133F53;">0 selected</span>
+                            <select class="px-3 py-1 border border-gray-200 rounded-lg text-sm" id="bulkStatus">
+                                <option value="">Change Status</option>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                            <select class="px-3 py-1 border border-gray-200 rounded-lg text-sm" id="bulkPage">
+                                <option value="">Change Page</option>
+                                <option value="home">Home</option>
+                                <option value="photo_frames">Photo Frames</option>
+                                <option value="wall_decor">Wall Decor</option>
+                            </select>
+                            <button class="px-3 py-1 bg-red-600 text-white rounded-lg text-sm" onclick="bulkDelete()">
+                                <i class="fa-regular fa-trash-can"></i> Delete
+                            </button>
+                            <button class="px-3 py-1 border border-gray-200 rounded-lg text-sm" onclick="clearSelection()">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modals Container - linking to existing modals.html -->
+    <div id="modals-container"></div>
+
+    <!-- Create/Edit Banner Modal -->
+    <div id="bannerModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 max-w-5xl w-full mx-4 max-h-[90vh] overflow-y-auto modal-enter">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold" style="color: #133F53;" id="modalTitle">Create New Banner</h3>
+                <button onclick="closeBannerModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+
+            <form id="bannerForm" class="space-y-4" onsubmit="saveBanner(event)">
+                <input type="hidden" id="bannerId" value="">
+
+                <!-- Basic Information -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2">
+                        <label class="block text-sm font-medium mb-1" style="color: #133F53;">Banner Title</label>
+                        <input type="text" id="bannerTitle" required
+                            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                            placeholder="e.g., Summer Sale Banner">
+                    </div>
+
+                    <div class="col-span-2">
+                        <label class="block text-sm font-medium mb-1" style="color: #133F53;">Description</label>
+                        <textarea id="bannerDescription" rows="2"
+                            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                            placeholder="Brief description of the banner..."></textarea>
+                    </div>
+
+                    <!-- Page Name (replaces Position) -->
+                    <div class="col-span-2">
+                        <label class="block text-sm font-medium mb-1" style="color: #133F53;">Page Name</label>
+                        <select id="bannerPageName" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" onchange="handlePageNameChange()">
+                            <option value="">Select a page</option>
+                            <option value="home">Home Page</option>
+                            <option value="photo_frames">Photo Frames</option>
+                            <option value="wall_decor">Wall Decor</option>
+                            <option value="home_decor">Home Decor</option>
+                            <option value="nameplates">Nameplates</option>
+                            <option value="corporate_gifting">Corporate Gifting</option>
+                            <option value="personalised_gifts">Personalised Gifts</option>
+                            <option value="trophies">Trophies and Mementos</option>
+                            <option value="trending">Trending Products</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Dynamic Banner Upload Section Based on Page Selection -->
+                <div class="border-t border-gray-200 pt-4" id="dynamicUploadSection">
+                    <h4 class="font-medium mb-3" style="color: #133F53;">Banner Images</h4>
+                    
+                    <!-- This container will be dynamically populated based on page selection -->
+                    <div id="bannerUploadContainer" class="space-y-4">
+                        <!-- Content will be loaded dynamically via JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Display Settings (Keep these) -->
+                <div class="border-t border-gray-200 pt-4">
+                    <h4 class="font-medium mb-3" style="color: #133F53;">Display Settings</h4>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" id="isActive" checked class="rounded border-gray-300">
+                            <span class="text-sm" style="color: #133F53;">Active</span>
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" id="showTitle" checked class="rounded border-gray-300">
+                            <span class="text-sm" style="color: #133F53;">Show title on banner</span>
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" id="showButton" checked class="rounded border-gray-300">
+                            <span class="text-sm" style="color: #133F53;">Show call-to-action button</span>
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" id="autoplay" class="rounded border-gray-300">
+                            <span class="text-sm" style="color: #133F53;">Autoplay (for sliders)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                    <button type="button" onclick="closeBannerModal()"
+                        class="px-4 py-2 border border-gray-200 rounded-lg text-sm">Cancel</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg text-sm"
+                        style="background-color: #D89F34; color: #133F53;">Save Banner</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- View Banner Modal -->
+    <div id="viewBannerModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 max-w-3xl w-full mx-4 modal-enter">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold" style="color: #133F53;">Banner Details</h3>
+                <button onclick="closeViewBannerModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+
+            <div id="bannerDetails" class="space-y-4">
+                <!-- Banner details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 max-w-sm w-full mx-4 modal-enter">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fa-solid fa-trash-can text-2xl text-red-600"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-2" style="color: #133F53;">Delete Banner</h3>
+                <p class="text-sm mb-6" style="color: #957A54;">Are you sure you want to delete this banner? This action cannot be undone.</p>
+
+                <div class="flex gap-3">
+                    <button onclick="closeDeleteModal()"
+                        class="flex-1 py-2 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                        style="color: #133F53;">
+                        Cancel
+                    </button>
+                    <button onclick="confirmDelete()"
+                        class="flex-1 py-2 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Notification -->
+    <div id="notification" class="fixed top-4 right-4 px-4 py-2 rounded-lg shadow-lg z-50 hidden"
+        style="min-width: 250px;">
+        <div class="flex items-center gap-2">
+            <i id="notificationIcon" class=""></i>
+            <span id="notificationMessage" class="text-sm"></span>
+        </div>
+    </div>
+
+
+    <script src="/js/auth.js"></script>
+    <script src="/js/components.js"></script>
+    <script>
+        // Sample banner data with new structure
+        let banners = [
+            // Home Page - Hero Section banners
+            {
+                id: '1',
+                title: 'Summer Sale 2024',
+                description: 'Get up to 50% off on summer collection',
+                pageName: 'home',
+                slot: 'slider1_main',
+                slotLabel: 'Hero Slider 1 – Main Banner',
+                bannerType: 'image',
+                image: 'https://via.placeholder.com/1920x600/133F53/FFFFFF?text=Summer+Sale+Main',
+                link: '/summer-sale',
+                buttonText: 'Shop Now',
+                isActive: true,
+                showTitle: true,
+                showButton: true,
+                autoplay: true,
+                clicks: 3450,
+                views: 25000,
+                createdAt: '2024-05-15'
+            },
+            {
+                id: '2',
+                title: 'New Arrivals',
+                description: 'Check out our latest products',
+                pageName: 'home',
+                slot: 'slider1_sub1',
+                slotLabel: 'Hero Slider 1 – Sub Banner 1',
+                bannerType: 'image',
+                image: 'https://via.placeholder.com/600x400/D89F34/FFFFFF?text=New+Arrivals+Sub1',
+                link: '/new-arrivals',
+                buttonText: 'Explore',
+                isActive: true,
+                showTitle: true,
+                showButton: true,
+                autoplay: false,
+                clicks: 5678,
+                views: 45000,
+                createdAt: '2024-01-01'
+            },
+            {
+                id: '3',
+                title: 'Exclusive Deals',
+                description: 'Limited time offers just for you',
+                pageName: 'home',
+                slot: 'slider1_sub2',
+                slotLabel: 'Hero Slider 1 – Sub Banner 2',
+                bannerType: 'text',
+                heading: 'Exclusive Deals',
+                description: 'Limited time offers just for you',
+                buttonText: 'Shop Now',
+                buttonLink: '/deals',
+                isActive: true,
+                showTitle: true,
+                showButton: true,
+                autoplay: false,
+                clicks: 2345,
+                views: 15000,
+                createdAt: '2024-03-10'
+            },
+            // Home Page - Banner Section
+            {
+                id: '4',
+                title: 'Free Shipping',
+                description: 'Free shipping on orders over $50',
+                pageName: 'home',
+                slot: 'left_banner',
+                slotLabel: 'Left Banner',
+                bannerType: 'image',
+                image: 'https://via.placeholder.com/800x400/133F53/FFFFFF?text=Free+Shipping+Left',
+                link: '/shipping-info',
+                buttonText: 'Learn More',
+                isActive: true,
+                showTitle: true,
+                showButton: true,
+                autoplay: false,
+                clicks: 1234,
+                views: 10000,
+                createdAt: '2024-01-01'
+            }
+        ];
+
+        // State variables
+        let currentFilter = 'all';
+        let currentPageNameFilter = 'all';
+        let selectedBanners = new Set();
+        let currentPage = 1;
+        const itemsPerPage = 10;
+        let deleteId = null;
+        let currentEditId = null;
+        let isFilterDropdownOpen = false;
+        let searchTimeout = null;
+        const DEBOUNCE_DELAY = 500;
+
+        // ==================== PAGE LOAD OPTIMIZATION ====================
+        document.addEventListener('DOMContentLoaded', function () {
+            // Show skeleton, hide actual content
+            document.getElementById('skeletonLoader').classList.remove('content-hidden');
+            document.getElementById('skeletonLoader').classList.add('content-visible');
+            document.getElementById('actualContent').classList.remove('content-visible');
+            document.getElementById('actualContent').classList.add('content-hidden');
+
+            // Initialize filter dropdown
+            currentFilter = 'all';
+            document.getElementById('selectedFilterText').textContent = 'All Banners';
+            updateDropdownCheckmarks();
+
+            // Load data
+            loadData();
+
+            // Check user role from role-config.js
+            checkUserRole();
+        });
+
+        // Check user role and adjust UI accordingly
+        function checkUserRole() {
+            const userRole = 'admin'; // Default to admin for now
+            
+            if (userRole === 'viewer') {
+                document.querySelectorAll('.edit-btn, .delete-btn, .position-btn').forEach(btn => {
+                    btn.style.display = 'none';
+                });
+                document.querySelector('button[onclick="openCreateBannerModal()"]').style.display = 'none';
+                document.querySelector('button[onclick="exportBanners()"]').style.display = 'none';
+            } else if (userRole === 'editor') {
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.style.display = 'none';
+                });
+            }
+        }
+
+        async function loadData() {
+            try {
+                await new Promise(resolve => setTimeout(resolve, 800));
+                renderBanners();
+
+                document.getElementById('skeletonLoader').classList.remove('content-visible');
+                document.getElementById('skeletonLoader').classList.add('content-hidden');
+                document.getElementById('actualContent').classList.remove('content-hidden');
+                document.getElementById('actualContent').classList.add('content-visible');
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showNotification('Error loading banners', 'error');
+            }
+        }
+
+        // ==================== RENDER FUNCTIONS ====================
+        function renderBanners() {
+            const tbody = document.getElementById('bannersTableBody');
+            if (!tbody) return;
+
+            let filteredBanners = filterBannersByStatus();
+
+            // Apply page name filter
+            if (currentPageNameFilter !== 'all') {
+                filteredBanners = filteredBanners.filter(banner => banner.pageName === currentPageNameFilter);
+            }
+
+            // Apply search filter
+            const searchTerm = document.getElementById('searchBanner')?.value.toLowerCase() || '';
+            if (searchTerm) {
+                filteredBanners = filteredBanners.filter(banner =>
+                    banner.title.toLowerCase().includes(searchTerm) ||
+                    banner.description.toLowerCase().includes(searchTerm) ||
+                    (banner.slotLabel && banner.slotLabel.toLowerCase().includes(searchTerm))
+                );
+            }
+
+            // Apply sorting
+            const sortBy = document.getElementById('sortBanners')?.value || 'position';
+            filteredBanners = sortBannersData(filteredBanners, sortBy);
+
+            // Pagination
+            const totalPages = Math.ceil(filteredBanners.length / itemsPerPage);
+            if (currentPage > totalPages) currentPage = 1;
+
+            const start = (currentPage - 1) * itemsPerPage;
+            const paginatedBanners = filteredBanners.slice(start, start + itemsPerPage);
+
+            document.getElementById('showingInfo').textContent =
+                `Showing ${start + 1}-${Math.min(start + itemsPerPage, filteredBanners.length)} of ${filteredBanners.length} banners`;
+
+            tbody.innerHTML = '';
+            paginatedBanners.forEach((banner, index) => {
+                const row = document.createElement('tr');
+                row.className = 'border-b border-gray-100 banner-row';
+                row.draggable = true;
+                row.setAttribute('data-id', banner.id);
+                
+                row.innerHTML = `
+                    <td class="py-2 px-4">
+                        <input type="checkbox" class="banner-checkbox" value="${banner.id}" onchange="updateSelection(this)">
+                    </td>
+                    <td class="py-2 px-4">
+                        ${banner.bannerType === 'image' ? 
+                            `<img src="${banner.image}" alt="${banner.title}" class="banner-preview" onerror="this.src='https://via.placeholder.com/80x50/e5e7eb/9CA3AF?text=No+Image'">` : 
+                            `<div class="w-20 h-12 bg-[#F8F8EA] rounded flex items-center justify-center text-xs" style="color: #133F53;">Text Banner</div>`
+                        }
+                    </td>
+                    <td class="py-2 px-4">
+                        <div>
+                            <p class="text-sm font-medium" style="color: #133F53;">${banner.title}</p>
+                            <p class="text-xs" style="color: #957A54;">${banner.description.substring(0, 30)}${banner.description.length > 30 ? '...' : ''}</p>
+                            <p class="text-xs text-gray-400">Created: ${formatDate(banner.createdAt)}</p>
+                        </div>
+                    </td>
+                    <td class="py-2 px-4">
+                        <p class="text-sm">${getPageNameLabel(banner.pageName)}</p>
+                    </td>
+                    <td class="py-2 px-4">
+                        <p class="text-sm">${banner.slotLabel || banner.slot}</p>
+                    </td>
+                    <td class="py-2 px-4 text-sm">${banner.clicks.toLocaleString()}</td>
+                    <td class="py-2 px-4 text-sm">${((banner.clicks / banner.views) * 100).toFixed(1)}%</td>
+                    <td class="py-2 px-4">${getStatusBadge(banner)}</td>
+                    <td class="py-2 px-4">
+                        <div class="flex gap-2">
+                            <button onclick="viewBanner('${banner.id}')" class="text-[#957A54] hover:text-[#133F53]" title="View">
+                                <i class="fa-regular fa-eye"></i>
+                            </button>
+                            <button onclick="editBanner('${banner.id}')" class="text-[#957A54] hover:text-[#D89F34] edit-btn" title="Edit">
+                                <i class="fa-regular fa-pen-to-square"></i>
+                            </button>
+                            <button onclick="openDeleteModal('${banner.id}')" class="text-[#957A54] hover:text-red-600 delete-btn" title="Delete">
+                                <i class="fa-regular fa-trash-can"></i>
+                            </button>
+                            <button onclick="duplicateBanner('${banner.id}')" class="text-[#957A54] hover:text-[#133F53]" title="Duplicate">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            updatePaginationButtons(filteredBanners.length);
+            updateSelectAll();
+        }
+
+        function getPageNameLabel(pageName) {
+            const labels = {
+                'home': 'Home Page',
+                'photo_frames': 'Photo Frames',
+                'wall_decor': 'Wall Decor',
+                'home_decor': 'Home Decor',
+                'nameplates': 'Nameplates',
+                'corporate_gifting': 'Corporate Gifting',
+                'personalised_gifts': 'Personalised Gifts',
+                'trophies': 'Trophies',
+                'trending': 'Trending Products'
+            };
+            return labels[pageName] || pageName;
+        }
+
+        function getStatusBadge(banner) {
+            if (!banner.isActive) {
+                return '<span class="status-badge" style="background-color: #FEE2E2; color: #991B1B;"><i class="fa-regular fa-circle-xmark"></i> Inactive</span>';
+            } else {
+                return '<span class="status-badge" style="background-color: #D1FAE5; color: #065F46;"><i class="fa-regular fa-circle-check"></i> Active</span>';
+            }
+        }
+
+        function formatDate(dateStr) {
+            return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        function filterBannersByStatus() {
+            if (currentFilter === 'all') return banners;
+            return banners.filter(banner => {
+                if (currentFilter === 'active') return banner.isActive;
+                if (currentFilter === 'inactive') return !banner.isActive;
+                return true;
+            });
+        }
+
+        function sortBannersData(bannersArray, sortBy) {
+            const sorted = [...bannersArray];
+            switch (sortBy) {
+                case 'newest':
+                    return sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                case 'oldest':
+                    return sorted.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                case 'clicks-high':
+                    return sorted.sort((a, b) => b.clicks - a.clicks);
+                case 'name':
+                    return sorted.sort((a, b) => a.title.localeCompare(b.title));
+                default:
+                    return sorted;
+            }
+        }
+
+        function updatePaginationButtons(totalItems) {
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            for (let i = 1; i <= 5; i++) {
+                const btn = document.getElementById(`page${i}`);
+                if (btn) {
+                    if (i <= totalPages) {
+                        btn.style.display = 'block';
+                        btn.textContent = i;
+                        btn.onclick = () => goToPage(i);
+                        btn.className = i === currentPage ?
+                            'w-8 h-8 rounded bg-[#133F53] text-white' :
+                            'w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA]';
+                    } else {
+                        btn.style.display = 'none';
+                    }
+                }
+            }
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            renderBanners();
+        }
+
+        function changePage(direction) {
+            const filteredBanners = filterBannersByStatus();
+            const totalPages = Math.ceil(filteredBanners.length / itemsPerPage);
+
+            if (direction === 'prev' && currentPage > 1) {
+                currentPage--;
+            } else if (direction === 'next' && currentPage < totalPages) {
+                currentPage++;
+            }
+            renderBanners();
+        }
+
+        // ==================== FILTER FUNCTIONS ====================
+        function toggleFilterDropdown() {
+            const dropdown = document.getElementById('filterDropdown');
+            const arrow = document.getElementById('filterDropdownArrow');
+            isFilterDropdownOpen = !isFilterDropdownOpen;
+            dropdown.classList.toggle('hidden');
+            arrow.style.transform = isFilterDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+        }
+
+        function selectFilter(filterValue, filterText) {
+            currentFilter = filterValue;
+            document.getElementById('selectedFilterText').textContent = filterText;
+            toggleFilterDropdown();
+            filterBanners();
+        }
+
+        function updateDropdownCheckmarks() {
+            document.querySelectorAll('.filter-dropdown-item i').forEach(icon => {
+                icon.style.display = 'none';
+            });
+            const checkId = `check-${currentFilter}`;
+            const checkIcon = document.getElementById(checkId);
+            if (checkIcon) checkIcon.style.display = 'inline-block';
+        }
+
+        function filterBanners() {
+            currentPage = 1;
+            renderBanners();
+        }
+
+        function filterByPageName() {
+            currentPageNameFilter = document.getElementById('pageNameFilter').value;
+            currentPage = 1;
+            renderBanners();
+        }
+
+        function filterByPageNameQuick(pageName) {
+            currentPageNameFilter = pageName;
+            document.getElementById('pageNameFilter').value = pageName;
+            currentPage = 1;
+            renderBanners();
+        }
+
+        function clearPageNameFilter() {
+            currentPageNameFilter = 'all';
+            document.getElementById('pageNameFilter').value = 'all';
+            currentPage = 1;
+            renderBanners();
+        }
+
+        function sortBanners() {
+            renderBanners();
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function (e) {
+            const dropdown = document.getElementById('filterDropdown');
+            const button = document.getElementById('filterDropdownButton');
+            const arrow = document.getElementById('filterDropdownArrow');
+
+            if (isFilterDropdownOpen && dropdown && button &&
+                !button.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.add('hidden');
+                arrow.style.transform = 'rotate(0deg)';
+                isFilterDropdownOpen = false;
+            }
+        });
+
+        // ==================== SEARCH FUNCTIONS ====================
+        function debounceSearch() {
+            const loadingIndicator = document.getElementById('searchLoading');
+            if (loadingIndicator) loadingIndicator.classList.remove('hidden');
+
+            if (searchTimeout) clearTimeout(searchTimeout);
+
+            searchTimeout = setTimeout(() => {
+                performSearch();
+            }, DEBOUNCE_DELAY);
+        }
+
+        function performSearch() {
+            const loadingIndicator = document.getElementById('searchLoading');
+            if (loadingIndicator) loadingIndicator.classList.add('hidden');
+            currentPage = 1;
+            renderBanners();
+        }
+
+        // ==================== DYNAMIC UPLOAD SECTION ====================
+        function handlePageNameChange() {
+            const pageName = document.getElementById('bannerPageName').value;
+            const container = document.getElementById('bannerUploadContainer');
+            
+            if (!pageName) {
+                container.innerHTML = '<p class="text-sm text-gray-500">Please select a page to configure banner uploads</p>';
+                return;
+            }
+
+            if (pageName === 'home') {
+                renderHomePageUpload(container);
+            } else {
+                renderSingleBannerUpload(container, pageName);
+            }
+        }
+
+        function renderHomePageUpload(container) {
+            container.innerHTML = `
+                <!-- Home Page Hero Section -->
+                <div class="section-container">
+                    <div class="section-title">1. Home Page – Hero Section</div>
+                    
+                    <!-- Slider 1 -->
+                    <div class="slider-container">
+                        <div class="slider-title">Slider 1</div>
+                        <div class="hero-layout">
+                            <!-- Main Banner - Large Area -->
+                            <div class="main-banner-area">
+                                <div class="banner-slot">
+                                    <div class="banner-slot-label">
+                                        <i class="fa-solid fa-image"></i>
+                                        Main Banner (Large Slider)
+                                    </div>
+                                    ${renderUploadSlot('slider1_main', 'Hero Slider 1 – Main Banner', 'image')}
+                                </div>
+                            </div>
+                            
+                            <!-- Sub Banners - Stacked Right Side -->
+                            <div class="sub-banners-area">
+                                <!-- Sub Banner 1 - Top Right -->
+                                <div class="sub-banner-item">
+                                    <div class="banner-slot">
+                                        <div class="banner-slot-label">
+                                            <i class="fa-solid fa-image"></i>
+                                            Sub Banner 1 (Top Right - Image)
+                                        </div>
+                                        ${renderUploadSlot('slider1_sub1', 'Hero Slider 1 – Sub Banner 1', 'image')}
+                                    </div>
+                                </div>
+                                
+                                <!-- Sub Banner 2 - Bottom Right (Image or Text) -->
+                                <div class="sub-banner-item">
+                                    <div class="banner-slot">
+                                        <div class="banner-slot-label">
+                                            <i class="fa-solid fa-pen-to-square"></i>
+                                            Sub Banner 2 (Bottom Right - Image or Text)
+                                        </div>
+                                        ${renderSubBanner2Slot('slider1_sub2', 'Hero Slider 1 – Sub Banner 2')}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Slider 2 -->
+                    <div class="slider-container">
+                        <div class="slider-title">Slider 2</div>
+                        <div class="hero-layout">
+                            <!-- Main Banner - Large Area -->
+                            <div class="main-banner-area">
+                                <div class="banner-slot">
+                                    <div class="banner-slot-label">
+                                        <i class="fa-solid fa-image"></i>
+                                        Main Banner (Large Slider)
+                                    </div>
+                                    ${renderUploadSlot('slider2_main', 'Hero Slider 2 – Main Banner', 'image')}
+                                </div>
+                            </div>
+                            
+                            <!-- Sub Banners - Stacked Right Side -->
+                            <div class="sub-banners-area">
+                                <!-- Sub Banner 1 - Top Right -->
+                                <div class="sub-banner-item">
+                                    <div class="banner-slot">
+                                        <div class="banner-slot-label">
+                                            <i class="fa-solid fa-image"></i>
+                                            Sub Banner 1 (Top Right - Image)
+                                        </div>
+                                        ${renderUploadSlot('slider2_sub1', 'Hero Slider 2 – Sub Banner 1', 'image')}
+                                    </div>
+                                </div>
+                                
+                                <!-- Sub Banner 2 - Bottom Right (Image or Text) -->
+                                <div class="sub-banner-item">
+                                    <div class="banner-slot">
+                                        <div class="banner-slot-label">
+                                            <i class="fa-solid fa-pen-to-square"></i>
+                                            Sub Banner 2 (Bottom Right - Image or Text)
+                                        </div>
+                                        ${renderSubBanner2Slot('slider2_sub2', 'Hero Slider 2 – Sub Banner 2')}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Slider 3 -->
+                    <div class="slider-container">
+                        <div class="slider-title">Slider 3</div>
+                        <div class="hero-layout">
+                            <!-- Main Banner - Large Area -->
+                            <div class="main-banner-area">
+                                <div class="banner-slot">
+                                    <div class="banner-slot-label">
+                                        <i class="fa-solid fa-image"></i>
+                                        Main Banner (Large Slider)
+                                    </div>
+                                    ${renderUploadSlot('slider3_main', 'Hero Slider 3 – Main Banner', 'image')}
+                                </div>
+                            </div>
+                            
+                            <!-- Sub Banners - Stacked Right Side -->
+                            <div class="sub-banners-area">
+                                <!-- Sub Banner 1 - Top Right -->
+                                <div class="sub-banner-item">
+                                    <div class="banner-slot">
+                                        <div class="banner-slot-label">
+                                            <i class="fa-solid fa-image"></i>
+                                            Sub Banner 1 (Top Right - Image)
+                                        </div>
+                                        ${renderUploadSlot('slider3_sub1', 'Hero Slider 3 – Sub Banner 1', 'image')}
+                                    </div>
+                                </div>
+                                
+                                <!-- Sub Banner 2 - Bottom Right (Image or Text) -->
+                                <div class="sub-banner-item">
+                                    <div class="banner-slot">
+                                        <div class="banner-slot-label">
+                                            <i class="fa-solid fa-pen-to-square"></i>
+                                            Sub Banner 2 (Bottom Right - Image or Text)
+                                        </div>
+                                        ${renderSubBanner2Slot('slider3_sub2', 'Hero Slider 3 – Sub Banner 2')}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Home Page Banner Section -->
+                <div class="section-container">
+                    <div class="section-title">2. Home Page – Banner Section</div>
+                    <div class="two-column-layout">
+                        <div class="banner-slot">
+                            <div class="banner-slot-label">
+                                <i class="fa-solid fa-image"></i>
+                                Left Banner
+                            </div>
+                            ${renderUploadSlot('left_banner', 'Left Banner', 'image')}
+                        </div>
+                        <div class="banner-slot">
+                            <div class="banner-slot-label">
+                                <i class="fa-solid fa-image"></i>
+                                Right Banner
+                            </div>
+                            ${renderUploadSlot('right_banner', 'Right Banner', 'image')}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Home Page Deals Section -->
+                <div class="section-container">
+                    <div class="section-title">3. Home Page – Deals Section</div>
+                    <div class="single-banner-layout">
+                        <div class="banner-slot">
+                            <div class="banner-slot-label">
+                                <i class="fa-solid fa-image"></i>
+                                Deals Banner
+                            </div>
+                            ${renderUploadSlot('deals_banner', 'Deals Banner', 'image')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Initialize toggle functionality for Sub Banner 2 slots
+            initializeSubBanner2Toggles();
+        }
+
+        function renderSubBanner2Slot(slotName, slotLabel) {
+            return `
+                <div class="sub-banner2-container" data-slot="${slotName}">
+                    <input type="hidden" class="slot-name" value="${slotName}">
+                    <input type="hidden" class="slot-label" value="${slotLabel}">
+                    <input type="hidden" class="banner-type" id="type_${slotName}" value="image">
+                    
+                    <!-- Toggle between Image and Text -->
+                    <div class="banner-type-toggle">
+                        <button type="button" class="banner-type-btn active" onclick="setBannerType('${slotName}', 'image')">
+                            <i class="fa-solid fa-image mr-1"></i> Image
+                        </button>
+                        <button type="button" class="banner-type-btn" onclick="setBannerType('${slotName}', 'text')">
+                            <i class="fa-solid fa-pen-to-square mr-1"></i> Text Banner
+                        </button>
+                    </div>
+                    
+                    <!-- Image Upload Section -->
+                    <div id="image_section_${slotName}" class="image-section">
+                        <div class="upload-area p-3 rounded-lg text-center cursor-pointer"
+                            onclick="document.getElementById('${slotName}_image').click()"
+                            ondragover="handleDragOver(event)"
+                            ondragleave="handleDragLeave(event)"
+                            ondrop="handleDrop(event, '${slotName}')">
+                            <input type="file" id="${slotName}_image" accept="image/*" class="hidden" onchange="previewSlotImage(this, 'preview_${slotName}')">
+                            <div id="preview_${slotName}-placeholder">
+                                <i class="fa-solid fa-cloud-upload-alt text-xl mb-1" style="color: #957A54;"></i>
+                                <p class="text-xs" style="color: #133F53;">Click to upload image</p>
+                                <p class="text-xs text-gray-400">Recommended: 600 x 400px</p>
+                            </div>
+                            <img id="preview_${slotName}" class="hidden max-h-20 mx-auto rounded">
+                        </div>
+                    </div>
+                    
+                    <!-- Text Banner Fields (Initially Hidden) -->
+                    <div id="text_section_${slotName}" class="text-banner-fields hidden">
+                        <div class="text-field">
+                            <label>Heading / Title</label>
+                            <input type="text" id="${slotName}_heading" placeholder="e.g., Exclusive Deals" class="text-input">
+                        </div>
+                        <div class="text-field">
+                            <label>Description</label>
+                            <input type="text" id="${slotName}_description" placeholder="e.g., Limited time offer" class="text-input">
+                        </div>
+                        <div class="text-field">
+                            <label>Button Text (optional)</label>
+                            <input type="text" id="${slotName}_button_text" placeholder="e.g., Shop Now" class="text-input">
+                        </div>
+                        <div class="text-field">
+                            <label>Button Link (optional)</label>
+                            <input type="text" id="${slotName}_button_link" placeholder="e.g., /deals" class="text-input">
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderUploadSlot(slotName, slotLabel, type = 'image') {
+            const slotId = `banner_${slotName}`;
+            const previewId = `preview_${slotName}`;
+            
+            return `
+                <div class="upload-slot">
+                    <input type="hidden" class="slot-name" value="${slotName}">
+                    <input type="hidden" class="slot-label" value="${slotLabel}">
+                    <input type="hidden" class="banner-type" value="${type}">
+                    <div class="upload-area p-3 rounded-lg text-center cursor-pointer"
+                        onclick="document.getElementById('${slotId}').click()"
+                        ondragover="handleDragOver(event)"
+                        ondragleave="handleDragLeave(event)"
+                        ondrop="handleDrop(event, '${slotName}')">
+                        <input type="file" id="${slotId}" accept="image/*" class="hidden" onchange="previewSlotImage(this, '${previewId}')">
+                        <div id="${previewId}-placeholder">
+                            <i class="fa-solid fa-cloud-upload-alt text-xl mb-1" style="color: #957A54;"></i>
+                            <p class="text-xs" style="color: #133F53;">Click to upload</p>
+                            <p class="text-xs text-gray-400">Recommended: 1920 x 600px</p>
+                        </div>
+                        <img id="${previewId}" class="hidden max-h-20 mx-auto rounded">
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSingleBannerUpload(container, pageName) {
+            const pageLabels = {
+                'photo_frames': 'Photo Frames',
+                'wall_decor': 'Wall Decor',
+                'home_decor': 'Home Decor',
+                'nameplates': 'Nameplates',
+                'corporate_gifting': 'Corporate Gifting',
+                'personalised_gifts': 'Personalised Gifts',
+                'trophies': 'Trophies and Mementos',
+                'trending': 'Trending Products'
+            };
+
+            container.innerHTML = `
+                <div class="section-container">
+                    <div class="section-title">${pageLabels[pageName] || pageName} Page - Hero Banner</div>
+                    <div class="single-banner-layout">
+                        <div class="banner-slot">
+                            <div class="banner-slot-label">
+                                <i class="fa-solid fa-image"></i>
+                                Hero Banner
+                            </div>
+                            ${renderUploadSlot('hero_banner', 'Hero Banner', 'image')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Function to set banner type (image or text) for Sub Banner 2
+        function setBannerType(slotName, type) {
+            const container = document.querySelector(`.sub-banner2-container[data-slot="${slotName}"]`);
+            if (!container) return;
+            
+            // Update hidden input
+            const typeInput = container.querySelector('.banner-type');
+            if (typeInput) typeInput.value = type;
+            
+            // Update toggle buttons
+            const buttons = container.querySelectorAll('.banner-type-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Activate the clicked button
+            const activeBtn = Array.from(buttons).find(btn => 
+                btn.textContent.toLowerCase().includes(type)
+            );
+            if (activeBtn) activeBtn.classList.add('active');
+            
+            // Show/hide relevant sections
+            const imageSection = container.querySelector(`#image_section_${slotName}`);
+            const textSection = container.querySelector(`#text_section_${slotName}`);
+            
+            if (type === 'image') {
+                imageSection.classList.remove('hidden');
+                textSection.classList.add('hidden');
+            } else {
+                imageSection.classList.add('hidden');
+                textSection.classList.remove('hidden');
+            }
+        }
+
+        // Initialize toggle functionality for all Sub Banner 2 slots
+        function initializeSubBanner2Toggles() {
+            const subBanner2Containers = document.querySelectorAll('.sub-banner2-container');
+            subBanner2Containers.forEach(container => {
+                const slotName = container.dataset.slot;
+                // Set default to image
+                setBannerType(slotName, 'image');
+            });
+        }
+
+        function previewSlotImage(input, previewId) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const preview = document.getElementById(previewId);
+                    const placeholder = document.getElementById(previewId + '-placeholder');
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                    if (placeholder) placeholder.classList.add('hidden');
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('dragover');
+        }
+
+        function handleDrop(e, slotName) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                // Check if this is a Sub Banner 2 slot with image type
+                const container = document.querySelector(`.sub-banner2-container[data-slot="${slotName}"]`);
+                if (container) {
+                    const typeInput = container.querySelector('.banner-type');
+                    if (typeInput && typeInput.value === 'image') {
+                        const input = document.getElementById(`${slotName}_image`);
+                        if (input) {
+                            input.files = files;
+                            previewSlotImage(input, `preview_${slotName}`);
+                        }
+                    }
+                } else {
+                    const input = document.getElementById(`banner_${slotName}`);
+                    if (input) {
+                        input.files = files;
+                        previewSlotImage(input, `preview_${slotName}`);
+                    }
+                }
+            }
+        }
+
+        // ==================== MODAL FUNCTIONS ====================
+        function openCreateBannerModal() {
+            currentEditId = null;
+            document.getElementById('modalTitle').textContent = 'Create New Banner';
+            document.getElementById('bannerId').value = '';
+            document.getElementById('bannerForm').reset();
+            document.getElementById('bannerPageName').value = '';
+            document.getElementById('bannerUploadContainer').innerHTML = '<p class="text-sm text-gray-500">Please select a page to configure banner uploads</p>';
+            document.getElementById('isActive').checked = true;
+            document.getElementById('showTitle').checked = true;
+            document.getElementById('showButton').checked = true;
+
+            document.getElementById('bannerModal').classList.remove('hidden');
+            document.getElementById('bannerModal').classList.add('flex');
+        }
+
+        function editBanner(id) {
+            const banner = banners.find(b => b.id === id);
+            if (!banner) return;
+
+            currentEditId = id;
+            document.getElementById('modalTitle').textContent = 'Edit Banner';
+            document.getElementById('bannerId').value = banner.id;
+            document.getElementById('bannerTitle').value = banner.title;
+            document.getElementById('bannerDescription').value = banner.description;
+            document.getElementById('bannerPageName').value = banner.pageName;
+            document.getElementById('isActive').checked = banner.isActive;
+            document.getElementById('showTitle').checked = banner.showTitle;
+            document.getElementById('showButton').checked = banner.showButton;
+            document.getElementById('autoplay').checked = banner.autoplay || false;
+
+            // Render the appropriate upload section and set preview
+            handlePageNameChange();
+            
+            // Set preview for the specific slot
+            setTimeout(() => {
+                if (banner.slot.includes('sub2') && banner.bannerType === 'text') {
+                    // For text banner in Sub Banner 2
+                    setBannerType(banner.slot, 'text');
+                    
+                    // Fill text fields
+                    const headingInput = document.getElementById(`${banner.slot}_heading`);
+                    const descInput = document.getElementById(`${banner.slot}_description`);
+                    const btnTextInput = document.getElementById(`${banner.slot}_button_text`);
+                    const btnLinkInput = document.getElementById(`${banner.slot}_button_link`);
+                    
+                    if (headingInput) headingInput.value = banner.heading || '';
+                    if (descInput) descInput.value = banner.description || '';
+                    if (btnTextInput) btnTextInput.value = banner.buttonText || '';
+                    if (btnLinkInput) btnLinkInput.value = banner.link || '';
+                } else {
+                    // For image banners
+                    const previewId = `preview_${banner.slot}`;
+                    const preview = document.getElementById(previewId);
+                    if (preview) {
+                        preview.src = banner.image;
+                        preview.classList.remove('hidden');
+                        const placeholder = document.getElementById(previewId + '-placeholder');
+                        if (placeholder) placeholder.classList.add('hidden');
+                    }
+                }
+            }, 100);
+
+            document.getElementById('bannerModal').classList.remove('hidden');
+            document.getElementById('bannerModal').classList.add('flex');
+        }
+
+        function closeBannerModal() {
+            document.getElementById('bannerModal').classList.add('hidden');
+            document.getElementById('bannerModal').classList.remove('flex');
+            document.getElementById('bannerForm').reset();
+        }
+
+        function viewBanner(id) {
+            const banner = banners.find(b => b.id === id);
+            if (!banner) return;
+
+            const modal = document.getElementById('viewBannerModal');
+            const details = document.getElementById('bannerDetails');
+
+            details.innerHTML = `
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center pb-2 border-b">
+                        <span class="text-sm font-medium" style="color: #133F53;">Banner Information</span>
+                        ${getStatusBadge(banner)}
+                    </div>
+                    
+                    <!-- Banner Preview -->
+                    <div>
+                        <p class="text-xs font-medium mb-2" style="color: #957A54;">Banner Preview</p>
+                        ${banner.bannerType === 'image' ? 
+                            `<img src="${banner.image}" class="w-full h-40 object-cover rounded border" onerror="this.src='https://via.placeholder.com/300x100/e5e7eb/9CA3AF?text=No+Image'">` : 
+                            `<div class="w-full h-40 bg-[#F8F8EA] rounded border flex items-center justify-center p-4">
+                                <div class="text-center">
+                                    <h3 class="font-bold text-lg" style="color: #133F53;">${banner.heading || banner.title}</h3>
+                                    <p class="text-sm mt-1" style="color: #957A54;">${banner.description}</p>
+                                    ${banner.buttonText ? `<button class="mt-2 px-4 py-1 bg-[#D89F34] text-[#133F53] rounded text-sm">${banner.buttonText}</button>` : ''}
+                                </div>
+                            </div>`
+                        }
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <p class="text-xs" style="color: #957A54;">Title</p>
+                            <p class="text-sm font-medium" style="color: #133F53;">${banner.title}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs" style="color: #957A54;">Page</p>
+                            <p class="text-sm">${getPageNameLabel(banner.pageName)}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs" style="color: #957A54;">Slot</p>
+                            <p class="text-sm">${banner.slotLabel || banner.slot}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs" style="color: #957A54;">Banner Type</p>
+                            <p class="text-sm capitalize">${banner.bannerType || 'image'}</p>
+                        </div>
+                        <div class="col-span-2">
+                            <p class="text-xs" style="color: #957A54;">Description</p>
+                            <p class="text-sm">${banner.description}</p>
+                        </div>
+                        ${banner.bannerType === 'text' ? `
+                            <div>
+                                <p class="text-xs" style="color: #957A54;">Heading</p>
+                                <p class="text-sm">${banner.heading || ''}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs" style="color: #957A54;">Button Text</p>
+                                <p class="text-sm">${banner.buttonText || ''}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs" style="color: #957A54;">Button Link</p>
+                                <p class="text-sm truncate">${banner.link || ''}</p>
+                            </div>
+                        ` : `
+                            <div>
+                                <p class="text-xs" style="color: #957A54;">Link URL</p>
+                                <p class="text-sm truncate"><a href="${banner.link}" target="_blank" class="text-blue-600 hover:underline">${banner.link}</a></p>
+                            </div>
+                            <div>
+                                <p class="text-xs" style="color: #957A54;">Button Text</p>
+                                <p class="text-sm">${banner.buttonText}</p>
+                            </div>
+                        `}
+                        <div>
+                            <p class="text-xs" style="color: #957A54;">Clicks / Views</p>
+                            <p class="text-sm">${banner.clicks.toLocaleString()} / ${banner.views.toLocaleString()}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs" style="color: #957A54;">CTR</p>
+                            <p class="text-sm">${((banner.clicks / banner.views) * 100).toFixed(2)}%</p>
+                        </div>
+                        <div>
+                            <p class="text-xs" style="color: #957A54;">Created On</p>
+                            <p class="text-sm">${formatDate(banner.createdAt)}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-4 pt-2 border-t">
+                        <div>
+                            <p class="text-xs" style="color: #957A54;">Show Title</p>
+                            <p class="text-sm">${banner.showTitle ? 'Yes' : 'No'}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs" style="color: #957A54;">Show Button</p>
+                            <p class="text-sm">${banner.showButton ? 'Yes' : 'No'}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs" style="color: #957A54;">Autoplay</p>
+                            <p class="text-sm">${banner.autoplay ? 'Yes' : 'No'}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeViewBannerModal() {
+            document.getElementById('viewBannerModal').classList.add('hidden');
+            document.getElementById('viewBannerModal').classList.remove('flex');
+        }
+
+        // ==================== SAVE BANNER ====================
+        function saveBanner(event) {
+            event.preventDefault();
+
+            const pageName = document.getElementById('bannerPageName').value;
+            if (!pageName) {
+                showNotification('Please select a page', 'error');
+                return;
+            }
+
+            // Collect all banner uploads based on page type
+            const bannerData = [];
+            
+            // Handle regular upload slots
+            const uploadSlots = document.querySelectorAll('.upload-slot');
+            uploadSlots.forEach((slot, index) => {
+                const slotName = slot.querySelector('.slot-name')?.value;
+                const slotLabel = slot.querySelector('.slot-label')?.value;
+                const bannerType = slot.querySelector('.banner-type')?.value || 'image';
+                const preview = slot.querySelector('img');
+
+                if (preview && preview.src && !preview.src.includes('placeholder')) {
+                    bannerData.push({
+                        id: currentEditId && index === 0 ? currentEditId : `${Date.now()}_${index}`,
+                        title: document.getElementById('bannerTitle').value,
+                        description: document.getElementById('bannerDescription').value,
+                        pageName: pageName,
+                        slot: slotName || 'unknown',
+                        slotLabel: slotLabel || 'Unknown Slot',
+                        bannerType: 'image',
+                        image: preview.src,
+                        link: '#',
+                        buttonText: 'Shop Now',
+                        isActive: document.getElementById('isActive').checked,
+                        showTitle: document.getElementById('showTitle').checked,
+                        showButton: document.getElementById('showButton').checked,
+                        autoplay: document.getElementById('autoplay').checked,
+                        clicks: 0,
+                        views: 0,
+                        createdAt: new Date().toISOString().split('T')[0]
+                    });
+                }
+            });
+
+            // Handle Sub Banner 2 slots (with image/text toggle)
+            const subBanner2Containers = document.querySelectorAll('.sub-banner2-container');
+            subBanner2Containers.forEach((container, index) => {
+                const slotName = container.dataset.slot;
+                const slotLabel = container.querySelector('.slot-label')?.value;
+                const bannerType = container.querySelector('.banner-type')?.value;
+                
+                if (bannerType === 'image') {
+                    // Handle image upload
+                    const preview = container.querySelector('img');
+                    if (preview && preview.src && !preview.src.includes('placeholder')) {
+                        bannerData.push({
+                            id: currentEditId ? currentEditId : `${Date.now()}_sub2_${index}`,
+                            title: document.getElementById('bannerTitle').value,
+                            description: document.getElementById('bannerDescription').value,
+                            pageName: pageName,
+                            slot: slotName,
+                            slotLabel: slotLabel,
+                            bannerType: 'image',
+                            image: preview.src,
+                            link: '#',
+                            buttonText: 'Shop Now',
+                            isActive: document.getElementById('isActive').checked,
+                            showTitle: document.getElementById('showTitle').checked,
+                            showButton: document.getElementById('showButton').checked,
+                            autoplay: document.getElementById('autoplay').checked,
+                            clicks: 0,
+                            views: 0,
+                            createdAt: new Date().toISOString().split('T')[0]
+                        });
+                    }
+                } else {
+                    // Handle text banner
+                    const heading = document.getElementById(`${slotName}_heading`)?.value;
+                    const description = document.getElementById(`${slotName}_description`)?.value;
+                    const buttonText = document.getElementById(`${slotName}_button_text`)?.value;
+                    const buttonLink = document.getElementById(`${slotName}_button_link`)?.value;
+                    
+                    if (heading || description) {
+                        bannerData.push({
+                            id: currentEditId ? currentEditId : `${Date.now()}_sub2_${index}`,
+                            title: heading || document.getElementById('bannerTitle').value,
+                            description: description || '',
+                            pageName: pageName,
+                            slot: slotName,
+                            slotLabel: slotLabel,
+                            bannerType: 'text',
+                            heading: heading || '',
+                            description: description || '',
+                            buttonText: buttonText || '',
+                            link: buttonLink || '#',
+                            isActive: document.getElementById('isActive').checked,
+                            showTitle: document.getElementById('showTitle').checked,
+                            showButton: document.getElementById('showButton').checked,
+                            autoplay: document.getElementById('autoplay').checked,
+                            clicks: 0,
+                            views: 0,
+                            createdAt: new Date().toISOString().split('T')[0]
+                        });
+                    }
+                }
+            });
+
+            if (bannerData.length === 0) {
+                showNotification('Please upload at least one banner image or fill text banner details', 'error');
+                return;
+            }
+
+            if (currentEditId) {
+                // Update existing banner
+                const index = banners.findIndex(b => b.id === currentEditId);
+                if (index !== -1) {
+                    banners[index] = { ...banners[index], ...bannerData[0] };
+                }
+                showNotification('Banner updated successfully!', 'success');
+            } else {
+                // Add new banners
+                banners.push(...bannerData);
+                showNotification(`${bannerData.length} banner(s) created successfully!`, 'success');
+            }
+
+            closeBannerModal();
+            renderBanners();
+        }
+
+        // ==================== DELETE FUNCTIONS ====================
+        function openDeleteModal(id) {
+            deleteId = id;
+            document.getElementById('deleteModal').classList.remove('hidden');
+            document.getElementById('deleteModal').classList.add('flex');
+        }
+
+        function closeDeleteModal() {
+            deleteId = null;
+            document.getElementById('deleteModal').classList.add('hidden');
+            document.getElementById('deleteModal').classList.remove('flex');
+        }
+
+        function confirmDelete() {
+            if (deleteId) {
+                banners = banners.filter(b => b.id !== deleteId);
+                renderBanners();
+                showNotification('Banner deleted successfully', 'success');
+            }
+            closeDeleteModal();
+        }
+
+        // ==================== SELECTION FUNCTIONS ====================
+        function toggleAll() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.banner-checkbox');
+
+            checkboxes.forEach(cb => {
+                cb.checked = selectAll.checked;
+                if (selectAll.checked) {
+                    selectedBanners.add(cb.value);
+                } else {
+                    selectedBanners.delete(cb.value);
+                }
+            });
+
+            updateBulkActions();
+            updateSelectAll();
+        }
+
+        function updateSelection(checkbox) {
+            if (checkbox.checked) {
+                selectedBanners.add(checkbox.value);
+            } else {
+                selectedBanners.delete(checkbox.value);
+            }
+
+            updateSelectAll();
+            updateBulkActions();
+        }
+
+        function updateSelectAll() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.banner-checkbox');
+
+            if (selectAll) {
+                selectAll.checked = checkboxes.length > 0 &&
+                    Array.from(checkboxes).every(cb => cb.checked);
+                selectAll.indeterminate = !selectAll.checked &&
+                    Array.from(checkboxes).some(cb => cb.checked);
+            }
+        }
+
+        function updateBulkActions() {
+            const bulkActions = document.getElementById('bulkActions');
+            const selectedCount = document.getElementById('selectedCount');
+
+            if (selectedBanners.size > 0) {
+                bulkActions.classList.remove('hidden');
+                selectedCount.textContent = `${selectedBanners.size} selected`;
+            } else {
+                bulkActions.classList.add('hidden');
+            }
+        }
+
+        function clearSelection() {
+            selectedBanners.clear();
+            document.querySelectorAll('.banner-checkbox').forEach(cb => cb.checked = false);
+            document.getElementById('selectAll').checked = false;
+            updateBulkActions();
+        }
+
+        function bulkDelete() {
+            if (selectedBanners.size === 0) return;
+
+            if (confirm(`Delete ${selectedBanners.size} selected banners?`)) {
+                banners = banners.filter(banner => !selectedBanners.has(banner.id));
+                clearSelection();
+                renderBanners();
+                showNotification('Banners deleted successfully', 'success');
+            }
+        }
+
+        // ==================== EXPORT FUNCTION ====================
+        function exportBanners() {
+            const headers = ['Title', 'Description', 'Page', 'Slot', 'Type', 'Link', 'Clicks', 'Views', 'Status'];
+            const csvRows = [];
+
+            csvRows.push(headers.join(','));
+
+            banners.forEach(banner => {
+                const row = [
+                    `"${banner.title}"`,
+                    `"${banner.description}"`,
+                    getPageNameLabel(banner.pageName),
+                    `"${banner.slotLabel || banner.slot}"`,
+                    banner.bannerType || 'image',
+                    `"${banner.link}"`,
+                    banner.clicks,
+                    banner.views,
+                    banner.isActive ? 'Active' : 'Inactive'
+                ];
+                csvRows.push(row.join(','));
+            });
+
+            const csv = csvRows.join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `banners_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+
+            showNotification('Banners exported successfully', 'success');
+        }
+
+        function duplicateBanner(id) {
+            const banner = banners.find(b => b.id === id);
+            if (!banner) return;
+
+            const newBanner = {
+                ...banner,
+                id: String(Date.now()),
+                title: `${banner.title} (Copy)`,
+                clicks: 0,
+                views: 0,
+                createdAt: new Date().toISOString().split('T')[0]
+            };
+
+            banners.push(newBanner);
+            renderBanners();
+            showNotification('Banner duplicated successfully', 'success');
+        }
+
+        // ==================== NOTIFICATION FUNCTION ====================
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            const icon = document.getElementById('notificationIcon');
+            const messageEl = document.getElementById('notificationMessage');
+
+            const colors = {
+                success: { bg: '#10B981', icon: 'fa-regular fa-circle-check' },
+                error: { bg: '#EF4444', icon: 'fa-solid fa-circle-exclamation' },
+                info: { bg: '#3B82F6', icon: 'fa-solid fa-circle-info' }
+            };
+
+            notification.style.backgroundColor = colors[type].bg;
+            notification.style.color = 'white';
+            icon.className = colors[type].icon;
+            messageEl.textContent = message;
+
+            notification.classList.remove('hidden');
+
+            setTimeout(() => {
+                notification.classList.add('hidden');
+            }, 3000);
+        }
+
+        // ==================== LOAD COMMON COMPONENTS ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            loadComponent('sidebar-container', '../sidebar.html');
+            loadComponent('header-container', '../header.html');
+            loadComponent('modals-container', '../modals.html');
+            
+            setTimeout(() => {
+                checkAndReloadIfEmpty('sidebar-container', '/sidebar.html', '../sidebar.html');
+                checkAndReloadIfEmpty('header-container', '/header.html', '../header.html');
+                checkAndReloadIfEmpty('modals-container', '/modals.html', '../modals.html');
+            }, 500);
+        });
+
+        function loadComponent(containerId, url) {
+            console.log(`Attempting to load ${url} into ${containerId}`);
+            
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.text();
+                })
+                .then(html => {
+                    if (html.trim().length === 0) {
+                        throw new Error('Empty response');
+                    }
+                    document.getElementById(containerId).innerHTML = html;
+                    console.log(`Successfully loaded ${url}`);
+                    
+                    if (containerId === 'sidebar-container') {
+                        setTimeout(highlightActiveMenuItem, 100);
+                    }
+                    
+                    if (containerId === 'modals-container') {
+                        setTimeout(initializeModals, 100);
+                    }
+                })
+                .catch(error => {
+                    console.error(`Error loading ${url}:`, error);
+                    tryAlternativePath(containerId, url);
+                });
+        }
+
+        function tryAlternativePath(containerId, originalUrl) {
+            let alternativeUrl;
+            
+            if (originalUrl.startsWith('../')) {
+                alternativeUrl = originalUrl.substring(2);
+            } else {
+                alternativeUrl = '../' + originalUrl;
+            }
+            
+            console.log(`Trying alternative path: ${alternativeUrl}`);
+            
+            fetch(alternativeUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.text();
+                })
+                .then(html => {
+                    if (html.trim().length === 0) {
+                        throw new Error('Empty response');
+                    }
+                    document.getElementById(containerId).innerHTML = html;
+                    console.log(`Successfully loaded ${alternativeUrl}`);
+                })
+                .catch(error => {
+                    console.error(`Alternative path also failed:`, error);
+                    createFallbackComponent(containerId);
+                });
+        }
+
+        function checkAndReloadIfEmpty(containerId, primaryPath, fallbackPath) {
+            const container = document.getElementById(containerId);
+            if (container && container.children.length === 0) {
+                console.log(`${containerId} is empty, trying to reload with ${primaryPath}`);
+                loadComponent(containerId, primaryPath);
+            }
+        }
+
+        function createFallbackComponent(containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            if (containerId === 'sidebar-container') {
+                container.innerHTML = `
+                    <div class="w-64 bg-white h-screen shadow-lg p-4">
+                        <div class="text-center py-4 border-b">
+                            <h2 class="text-xl font-bold" style="color: #133F53;">Admin Panel</h2>
+                        </div>
+                        <ul class="mt-4 space-y-2">
+                            <li><a href="../index.html" class="block p-2 rounded hover:bg-[#F8F8EA]" style="color: #133F53;">Dashboard</a></li>
+                            <li><a href="../Product_Management/products.html" class="block p-2 rounded hover:bg-[#F8F8EA]" style="color: #133F53;">Product Management</a></li>
+                            <li><a href="../Order_Management/orders.html" class="block p-2 rounded hover:bg-[#F8F8EA]" style="color: #133F53;">Order Management</a></li>
+                            <li><a href="banner.html" class="block p-2 rounded bg-[#D89F34] text-[#133F53] font-medium">Banner Management</a></li>
+                            <li><a href="../User_Management/user.html" class="block p-2 rounded hover:bg-[#F8F8EA]" style="color: #133F53;">User Management</a></li>
+                        </ul>
+                    </div>
+                `;
+            } else if (containerId === 'header-container') {
+                container.innerHTML = `
+                    <header class="bg-white shadow-sm p-4 flex justify-between items-center">
+                        <h1 class="text-xl font-semibold" style="color: #133F53;">Banner Management</h1>
+                        <div class="flex items-center gap-4">
+                            <span class="text-sm" style="color: #957A54;">Admin User</span>
+                            <button class="w-8 h-8 rounded-full bg-[#F8F8EA] flex items-center justify-center">
+                                <i class="fa-regular fa-user" style="color: #133F53;"></i>
+                            </button>
+                        </div>
+                    </header>
+                `;
+            } else if (containerId === 'modals-container') {
+                container.innerHTML = `
+                    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+                        <div class="bg-white rounded-xl p-6 max-w-md w-full">
+                            <h3 class="text-xl font-bold mb-4" style="color: #133F53;">Login</h3>
+                            <p class="text-sm text-gray-500">Modal content here</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function highlightActiveMenuItem() {
+            const currentPage = window.location.pathname.split('/').pop() || 'banner.html';
+            const menuLinks = document.querySelectorAll('#sidebar-container a');
+            
+            menuLinks.forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && (href.includes(currentPage) || 
+                    (currentPage === 'banner.html' && href.includes('banner')))) {
+                    link.classList.add('active');
+                    link.style.backgroundColor = '#D89F34';
+                    link.style.color = '#133F53';
+                    
+                    const icon = link.querySelector('i');
+                    if (icon) {
+                        icon.style.color = '#133F53';
+                    }
+                }
+            });
+        }
+
+        function initializeModals() {
+            const modalTriggers = document.querySelectorAll('[data-modal-target]');
+            modalTriggers.forEach(trigger => {
+                trigger.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const modalId = this.getAttribute('data-modal-target');
+                    const modal = document.getElementById(modalId);
+                    if (modal) {
+                        modal.classList.remove('hidden');
+                        modal.classList.add('flex');
+                    }
+                });
+            });
+
+            const closeModalButtons = document.querySelectorAll('[data-modal-close]');
+            closeModalButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const modal = this.closest('.fixed');
+                    if (modal) {
+                        modal.classList.add('hidden');
+                        modal.classList.remove('flex');
+                    }
+                });
+            });
+
+            document.querySelectorAll('.fixed').forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.classList.add('hidden');
+                        this.classList.remove('flex');
+                    }
+                });
+            });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {});
+        } else {
+            setTimeout(() => {
+                loadComponent('sidebar-container', '../sidebar.html');
+                loadComponent('header-container', '../header.html');
+                loadComponent('modals-container', '../modals.html');
+            }, 100);
+        }
+    </script>
+</body>
+
+</html>
