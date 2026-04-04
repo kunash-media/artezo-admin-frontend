@@ -343,6 +343,12 @@ select.field-input { appearance: none; background-image: url("data:image/svg+xml
 .rich-toast.toast-error .rich-toast-bar { background: linear-gradient(90deg, #B02A2A, #D89F34); }
  
  .export-btn:hover { background: #C08A25; transform: translateY(-1px); }
+
+ @keyframes pulseRing {
+    0%   { transform: scale(0.95); opacity: 0.6; }
+    50%  { transform: scale(1.08); opacity: 0.25; }
+    100% { transform: scale(0.95); opacity: 0.6; }
+}
 </style>
 <body class="bg-[#F2F2E8]">
 
@@ -356,7 +362,7 @@ select.field-input { appearance: none; background-image: url("data:image/svg+xml
 
             <div class="flex items-center justify-between mb-6">
                 <div>
-                    <h1 class="text-[22px] font-semibold text-[#133F53] tracking-tight">Inventory Management</h1>
+                    <h1 class="text-2xl font-semibold text-[#133F53] tracking-tight">Inventory Management</h1>
                     <p class="text-[13px] text-[#957A54] mt-0.5">Monitor stock levels and manage product inventory</p>
                 </div>
 
@@ -374,7 +380,7 @@ select.field-input { appearance: none; background-image: url("data:image/svg+xml
             </div>
 
             <!-- Filters -->
-            <div class="bg-white/70 border border-gray-300 rounded-xl px-4 py-3 mb-4 flex flex-wrap gap-3 items-center">
+            <div class="bg-white/70 border border-gray-400 rounded-xl px-4 py-3 mb-4 flex flex-wrap gap-3 items-center">
                 <div class="search-wrapper flex-1 min-w-[200px] max-w-[300px]">
                     <i class="fas fa-search"></i>
                     <input class="field-input" type="text" id="searchInput" placeholder="Search SKU, product…" oninput="handleSearchInput(this.value)">
@@ -395,11 +401,11 @@ select.field-input { appearance: none; background-image: url("data:image/svg+xml
             </div>
 
             <!-- Table Card -->
-            <div class="bg-white/70 border border-gray-300 rounded-xl overflow-hidden">
-                <div class="overflow-x-auto">
+            <div class="bg-white/70 border border-gray-400 rounded-xl overflow-hidden">
+                <div class="overflow-x-auto h-[600px]">
                     <table class="inv-table w-full border-collapse">
-                        <thead>
-                            <tr>
+                        <thead class="sticky top-0 z-50">
+                            <tr >
                                 <th class="text-left">SKU</th>
                                 <th class="text-left">Product Name</th>
                                 <th class="text-left">Variant Name</th>                                
@@ -788,819 +794,813 @@ select.field-input { appearance: none; background-image: url("data:image/svg+xml
     </div>
 </div>
  
-<style>
-@keyframes pulseRing {
-    0%   { transform: scale(0.95); opacity: 0.6; }
-    50%  { transform: scale(1.08); opacity: 0.25; }
-    100% { transform: scale(0.95); opacity: 0.6; }
-}
-</style>
 
 <div id="modals-container"></div>
 
+<script src="/js/order-badge.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/components.js"></script>
+
 <script>
-const BASE_URL = 'http://localhost:8085';
+    const BASE_URL = 'http://localhost:8085';
 
-// ============================================================
-// STATE
-// ============================================================
-let allInventory = [];
-let filteredInventory = [];
-let currentPage = 1;
-const PAGE_SIZE = 10;
-let searchDebounceTimer = null;
-let currentEditSku = null;
-let currentViewItem = null;
+    // ============================================================
+    // STATE
+    // ============================================================
+    let allInventory = [];
+    let filteredInventory = [];
+    let currentPage = 1;
+    const PAGE_SIZE = 10;
+    let searchDebounceTimer = null;
+    let currentEditSku = null;
+    let currentViewItem = null;
 
-// ============================================================
-// INIT
-// ============================================================
-window.addEventListener('DOMContentLoaded', () => fetchInventory());
+    // ============================================================
+    // INIT
+    // ============================================================
+    window.addEventListener('DOMContentLoaded', () => fetchInventory());
 
-// ============================================================
-// FETCH ALL INVENTORY
-// ============================================================
-async function fetchInventory() {
-    showSkeleton();
-    document.getElementById('errorState').classList.add('hidden');
-    document.getElementById('emptyState').classList.add('hidden');
-    setPagination(false);
+    // ============================================================
+    // FETCH ALL INVENTORY
+    // ============================================================
+    async function fetchInventory() {
+        showSkeleton();
+        document.getElementById('errorState').classList.add('hidden');
+        document.getElementById('emptyState').classList.add('hidden');
+        setPagination(false);
 
-    try {
-        const res = await fetch(`${BASE_URL}/api/inventory/get-all-inventories`);
-        if (!res.ok) throw new Error(`Server responded with ${res.status}`);
-        const data = await res.json();
-        allInventory = data.content || [];
-        populateCategoryFilter();
-        applyFilters();
-    } catch (err) {
-        document.getElementById('tableBody').innerHTML = '';
-        document.getElementById('errorState').classList.remove('hidden');
-        document.getElementById('errorMsg').textContent = err.message || 'Unable to reach server.';
+        try {
+            const res = await fetch(`${BASE_URL}/api/inventory/get-all-inventories`);
+            if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+            const data = await res.json();
+            allInventory = data.content || [];
+            populateCategoryFilter();
+            applyFilters();
+        } catch (err) {
+            document.getElementById('tableBody').innerHTML = '';
+            document.getElementById('errorState').classList.remove('hidden');
+            document.getElementById('errorMsg').textContent = err.message || 'Unable to reach server.';
+        }
     }
-}
 
 
-//=============================================
-//      Refresh invenotry
-//==============================================
-async function refreshInventory() {
-    // Show subtle full-page loader overlay without disrupting layout
-    const overlay = document.createElement('div');
-    overlay.id = 'refreshOverlay';
-    overlay.style.cssText = `position:fixed;inset:0;z-index:40;background:rgba(242,242,232,0.7);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;`;
-    overlay.innerHTML = `
-        <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
-            <div style="width:36px;height:36px;border:3px solid rgba(19,63,83,0.15);border-top-color:#133F53;border-radius:50%;animation:spin 0.7s linear infinite;"></div>
-            <span style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:#133F53;">Refreshing inventory…</span>
-        </div>`;
-    document.body.appendChild(overlay);
+    //=============================================
+    //      Refresh invenotry
+    //==============================================
+    async function refreshInventory() {
+        // Show subtle full-page loader overlay without disrupting layout
+        const overlay = document.createElement('div');
+        overlay.id = 'refreshOverlay';
+        overlay.style.cssText = `position:fixed;inset:0;z-index:40;background:rgba(242,242,232,0.7);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;`;
+        overlay.innerHTML = `
+            <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+                <div style="width:36px;height:36px;border:3px solid rgba(19,63,83,0.15);border-top-color:#133F53;border-radius:50%;animation:spin 0.7s linear infinite;"></div>
+                <span style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:#133F53;">Refreshing inventory…</span>
+            </div>`;
+        document.body.appendChild(overlay);
 
-    try {
-        const res = await fetch(`${BASE_URL}/api/inventory/get-all-inventories`);
-        if (!res.ok) throw new Error(`Server responded with ${res.status}`);
-        const data = await res.json();
-        allInventory = data.content || [];
-        populateCategoryFilter();
-        applyFilters();
-    } catch (err) {
-        showToast('Failed to refresh inventory', 'error');
-    } finally {
-        document.getElementById('refreshOverlay')?.remove();
+        try {
+            const res = await fetch(`${BASE_URL}/api/inventory/get-all-inventories`);
+            if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+            const data = await res.json();
+            allInventory = data.content || [];
+            populateCategoryFilter();
+            applyFilters();
+        } catch (err) {
+            showToast('Failed to refresh inventory', 'error');
+        } finally {
+            document.getElementById('refreshOverlay')?.remove();
+        }
     }
-}
 
-// ============================================================
-// SKELETON
-// ============================================================
-function showSkeleton() {
-    setPagination(false);
-    document.getElementById('tableBody').innerHTML = Array.from({ length: 7 }, () => `
-        <tr>
-            <td><span class="skeleton" style="height:20px;width:112px;">&nbsp;</span></td>
-            <td>
-                <span class="skeleton" style="height:14px;width:180px;display:block;margin-bottom:5px;">&nbsp;</span>
-                <span class="skeleton" style="height:12px;width:72px;">&nbsp;</span>
-            </td>
-            <td><span class="skeleton" style="height:20px;width:60px;">&nbsp;</span></td>
-            <td style="text-align:center;"><span class="skeleton" style="height:24px;width:48px;border-radius:20px;display:inline-block;">&nbsp;</span></td>
-            <td style="text-align:center;"><span class="skeleton" style="height:24px;width:48px;border-radius:20px;display:inline-block;">&nbsp;</span></td>
-            <td style="text-align:center;"><span class="skeleton" style="height:24px;width:80px;border-radius:20px;display:inline-block;">&nbsp;</span></td>
-            <td style="text-align:center;"><span class="skeleton" style="height:14px;width:72px;display:inline-block;">&nbsp;</span></td>
-            <td>
-                <div style="display:flex;gap:6px;justify-content:center;">
-                    <span class="skeleton" style="height:30px;width:30px;border-radius:7px;">&nbsp;</span>
-                    <span class="skeleton" style="height:30px;width:30px;border-radius:7px;">&nbsp;</span>
+    // ============================================================
+    // SKELETON
+    // ============================================================
+    function showSkeleton() {
+        setPagination(false);
+        document.getElementById('tableBody').innerHTML = Array.from({ length: 7 }, () => `
+            <tr>
+                <td><span class="skeleton" style="height:20px;width:112px;">&nbsp;</span></td>
+                <td>
+                    <span class="skeleton" style="height:14px;width:180px;display:block;margin-bottom:5px;">&nbsp;</span>
+                    <span class="skeleton" style="height:12px;width:72px;">&nbsp;</span>
+                </td>
+                <td><span class="skeleton" style="height:20px;width:60px;">&nbsp;</span></td>
+                <td style="text-align:center;"><span class="skeleton" style="height:24px;width:48px;border-radius:20px;display:inline-block;">&nbsp;</span></td>
+                <td style="text-align:center;"><span class="skeleton" style="height:24px;width:48px;border-radius:20px;display:inline-block;">&nbsp;</span></td>
+                <td style="text-align:center;"><span class="skeleton" style="height:24px;width:80px;border-radius:20px;display:inline-block;">&nbsp;</span></td>
+                <td style="text-align:center;"><span class="skeleton" style="height:14px;width:72px;display:inline-block;">&nbsp;</span></td>
+                <td>
+                    <div style="display:flex;gap:6px;justify-content:center;">
+                        <span class="skeleton" style="height:30px;width:30px;border-radius:7px;">&nbsp;</span>
+                        <span class="skeleton" style="height:30px;width:30px;border-radius:7px;">&nbsp;</span>
+                    </div>
+                </td>
+            </tr>`).join('');
+    }
+
+    function setPagination(visible) {
+        const bar = document.getElementById('paginationBar');
+        bar.style.display = visible ? 'flex' : 'none';
+    }
+
+    // ============================================================
+    // CATEGORY FILTER — unique values from API
+    // ============================================================
+    function populateCategoryFilter() {
+        const cats = [...new Set(allInventory.map(i => i.product.productCategory))].sort();
+        const sel = document.getElementById('categoryFilter');
+        while (sel.options.length > 1) sel.remove(1);
+        cats.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c; opt.textContent = c;
+            sel.appendChild(opt);
+        });
+    }
+
+    // ============================================================
+    // FILTERS + SEARCH
+    // ============================================================
+    function handleSearchInput(val) {
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = setTimeout(() => {
+            if (val.length === 0 || val.length >= 3) applyFilters();
+        }, 300);
+    }
+
+    // Add this function
+    function resetFilters() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('stockFilter').value = '';
+        document.getElementById('categoryFilter').value = '';
+        applyFilters();
+    }
+
+    function applyFilters() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const stockF = document.getElementById('stockFilter').value;
+        const catF = document.getElementById('categoryFilter').value;
+        const hasFilter = document.getElementById('searchInput').value || document.getElementById('stockFilter').value || document.getElementById('categoryFilter').value;
+        document.getElementById('resetFiltersBtn').style.display = hasFilter ? 'inline-flex' : 'none';
+        
+
+        filteredInventory = allInventory.filter(item => {
+            const matchSearch = !search || search.length < 3 ||
+                item.sku.toLowerCase().includes(search) ||
+                item.product.title.toLowerCase().includes(search) ||
+                item.product.productStrId.toLowerCase().includes(search);
+            const matchStock = !stockF || getStatus(item) === stockF;
+            const matchCat = !catF || item.product.productCategory === catF;
+            return matchSearch && matchStock && matchCat;
+        });
+
+        // Sort: low stock first, then out of stock, then in stock
+        const order = { low: 0, out: 1, ok: 2 };
+        filteredInventory.sort((a, b) => order[getStatus(a)] - order[getStatus(b)]);
+
+        currentPage = 1;
+        renderTable();
+    }
+
+    function getStatus(item) {
+        if (item.availableStock === 0) return 'out';
+        if (item.availableStock <= item.lowStockThreshold) return 'low';
+        return 'ok';
+    }
+
+    // ============================================================
+    // TABLE RENDER
+    // ============================================================
+    function renderTable() {
+        const tbody = document.getElementById('tableBody');
+        const total = filteredInventory.length;
+        const totalPages = Math.ceil(total / PAGE_SIZE);
+        const start = (currentPage - 1) * PAGE_SIZE;
+        const pageItems = filteredInventory.slice(start, start + PAGE_SIZE);
+
+        document.getElementById('resultsCount').textContent = total > 0 ? `${total} item${total !== 1 ? 's' : ''}` : '';
+        document.getElementById('emptyState').classList.toggle('hidden', pageItems.length > 0);
+
+        if (pageItems.length === 0) {
+            tbody.innerHTML = '';
+            setPagination(false);
+        } else {
+            tbody.innerHTML = pageItems.map(renderRow).join('');
+            setPagination(true);
+        }
+        renderPagination(total, totalPages);
+    }
+
+    function renderRow(item) {
+        const status = getStatus(item);
+        const badgeHTML = {
+            ok:  `<span class="badge badge-ok border border-gray-400"><i class="fas fa-circle" style="font-size:7px;"></i>In Stock</span>`,
+            low: `<span class="badge badge-low border border-gray-400"><i class="fas fa-circle" style="font-size:7px;"></i>Low Stock</span>`,
+            out: `<span class="badge badge-out border border-gray-400"><i class="fas fa-circle" style="font-size:7px;"></i>Out of Stock</span>`,
+        };
+        const pillCls = status === 'ok' ? 'stock-pill-ok' : status === 'low' ? 'stock-pill-low' : 'stock-pill-out';
+        const rowCls = status === 'low' ? 'row-low-blink' : '';
+
+        return `<tr class="${rowCls}">
+            <td style="white-space:nowrap;"><span class="sku-chip">${item.sku}</span></td>
+            <td style="min-width:240px;">
+                <div style="font-size:13.5px;font-weight:500;color:#1a1a14;line-height:1.35;" class="flex flex-col items-baseline justify-evenly gap-2 p-2" >
+                    <span class="text-lg">${item.product.title}</span>
+                    <span class="border border-gray-400 rounded-md ${pillCls} px-1">qty : ${item.product.currentStock}</span>
+                    <span class="border border-[#D89F34] rounded-md bg-gray-100 px-1" >selling price : ${item.product.currentSellingPrice}</span>
+                    <span class="border border-[#D89F34] rounded-md bg-gray-100 px-1" >mrp price : ${item.product.currentMrpPrice}</span>
+                    <span style="font-size:11.5px;margin-top:2px;" 
+                    class="bg-gray-100 border border-[#D89F34] rounded-md px-1">ID : ${item.product.productStrId}</span>
                 </div>
             </td>
-        </tr>`).join('');
-}
 
-function setPagination(visible) {
-    const bar = document.getElementById('paginationBar');
-    bar.style.display = visible ? 'flex' : 'none';
-}
 
-// ============================================================
-// CATEGORY FILTER — unique values from API
-// ============================================================
-function populateCategoryFilter() {
-    const cats = [...new Set(allInventory.map(i => i.product.productCategory))].sort();
-    const sel = document.getElementById('categoryFilter');
-    while (sel.options.length > 1) sel.remove(1);
-    cats.forEach(c => {
-        const opt = document.createElement('option');
-        opt.value = c; opt.textContent = c;
-        sel.appendChild(opt);
+            <td style="white-space:nowrap;" >
+                <div class="flex flex-col items-baseline justify-evenly gap-2 p-2">
+                    <span class="cat-tag">
+                        ${item.product.variantTitle}
+                    </span>
+                    <span class="border border-gray-400 rounded-md ${pillCls} px-1">qty : ${item.product.variantStock}</span>
+                    <span class="border border-[#D89F34] rounded-md bg-gray-100 px-1" >selling price : ${item.product.variantSellingPrice}</span>
+                    <span class="border border-[#D89F34] rounded-md bg-gray-100 px-1" >mrp price : ${item.product.variantMrpPrice}</span>
+                </div>
+            </td>
+            <td style="white-space:nowrap;"><span class="cat-tag">${item.product.productCategory}</span></td>
+            <td style="white-space:nowrap;"><span class="cat-tag">${item.product.productSubCategory}</span></td>
+            <td style="text-align:center;white-space:nowrap;"><span class="border border-gray-400 rounded-md ${pillCls} px-1">${item.totalStock}</span></td>
+            <td style="text-align:center;white-space:nowrap;" >${badgeHTML[status]}</td>
+            <td style="text-align:center;font-size:12.5px;color:#957A54;white-space:nowrap;">${formatDate(item.updatedAt)}</td>
+            <td style="white-space:nowrap;">
+                <div style="display:flex;gap:6px;justify-content:center;">
+                    <button class="act-btn act-btn-view" data-tooltip="View Details" onclick="openView(${item.inventoryId})">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="border border-[#D89F34] act-btn act-btn-edit" data-tooltip="Edit Stock" onclick="openEdit(${item.inventoryId})">
+                        <i class="fas fa-pen"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>`;
+    }
+
+    function formatDate(iso) {
+        return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    function renderPagination(total, totalPages) {
+        const info = document.getElementById('pageInfo');
+        const btns = document.getElementById('pageButtons');
+        if (total === 0) { info.textContent = ''; btns.innerHTML = ''; return; }
+
+        const s = (currentPage - 1) * PAGE_SIZE + 1;
+        const e = Math.min(currentPage * PAGE_SIZE, total);
+        info.textContent = `Showing ${s}–${e} of ${total}`;
+
+        let html = `<button class="page-btn" onclick="goPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+            <i class="fas fa-chevron-left" style="font-size:10px;"></i></button>`;
+        for (let i = 1; i <= totalPages; i++) {
+            html += `<button class="page-btn${i === currentPage ? ' active' : ''}" onclick="goPage(${i})">${i}</button>`;
+        }
+        html += `<button class="page-btn" onclick="goPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
+            <i class="fas fa-chevron-right" style="font-size:10px;"></i></button>`;
+        btns.innerHTML = html;
+    }
+
+    function goPage(p) {
+        const tp = Math.ceil(filteredInventory.length / PAGE_SIZE);
+        if (p < 1 || p > tp) return;
+        currentPage = p;
+        renderTable();
+    }
+
+    // ============================================================
+    // OVERLAYS
+    // ============================================================
+    function openOverlay(id) { document.getElementById(id).classList.add('active'); document.body.style.overflow = 'hidden'; }
+    function closeOverlay(id) { document.getElementById(id).classList.remove('active'); document.body.style.overflow = ''; }
+    document.querySelectorAll('.overlay-backdrop').forEach(el => {
+        el.addEventListener('click', function(e) { if (e.target === this) closeOverlay(this.id); });
     });
-}
-
-// ============================================================
-// FILTERS + SEARCH
-// ============================================================
-function handleSearchInput(val) {
-    clearTimeout(searchDebounceTimer);
-    searchDebounceTimer = setTimeout(() => {
-        if (val.length === 0 || val.length >= 3) applyFilters();
-    }, 300);
-}
-
-// Add this function
-function resetFilters() {
-    document.getElementById('searchInput').value = '';
-    document.getElementById('stockFilter').value = '';
-    document.getElementById('categoryFilter').value = '';
-    applyFilters();
-}
-
-function applyFilters() {
-    const search = document.getElementById('searchInput').value.toLowerCase();
-    const stockF = document.getElementById('stockFilter').value;
-    const catF = document.getElementById('categoryFilter').value;
-     const hasFilter = document.getElementById('searchInput').value || document.getElementById('stockFilter').value || document.getElementById('categoryFilter').value;
-    document.getElementById('resetFiltersBtn').style.display = hasFilter ? 'inline-flex' : 'none';
-    
-
-    filteredInventory = allInventory.filter(item => {
-        const matchSearch = !search || search.length < 3 ||
-            item.sku.toLowerCase().includes(search) ||
-            item.product.title.toLowerCase().includes(search) ||
-            item.product.productStrId.toLowerCase().includes(search);
-        const matchStock = !stockF || getStatus(item) === stockF;
-        const matchCat = !catF || item.product.productCategory === catF;
-        return matchSearch && matchStock && matchCat;
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') document.querySelectorAll('.overlay-backdrop.active').forEach(el => closeOverlay(el.id));
     });
 
-    // Sort: low stock first, then out of stock, then in stock
-    const order = { low: 0, out: 1, ok: 2 };
-    filteredInventory.sort((a, b) => order[getStatus(a)] - order[getStatus(b)]);
+    // ============================================================
+    // VIEW
+    // ============================================================
+    function openView(id) {
+        const item = allInventory.find(i => i.inventoryId === id);
+        if (!item) return;
+        currentViewItem = item;
 
-    currentPage = 1;
-    renderTable();
-}
+        document.getElementById('viewSubtitle').textContent = item.product.productStrId;
+        document.getElementById('v_sku').textContent = item.sku;
+        document.getElementById('v_category').textContent = item.product.productCategory;
+        // document.getElementById('v_variantTitle').textContent = item.product.variantTitle;
+        document.getElementById('v_title').textContent = item.product.title;
+        document.getElementById('v_total').textContent = item.totalStock;
+        document.getElementById('v_currentStock').textContent = item.product.currentStock ?? '—';
+        document.getElementById('v_variantStock').textContent  = item.product.variantStock  ?? '—';
+        // document.getElementById('v_available').textContent = item.availableStock;
+        document.getElementById('v_threshold').textContent = item.lowStockThreshold;
+        document.getElementById('v_created').textContent = formatDate(item.createdAt);
+        document.getElementById('v_updated').textContent = formatDate(item.updatedAt);
 
-function getStatus(item) {
-    if (item.availableStock === 0) return 'out';
-    if (item.availableStock <= item.lowStockThreshold) return 'low';
-    return 'ok';
-}
-
-// ============================================================
-// TABLE RENDER
-// ============================================================
-function renderTable() {
-    const tbody = document.getElementById('tableBody');
-    const total = filteredInventory.length;
-    const totalPages = Math.ceil(total / PAGE_SIZE);
-    const start = (currentPage - 1) * PAGE_SIZE;
-    const pageItems = filteredInventory.slice(start, start + PAGE_SIZE);
-
-    document.getElementById('resultsCount').textContent = total > 0 ? `${total} item${total !== 1 ? 's' : ''}` : '';
-    document.getElementById('emptyState').classList.toggle('hidden', pageItems.length > 0);
-
-    if (pageItems.length === 0) {
-        tbody.innerHTML = '';
-        setPagination(false);
-    } else {
-        tbody.innerHTML = pageItems.map(renderRow).join('');
-        setPagination(true);
-    }
-    renderPagination(total, totalPages);
-}
-
-function renderRow(item) {
-    const status = getStatus(item);
-    const badgeHTML = {
-        ok:  `<span class="badge badge-ok border border-gray-400"><i class="fas fa-circle" style="font-size:7px;"></i>In Stock</span>`,
-        low: `<span class="badge badge-low border border-gray-400"><i class="fas fa-circle" style="font-size:7px;"></i>Low Stock</span>`,
-        out: `<span class="badge badge-out border border-gray-400"><i class="fas fa-circle" style="font-size:7px;"></i>Out of Stock</span>`,
-    };
-    const pillCls = status === 'ok' ? 'stock-pill-ok' : status === 'low' ? 'stock-pill-low' : 'stock-pill-out';
-    const rowCls = status === 'low' ? 'row-low-blink' : '';
-
-    return `<tr class="${rowCls}">
-        <td style="white-space:nowrap;"><span class="sku-chip">${item.sku}</span></td>
-        <td style="min-width:240px;">
-            <div style="font-size:13.5px;font-weight:500;color:#1a1a14;line-height:1.35;" class="flex flex-col items-baseline justify-evenly gap-2 p-2" >
-                <span class="text-lg">${item.product.title}</span>
-                <span class="border border-gray-400 rounded-md ${pillCls} px-1">qty : ${item.product.currentStock}</span>
-                <span class="border border-[#D89F34] rounded-md bg-gray-100 px-1" >selling price : ${item.product.currentSellingPrice}</span>
-                <span class="border border-[#D89F34] rounded-md bg-gray-100 px-1" >mrp price : ${item.product.currentMrpPrice}</span>
-                <span style="font-size:11.5px;margin-top:2px;" 
-                class="bg-gray-100 border border-[#D89F34] rounded-md px-1">ID : ${item.product.productStrId}</span>
-            </div>
-        </td>
-
-
-        <td style="white-space:nowrap;" >
-            <div class="flex flex-col items-baseline justify-evenly gap-2 p-2">
-                <span class="cat-tag">
-                    ${item.product.variantTitle}
-                </span>
-                <span class="border border-gray-400 rounded-md ${pillCls} px-1">qty : ${item.product.variantStock}</span>
-                <span class="border border-[#D89F34] rounded-md bg-gray-100 px-1" >selling price : ${item.product.variantSellingPrice}</span>
-                <span class="border border-[#D89F34] rounded-md bg-gray-100 px-1" >mrp price : ${item.product.variantMrpPrice}</span>
-            </div>
-        </td>
-        <td style="white-space:nowrap;"><span class="cat-tag">${item.product.productCategory}</span></td>
-        <td style="white-space:nowrap;"><span class="cat-tag">${item.product.productSubCategory}</span></td>
-        <td style="text-align:center;white-space:nowrap;"><span class="border border-gray-400 rounded-md ${pillCls} px-1">${item.totalStock}</span></td>
-        <td style="text-align:center;white-space:nowrap;" >${badgeHTML[status]}</td>
-        <td style="text-align:center;font-size:12.5px;color:#957A54;white-space:nowrap;">${formatDate(item.updatedAt)}</td>
-        <td style="white-space:nowrap;">
-            <div style="display:flex;gap:6px;justify-content:center;">
-                <button class="act-btn act-btn-view" data-tooltip="View Details" onclick="openView(${item.inventoryId})">
-                    <i class="fas fa-eye"></i>
-                </button>
-                <button class="act-btn act-btn-edit" data-tooltip="Edit Stock" onclick="openEdit(${item.inventoryId})">
-                    <i class="fas fa-pen"></i>
-                </button>
-            </div>
-        </td>
-    </tr>`;
-}
-
-function formatDate(iso) {
-    return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-}
-
-function renderPagination(total, totalPages) {
-    const info = document.getElementById('pageInfo');
-    const btns = document.getElementById('pageButtons');
-    if (total === 0) { info.textContent = ''; btns.innerHTML = ''; return; }
-
-    const s = (currentPage - 1) * PAGE_SIZE + 1;
-    const e = Math.min(currentPage * PAGE_SIZE, total);
-    info.textContent = `Showing ${s}–${e} of ${total}`;
-
-    let html = `<button class="page-btn" onclick="goPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
-        <i class="fas fa-chevron-left" style="font-size:10px;"></i></button>`;
-    for (let i = 1; i <= totalPages; i++) {
-        html += `<button class="page-btn${i === currentPage ? ' active' : ''}" onclick="goPage(${i})">${i}</button>`;
-    }
-    html += `<button class="page-btn" onclick="goPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
-        <i class="fas fa-chevron-right" style="font-size:10px;"></i></button>`;
-    btns.innerHTML = html;
-}
-
-function goPage(p) {
-    const tp = Math.ceil(filteredInventory.length / PAGE_SIZE);
-    if (p < 1 || p > tp) return;
-    currentPage = p;
-    renderTable();
-}
-
-// ============================================================
-// OVERLAYS
-// ============================================================
-function openOverlay(id) { document.getElementById(id).classList.add('active'); document.body.style.overflow = 'hidden'; }
-function closeOverlay(id) { document.getElementById(id).classList.remove('active'); document.body.style.overflow = ''; }
-document.querySelectorAll('.overlay-backdrop').forEach(el => {
-    el.addEventListener('click', function(e) { if (e.target === this) closeOverlay(this.id); });
-});
-document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') document.querySelectorAll('.overlay-backdrop.active').forEach(el => closeOverlay(el.id));
-});
-
-// ============================================================
-// VIEW
-// ============================================================
-function openView(id) {
-    const item = allInventory.find(i => i.inventoryId === id);
-    if (!item) return;
-    currentViewItem = item;
-
-    document.getElementById('viewSubtitle').textContent = item.product.productStrId;
-    document.getElementById('v_sku').textContent = item.sku;
-    document.getElementById('v_category').textContent = item.product.productCategory;
-    // document.getElementById('v_variantTitle').textContent = item.product.variantTitle;
-    document.getElementById('v_title').textContent = item.product.title;
-    document.getElementById('v_total').textContent = item.totalStock;
-    document.getElementById('v_currentStock').textContent = item.product.currentStock ?? '—';
-    document.getElementById('v_variantStock').textContent  = item.product.variantStock  ?? '—';
-    // document.getElementById('v_available').textContent = item.availableStock;
-    document.getElementById('v_threshold').textContent = item.lowStockThreshold;
-    document.getElementById('v_created').textContent = formatDate(item.createdAt);
-    document.getElementById('v_updated').textContent = formatDate(item.updatedAt);
-
-    const badgeHTML = {
-        ok:  `<span class="badge badge-ok"><i class="fas fa-circle" style="font-size:7px;"></i>In Stock</span>`,
-        low: `<span class="badge badge-low"><i class="fas fa-circle" style="font-size:7px;"></i>Low Stock</span>`,
-        out: `<span class="badge badge-out"><i class="fas fa-circle" style="font-size:7px;"></i>Out of Stock</span>`,
-    };
-    document.getElementById('v_statusBadge').innerHTML = badgeHTML[getStatus(item)];
-    openOverlay('viewOverlay');
-}
-
-function switchToEdit() {
-    closeOverlay('viewOverlay');
-    if (currentViewItem) openEdit(currentViewItem.inventoryId);
-}
-
-// ============================================================
-// EDIT
-// ============================================================
-
-function openEdit(id) {
-    const item = allInventory.find(i => i.inventoryId === id);
-    console.log("edit form :", item);
-
-    if (!item) return;
-    currentEditSku = item.sku;
-
-    document.getElementById('editSubtitle').textContent      = item.sku;
-    document.getElementById('edit_title').textContent        = item.product.title;
-    document.getElementById('edit_sku').textContent          = item.sku;
-    document.getElementById('edit_currentTotal').textContent = item.totalStock;
-    document.getElementById('edit_threshold').textContent    = item.lowStockThreshold;
-    document.getElementById('edit_variantTitle').textContent   = item.product.variantTitle;
-
-    // Show current values as hints below inputs
-    document.getElementById('edit_currentProduct').textContent = item.product.title;
-    // document.getElementById('edit_variantStock').textContent = item.product.variantStock  ?? '—';
-
-    // ✅ Pre-fill both inputs
-    document.getElementById('newRootStockInput').value    = item.product.currentStock ?? 0;
-    document.getElementById('newVariantStockInput').value = item.product.variantStock  ?? 0;
-
-    document.getElementById('editError').classList.add('hidden');
-    const btn = document.getElementById('saveStockBtn');
-    btn.innerHTML = `<i class="fas fa-check" style="font-size:11px;"></i> Save Changes`;
-    btn.disabled = false;
-    openOverlay('editOverlay');
-}
-
-
-
-async function saveStock() {
-    const variantVal = parseInt(document.getElementById('newVariantStockInput').value);
-    const rootVal    = parseInt(document.getElementById('newRootStockInput').value);
-    const errEl      = document.getElementById('editError');
-    errEl.classList.add('hidden');
-
-    if (isNaN(variantVal) || variantVal < 0 || isNaN(rootVal) || rootVal < 0) {
-        errEl.textContent = 'Please enter valid stock values (0 or more) for both fields.';
-        errEl.classList.remove('hidden');
-        return;
+        const badgeHTML = {
+            ok:  `<span class="badge badge-ok"><i class="fas fa-circle" style="font-size:7px;"></i>In Stock</span>`,
+            low: `<span class="badge badge-low"><i class="fas fa-circle" style="font-size:7px;"></i>Low Stock</span>`,
+            out: `<span class="badge badge-out"><i class="fas fa-circle" style="font-size:7px;"></i>Out of Stock</span>`,
+        };
+        document.getElementById('v_statusBadge').innerHTML = badgeHTML[getStatus(item)];
+        openOverlay('viewOverlay');
     }
 
-    const btn = document.getElementById('saveStockBtn');
-    btn.innerHTML = `<span class="spinner"></span> Saving…`;
-    btn.disabled = true;
+    function switchToEdit() {
+        closeOverlay('viewOverlay');
+        if (currentViewItem) openEdit(currentViewItem.inventoryId);
+    }
 
-    try {
-        // Single API call — variant SKU in path, rootStock as optional param
-        const res = await fetch(
-            `${BASE_URL}/api/inventory/patch-by-sku/${currentEditSku}/stock?availableStock=${variantVal}&rootStock=${rootVal}`,
-            { method: 'PATCH' }
-        );
-        if (!res.ok) throw new Error(`Server error ${res.status}`);
+    // ============================================================
+    // EDIT
+    // ============================================================
 
-        closeOverlay('editOverlay');
-        showToast(`Stock updated — Variant: ${variantVal}, Root: ${rootVal}`);
-        await refreshInventory();
+    function openEdit(id) {
+        const item = allInventory.find(i => i.inventoryId === id);
+        console.log("edit form :", item);
 
-    } catch (err) {
-        errEl.textContent = `Failed to save: ${err.message}`;
-        errEl.classList.remove('hidden');
+        if (!item) return;
+        currentEditSku = item.sku;
+
+        document.getElementById('editSubtitle').textContent      = item.sku;
+        document.getElementById('edit_title').textContent        = item.product.title;
+        document.getElementById('edit_sku').textContent          = item.sku;
+        document.getElementById('edit_currentTotal').textContent = item.totalStock;
+        document.getElementById('edit_threshold').textContent    = item.lowStockThreshold;
+        document.getElementById('edit_variantTitle').textContent   = item.product.variantTitle;
+
+        // Show current values as hints below inputs
+        document.getElementById('edit_currentProduct').textContent = item.product.title;
+        // document.getElementById('edit_variantStock').textContent = item.product.variantStock  ?? '—';
+
+        // ✅ Pre-fill both inputs
+        document.getElementById('newRootStockInput').value    = item.product.currentStock ?? 0;
+        document.getElementById('newVariantStockInput').value = item.product.variantStock  ?? 0;
+
+        document.getElementById('editError').classList.add('hidden');
+        const btn = document.getElementById('saveStockBtn');
         btn.innerHTML = `<i class="fas fa-check" style="font-size:11px;"></i> Save Changes`;
         btn.disabled = false;
+        openOverlay('editOverlay');
     }
-}
 
 
 
+    async function saveStock() {
+        const variantVal = parseInt(document.getElementById('newVariantStockInput').value);
+        const rootVal    = parseInt(document.getElementById('newRootStockInput').value);
+        const errEl      = document.getElementById('editError');
+        errEl.classList.add('hidden');
 
-// ============================================================
-// BULK UPLOAD
-// ============================================================
-
-// ── Open / close ────────────────────────────────────────────
-function openBulkUpload() {
-    resetBulkUpload();
-    openOverlay('bulkOverlay');
-}
- 
-function closeBulkOverlay() {
-    closeOverlay('bulkOverlay');
-    // small delay so animation plays before reset
-    setTimeout(resetBulkUpload, 300);
-}
- 
-function resetBulkUpload() {
-    setBulkState('form');
-    document.getElementById('excelInput').value = '';
-    document.getElementById('imagesInput').value = '';
-    resetUploadZone('excelZone', 'excelPlaceholder', 'excelFileInfo');
-    document.getElementById('imagesPlaceholder').classList.remove('hidden');
-    const img = document.getElementById('imagesFileInfo');
-    img.classList.add('hidden'); img.innerHTML = '';
-    document.getElementById('excelError').classList.add('hidden');
-    setBulkProgress(0, 'Preparing upload…', 'Getting things ready', 'Uploading file');
-}
- 
-function setBulkState(state) {
-    // state: 'form' | 'loading' | 'result'
-    document.getElementById('bulkStateForm').classList.toggle('active',    state === 'form');
-    document.getElementById('bulkStateLoading').classList.toggle('active', state === 'loading');
-    document.getElementById('bulkStateResult').classList.toggle('active',  state === 'result');
-}
- 
-// ── Progress helpers ─────────────────────────────────────────
-let _progressInterval = null;
-let _phase2Timer = null;
- 
-function setBulkProgress(pct, title, subtitle, label) {
-    document.getElementById('bulkProgressFill').style.width = pct + '%';
-    document.getElementById('bulkPercentLabel').textContent  = Math.round(pct) + '%';
-    if (title)    document.getElementById('bulkPhaseTitle').textContent    = title;
-    if (subtitle) document.getElementById('bulkPhaseSubtitle').textContent = subtitle;
-    if (label)    document.getElementById('bulkPhaseLabel').textContent    = label;
-}
- 
-function activateDot(step) {
-    // step 1,2,3
-    [1,2,3].forEach(i => {
-        const el = document.getElementById('bulkDot' + i);
-        if (i <= step) {
-            el.style.opacity = '1';
-            el.querySelector('div').style.background = '#D89F34';
-            el.querySelector('span').style.color = '#133F53';
-        } else {
-            el.style.opacity = '0.4';
-            el.querySelector('div').style.background = '#957A54';
-            el.querySelector('span').style.color = '#957A54';
+        if (isNaN(variantVal) || variantVal < 0 || isNaN(rootVal) || rootVal < 0) {
+            errEl.textContent = 'Please enter valid stock values (0 or more) for both fields.';
+            errEl.classList.remove('hidden');
+            return;
         }
-    });
-}
- 
-function animateProgressTo(target, duration, onDone) {
-    // Smoothly animate from current % to target %
-    clearInterval(_progressInterval);
-    const fill = document.getElementById('bulkProgressFill');
-    let current = parseFloat(fill.style.width) || 0;
-    const step  = (target - current) / (duration / 60);
-    _progressInterval = setInterval(() => {
-        current += step;
-        if ((step > 0 && current >= target) || (step < 0 && current <= target)) {
-            current = target;
-            clearInterval(_progressInterval);
-            if (onDone) onDone();
-        }
-        setBulkProgress(current,
-            document.getElementById('bulkPhaseTitle').textContent,
-            document.getElementById('bulkPhaseSubtitle').textContent,
-            document.getElementById('bulkPhaseLabel').textContent);
-    }, 60);
-}
- 
-// ── Main upload handler ──────────────────────────────────────
-async function handleBulkUpload() {
-    const excelFile = document.getElementById('excelInput').files[0];
-    if (!excelFile) {
-        const e = document.getElementById('excelError');
-        e.querySelector('span').textContent = 'Please select an Excel file before uploading.';
-        e.classList.remove('hidden');
-        return;
-    }
-    document.getElementById('excelError').classList.add('hidden');
 
-    setBulkState('loading');
-    activateDot(1);
-    setBulkProgress(0, 'Uploading file…', 'Sending your data to the server', 'Uploading file');
-    animateProgressTo(35, 800);
+        const btn = document.getElementById('saveStockBtn');
+        btn.innerHTML = `<span class="spinner"></span> Saving…`;
+        btn.disabled = true;
 
-    try {
-        const formData = new FormData();
-        formData.append('excelFile', excelFile);
-        Array.from(document.getElementById('imagesInput').files)
-            .forEach(f => formData.append('productImages', f));
-
-        _phase2Timer = setTimeout(() => {
-            setBulkProgress(35, 'Processing rows…', 'Server is parsing your Excel data', 'Processing');
-            activateDot(2);
-            animateProgressTo(75, 1200);
-        }, 820);
-
-        const res = await fetch(`${BASE_URL}/api/products/bulk-upload`, {
-            method: 'POST',
-            body: formData
-        });
-
-        // ── KEY FIX: cancel phase2 timer + any running animation before phase 3 ──
-        clearTimeout(_phase2Timer);
-        clearInterval(_progressInterval);
-        activateDot(2);
-
-        // Phase 3: 75 → 100
-        setBulkProgress(75, 'Finalising…', 'Almost done', 'Finalising');
-        animateProgressTo(100, 500, async () => {
-            activateDot(3);
-            setBulkProgress(100, 'Upload complete', 'Results ready', 'Complete');
-
-            await new Promise(r => setTimeout(r, 420));
-
-            if (!res.ok) {
-                let errMsg = `Server error ${res.status}`;
-                try { const j = await res.json(); errMsg = j.message || errMsg; } catch {}
-                showBulkResult('error', { message: errMsg, uploadedCount: 0, skippedCount: 0, skippedReasons: [] });
-                showRichToast('error', 'Upload Failed', errMsg);
-                return;
-            }
-
-            const data = await res.json();
-            showBulkResult(
-                data.uploadedCount > 0 && data.skippedCount === 0 ? 'success' :
-                data.uploadedCount > 0 && data.skippedCount > 0   ? 'partial' : 'error',
-                data
+        try {
+            // Single API call — variant SKU in path, rootStock as optional param
+            const res = await fetch(
+                `${BASE_URL}/api/inventory/patch-by-sku/${currentEditSku}/stock?availableStock=${variantVal}&rootStock=${rootVal}`,
+                { method: 'PATCH' }
             );
+            if (!res.ok) throw new Error(`Server error ${res.status}`);
 
-            refreshInventory().catch(() => {});
-        });
+            closeOverlay('editOverlay');
+            showToast(`Stock updated — Variant: ${variantVal}, Root: ${rootVal}`);
+            await refreshInventory();
 
-    } catch (err) {
-        clearTimeout(_phase2Timer);
-        clearInterval(_progressInterval);
-        showBulkResult('error', {
-            message: 'Could not reach the server. Check your connection and try again.',
-            uploadedCount: 0, skippedCount: 0, skippedReasons: []
-        });
-        showRichToast('error', 'Upload Failed', err.message || 'Network error');
+        } catch (err) {
+            errEl.textContent = `Failed to save: ${err.message}`;
+            errEl.classList.remove('hidden');
+            btn.innerHTML = `<i class="fas fa-check" style="font-size:11px;"></i> Save Changes`;
+            btn.disabled = false;
+        }
     }
-}
- 
-// ── Result panel ─────────────────────────────────────────────
-function showBulkResult(type, data) {
-    setBulkState('result');
- 
-    const icons = { success: 'fa-circle-check', partial: 'fa-triangle-exclamation', error: 'fa-circle-xmark' };
-    const titles = {
-        success: 'All products uploaded!',
-        partial: 'Upload completed with skips',
-        error:   'Upload failed'
-    };
- 
-    let html = `
-        <div class="bulk-result-card ${type}">
-            <div class="bulk-result-icon">
-                <i class="fas ${icons[type]}"></i>
-            </div>
-            <div class="flex-1">
-                <p style="font-size:13.5px;font-weight:600;color:#1a1a14;margin-bottom:4px;">${titles[type]}</p>
-                <p style="font-size:12.5px;color:#2C2C24;line-height:1.5;">${data.message || '—'}</p>
-                ${(data.uploadedCount > 0 || data.skippedCount > 0) ? `
-                <div class="bulk-result-chips" style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
-                    ${data.uploadedCount > 0 ? `<span class="bulk-stat-chip uploaded"><i class="fas fa-circle-check" style="font-size:10px;"></i>${data.uploadedCount} uploaded</span>` : ''}
-                    ${data.skippedCount  > 0 ? `<span class="bulk-stat-chip skipped"><i class="fas fa-circle-minus" style="font-size:10px;"></i>${data.skippedCount} skipped</span>` : ''}
-                </div>` : ''}
-            </div>
-        </div>`;
- 
-    // Skipped reasons list
-    if (data.skippedReasons && data.skippedReasons.length > 0) {
-        html += `
-            <div>
-                <p style="font-size:12px;font-weight:600;color:#957A54;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px;">
-                    <i class="fas fa-list-ul text-[10px] mr-1"></i>Skipped Reasons
-                </p>
-                <div class="bulk-skip-list">
-                    ${data.skippedReasons.map(r => `<div class="bulk-skip-list-item">${r}</div>`).join('')}
+
+
+
+
+    // ============================================================
+    // BULK UPLOAD
+    // ============================================================
+
+    // ── Open / close ────────────────────────────────────────────
+    function openBulkUpload() {
+        resetBulkUpload();
+        openOverlay('bulkOverlay');
+    }
+    
+    function closeBulkOverlay() {
+        closeOverlay('bulkOverlay');
+        // small delay so animation plays before reset
+        setTimeout(resetBulkUpload, 300);
+    }
+    
+    function resetBulkUpload() {
+        setBulkState('form');
+        document.getElementById('excelInput').value = '';
+        document.getElementById('imagesInput').value = '';
+        resetUploadZone('excelZone', 'excelPlaceholder', 'excelFileInfo');
+        document.getElementById('imagesPlaceholder').classList.remove('hidden');
+        const img = document.getElementById('imagesFileInfo');
+        img.classList.add('hidden'); img.innerHTML = '';
+        document.getElementById('excelError').classList.add('hidden');
+        setBulkProgress(0, 'Preparing upload…', 'Getting things ready', 'Uploading file');
+    }
+    
+    function setBulkState(state) {
+        // state: 'form' | 'loading' | 'result'
+        document.getElementById('bulkStateForm').classList.toggle('active',    state === 'form');
+        document.getElementById('bulkStateLoading').classList.toggle('active', state === 'loading');
+        document.getElementById('bulkStateResult').classList.toggle('active',  state === 'result');
+    }
+    
+    // ── Progress helpers ─────────────────────────────────────────
+    let _progressInterval = null;
+    let _phase2Timer = null;
+    
+    function setBulkProgress(pct, title, subtitle, label) {
+        document.getElementById('bulkProgressFill').style.width = pct + '%';
+        document.getElementById('bulkPercentLabel').textContent  = Math.round(pct) + '%';
+        if (title)    document.getElementById('bulkPhaseTitle').textContent    = title;
+        if (subtitle) document.getElementById('bulkPhaseSubtitle').textContent = subtitle;
+        if (label)    document.getElementById('bulkPhaseLabel').textContent    = label;
+    }
+    
+    function activateDot(step) {
+        // step 1,2,3
+        [1,2,3].forEach(i => {
+            const el = document.getElementById('bulkDot' + i);
+            if (i <= step) {
+                el.style.opacity = '1';
+                el.querySelector('div').style.background = '#D89F34';
+                el.querySelector('span').style.color = '#133F53';
+            } else {
+                el.style.opacity = '0.4';
+                el.querySelector('div').style.background = '#957A54';
+                el.querySelector('span').style.color = '#957A54';
+            }
+        });
+    }
+    
+    function animateProgressTo(target, duration, onDone) {
+        // Smoothly animate from current % to target %
+        clearInterval(_progressInterval);
+        const fill = document.getElementById('bulkProgressFill');
+        let current = parseFloat(fill.style.width) || 0;
+        const step  = (target - current) / (duration / 60);
+        _progressInterval = setInterval(() => {
+            current += step;
+            if ((step > 0 && current >= target) || (step < 0 && current <= target)) {
+                current = target;
+                clearInterval(_progressInterval);
+                if (onDone) onDone();
+            }
+            setBulkProgress(current,
+                document.getElementById('bulkPhaseTitle').textContent,
+                document.getElementById('bulkPhaseSubtitle').textContent,
+                document.getElementById('bulkPhaseLabel').textContent);
+        }, 60);
+    }
+    
+    // ── Main upload handler ──────────────────────────────────────
+    async function handleBulkUpload() {
+        const excelFile = document.getElementById('excelInput').files[0];
+        if (!excelFile) {
+            const e = document.getElementById('excelError');
+            e.querySelector('span').textContent = 'Please select an Excel file before uploading.';
+            e.classList.remove('hidden');
+            return;
+        }
+        document.getElementById('excelError').classList.add('hidden');
+
+        setBulkState('loading');
+        activateDot(1);
+        setBulkProgress(0, 'Uploading file…', 'Sending your data to the server', 'Uploading file');
+        animateProgressTo(35, 800);
+
+        try {
+            const formData = new FormData();
+            formData.append('excelFile', excelFile);
+            Array.from(document.getElementById('imagesInput').files)
+                .forEach(f => formData.append('productImages', f));
+
+            _phase2Timer = setTimeout(() => {
+                setBulkProgress(35, 'Processing rows…', 'Server is parsing your Excel data', 'Processing');
+                activateDot(2);
+                animateProgressTo(75, 1200);
+            }, 820);
+
+            const res = await fetch(`${BASE_URL}/api/products/bulk-upload`, {
+                method: 'POST',
+                body: formData
+            });
+
+            // ── KEY FIX: cancel phase2 timer + any running animation before phase 3 ──
+            clearTimeout(_phase2Timer);
+            clearInterval(_progressInterval);
+            activateDot(2);
+
+            // Phase 3: 75 → 100
+            setBulkProgress(75, 'Finalising…', 'Almost done', 'Finalising');
+            animateProgressTo(100, 500, async () => {
+                activateDot(3);
+                setBulkProgress(100, 'Upload complete', 'Results ready', 'Complete');
+
+                await new Promise(r => setTimeout(r, 420));
+
+                if (!res.ok) {
+                    let errMsg = `Server error ${res.status}`;
+                    try { const j = await res.json(); errMsg = j.message || errMsg; } catch {}
+                    showBulkResult('error', { message: errMsg, uploadedCount: 0, skippedCount: 0, skippedReasons: [] });
+                    showRichToast('error', 'Upload Failed', errMsg);
+                    return;
+                }
+
+                const data = await res.json();
+                showBulkResult(
+                    data.uploadedCount > 0 && data.skippedCount === 0 ? 'success' :
+                    data.uploadedCount > 0 && data.skippedCount > 0   ? 'partial' : 'error',
+                    data
+                );
+
+                refreshInventory().catch(() => {});
+            });
+
+        } catch (err) {
+            clearTimeout(_phase2Timer);
+            clearInterval(_progressInterval);
+            showBulkResult('error', {
+                message: 'Could not reach the server. Check your connection and try again.',
+                uploadedCount: 0, skippedCount: 0, skippedReasons: []
+            });
+            showRichToast('error', 'Upload Failed', err.message || 'Network error');
+        }
+    }
+    
+    // ── Result panel ─────────────────────────────────────────────
+    function showBulkResult(type, data) {
+        setBulkState('result');
+    
+        const icons = { success: 'fa-circle-check', partial: 'fa-triangle-exclamation', error: 'fa-circle-xmark' };
+        const titles = {
+            success: 'All products uploaded!',
+            partial: 'Upload completed with skips',
+            error:   'Upload failed'
+        };
+    
+        let html = `
+            <div class="bulk-result-card ${type}">
+                <div class="bulk-result-icon">
+                    <i class="fas ${icons[type]}"></i>
+                </div>
+                <div class="flex-1">
+                    <p style="font-size:13.5px;font-weight:600;color:#1a1a14;margin-bottom:4px;">${titles[type]}</p>
+                    <p style="font-size:12.5px;color:#2C2C24;line-height:1.5;">${data.message || '—'}</p>
+                    ${(data.uploadedCount > 0 || data.skippedCount > 0) ? `
+                    <div class="bulk-result-chips" style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+                        ${data.uploadedCount > 0 ? `<span class="bulk-stat-chip uploaded"><i class="fas fa-circle-check" style="font-size:10px;"></i>${data.uploadedCount} uploaded</span>` : ''}
+                        ${data.skippedCount  > 0 ? `<span class="bulk-stat-chip skipped"><i class="fas fa-circle-minus" style="font-size:10px;"></i>${data.skippedCount} skipped</span>` : ''}
+                    </div>` : ''}
                 </div>
             </div>`;
-    }
- 
-    document.getElementById('bulkResultContent').innerHTML = html;
+    
+        // Skipped reasons list
+        if (data.skippedReasons && data.skippedReasons.length > 0) {
+            html += `
+                <div>
+                    <p style="font-size:12px;font-weight:600;color:#957A54;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px;">
+                        <i class="fas fa-list-ul text-[10px] mr-1"></i>Skipped Reasons
+                    </p>
+                    <div class="bulk-skip-list">
+                        ${data.skippedReasons.map(r => `<div class="bulk-skip-list-item">${r}</div>`).join('')}
+                    </div>
+                </div>`;
+        }
+    
+        document.getElementById('bulkResultContent').innerHTML = html;
 
-    const btn = document.getElementById('bulkActionBtn');
-    if (type === 'error') {
-        btn.innerHTML = `<i class="fas fa-rotate-right text-[11px]"></i> Try Again`;
-    } else {
-        btn.innerHTML = `<i class="fas fa-rotate-left text-[11px]"></i> Upload More`;
+        const btn = document.getElementById('bulkActionBtn');
+        if (type === 'error') {
+            btn.innerHTML = `<i class="fas fa-rotate-right text-[11px]"></i> Try Again`;
+        } else {
+            btn.innerHTML = `<i class="fas fa-rotate-left text-[11px]"></i> Upload More`;
+        }
+    
+        // Show rich toast
+        if (type === 'success') {
+            showRichToast('success',
+                `${data.uploadedCount} product${data.uploadedCount !== 1 ? 's' : ''} uploaded`,
+                data.message);
+        } else if (type === 'partial') {
+            showRichToast('partial',
+                `${data.uploadedCount} uploaded, ${data.skippedCount} skipped`,
+                data.message);
+        } else {
+            showRichToast('error', 'Upload Failed', data.message);
+        }
     }
- 
-    // Show rich toast
-    if (type === 'success') {
-        showRichToast('success',
-            `${data.uploadedCount} product${data.uploadedCount !== 1 ? 's' : ''} uploaded`,
-            data.message);
-    } else if (type === 'partial') {
-        showRichToast('partial',
-            `${data.uploadedCount} uploaded, ${data.skippedCount} skipped`,
-            data.message);
-    } else {
-        showRichToast('error', 'Upload Failed', data.message);
+    
+    // ── Rich Toast ───────────────────────────────────────────────
+    function showRichToast(type, title, subtitle, duration = 5000) {
+        // Remove existing
+        document.querySelectorAll('.rich-toast').forEach(t => t.remove());
+    
+        const icons = {
+            success: 'fa-circle-check',
+            partial: 'fa-triangle-exclamation',
+            error:   'fa-circle-xmark'
+        };
+    
+        const t = document.createElement('div');
+        t.className = `rich-toast toast-${type}`;
+        t.innerHTML = `
+            <div class="rich-toast-bar" style="animation-duration:${duration}ms;"></div>
+            <div class="rich-toast-body">
+                <div class="rich-toast-icon">
+                    <i class="fas ${icons[type]} text-[15px]"></i>
+                </div>
+                <div class="flex-1">
+                    <div class="rich-toast-title">${title}</div>
+                    <div class="rich-toast-sub">${subtitle || ''}</div>
+                </div>
+                <button onclick="this.closest('.rich-toast').remove()"
+                        style="opacity:0.55;hover:opacity:1;background:none;border:none;cursor:pointer;color:inherit;padding:2px;font-size:13px;flex-shrink:0;">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>`;
+    
+        document.body.appendChild(t);
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => t.classList.add('show'));
+        });
+    
+        setTimeout(() => {
+            t.classList.remove('show');
+            setTimeout(() => t.remove(), 400);
+        }, duration);
     }
-}
- 
-// ── Rich Toast ───────────────────────────────────────────────
-function showRichToast(type, title, subtitle, duration = 5000) {
-    // Remove existing
-    document.querySelectorAll('.rich-toast').forEach(t => t.remove());
- 
-    const icons = {
-        success: 'fa-circle-check',
-        partial: 'fa-triangle-exclamation',
-        error:   'fa-circle-xmark'
-    };
- 
-    const t = document.createElement('div');
-    t.className = `rich-toast toast-${type}`;
-    t.innerHTML = `
-        <div class="rich-toast-bar" style="animation-duration:${duration}ms;"></div>
-        <div class="rich-toast-body">
-            <div class="rich-toast-icon">
-                <i class="fas ${icons[type]} text-[15px]"></i>
-            </div>
-            <div class="flex-1">
-                <div class="rich-toast-title">${title}</div>
-                <div class="rich-toast-sub">${subtitle || ''}</div>
-            </div>
-            <button onclick="this.closest('.rich-toast').remove()"
-                    style="opacity:0.55;hover:opacity:1;background:none;border:none;cursor:pointer;color:inherit;padding:2px;font-size:13px;flex-shrink:0;">
-                <i class="fas fa-xmark"></i>
-            </button>
+
+    // ============================================================
+    // FILE HELPERS
+    // ============================================================
+    function handleDragOver(e, z) { e.preventDefault(); document.getElementById(z).classList.add('drag-over'); }
+    function handleDragLeave(z) { document.getElementById(z).classList.remove('drag-over'); }
+    function handleDrop(e, inputId, z, exts) {
+        e.preventDefault(); document.getElementById(z).classList.remove('drag-over');
+        const files = e.dataTransfer.files; if (!files.length) return;
+        const input = document.getElementById(inputId);
+        const dt = new DataTransfer();
+        for (const f of files) dt.items.add(f);
+        input.files = dt.files; input.dispatchEvent(new Event('change'));
+    }
+    function handleFileSelect(input, z, nameId, exts) {
+        const file = input.files[0]; if (!file) return;
+        const ext = file.name.split('.').pop().toLowerCase();
+        const errEl = document.getElementById(z === 'excelZone' ? 'excelError' : 'imagesError');
+        if (!exts.includes(ext)) {
+            errEl.querySelector('span').textContent = `Invalid type. Accepted: ${exts.join(', ')}`;
+            errEl.classList.remove('hidden'); input.value = ''; return;
+        }
+        errEl.classList.add('hidden');
+        document.getElementById(z.replace('Zone','Placeholder')).classList.add('hidden');
+        const info = document.getElementById(z.replace('Zone','FileInfo'));
+        info.classList.remove('hidden'); info.classList.add('flex');
+        document.getElementById(nameId).textContent = file.name;
+    }
+    function clearFile(e, inputId, z) {
+        e.stopPropagation(); document.getElementById(inputId).value = '';
+        resetUploadZone(z, z.replace('Zone','Placeholder'), z.replace('Zone','FileInfo'));
+    }
+    function resetUploadZone(z, pid, iid) {
+        document.getElementById(pid).classList.remove('hidden');
+        const info = document.getElementById(iid);
+        if (info) { info.classList.add('hidden'); info.classList.remove('flex'); }
+    }
+    function handleImagesSelect(input) {
+        const files = Array.from(input.files); if (!files.length) return;
+        document.getElementById('imagesPlaceholder').classList.add('hidden');
+        const info = document.getElementById('imagesFileInfo');
+        info.classList.remove('hidden');
+        info.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;">
+            ${files.map(f => `<div style="position:relative;">
+                <img src="${URL.createObjectURL(f)}" style="width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid #E5E4D5;">
+            </div>`).join('')}
+            <p style="width:100%;text-align:center;font-size:12px;color:#957A54;margin-top:4px;">${files.length} image${files.length > 1 ? 's' : ''} selected</p>
         </div>`;
- 
-    document.body.appendChild(t);
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => t.classList.add('show'));
-    });
- 
-    setTimeout(() => {
-        t.classList.remove('show');
-        setTimeout(() => t.remove(), 400);
-    }, duration);
-}
-
-// ============================================================
-// FILE HELPERS
-// ============================================================
-function handleDragOver(e, z) { e.preventDefault(); document.getElementById(z).classList.add('drag-over'); }
-function handleDragLeave(z) { document.getElementById(z).classList.remove('drag-over'); }
-function handleDrop(e, inputId, z, exts) {
-    e.preventDefault(); document.getElementById(z).classList.remove('drag-over');
-    const files = e.dataTransfer.files; if (!files.length) return;
-    const input = document.getElementById(inputId);
-    const dt = new DataTransfer();
-    for (const f of files) dt.items.add(f);
-    input.files = dt.files; input.dispatchEvent(new Event('change'));
-}
-function handleFileSelect(input, z, nameId, exts) {
-    const file = input.files[0]; if (!file) return;
-    const ext = file.name.split('.').pop().toLowerCase();
-    const errEl = document.getElementById(z === 'excelZone' ? 'excelError' : 'imagesError');
-    if (!exts.includes(ext)) {
-        errEl.querySelector('span').textContent = `Invalid type. Accepted: ${exts.join(', ')}`;
-        errEl.classList.remove('hidden'); input.value = ''; return;
-    }
-    errEl.classList.add('hidden');
-    document.getElementById(z.replace('Zone','Placeholder')).classList.add('hidden');
-    const info = document.getElementById(z.replace('Zone','FileInfo'));
-    info.classList.remove('hidden'); info.classList.add('flex');
-    document.getElementById(nameId).textContent = file.name;
-}
-function clearFile(e, inputId, z) {
-    e.stopPropagation(); document.getElementById(inputId).value = '';
-    resetUploadZone(z, z.replace('Zone','Placeholder'), z.replace('Zone','FileInfo'));
-}
-function resetUploadZone(z, pid, iid) {
-    document.getElementById(pid).classList.remove('hidden');
-    const info = document.getElementById(iid);
-    if (info) { info.classList.add('hidden'); info.classList.remove('flex'); }
-}
-function handleImagesSelect(input) {
-    const files = Array.from(input.files); if (!files.length) return;
-    document.getElementById('imagesPlaceholder').classList.add('hidden');
-    const info = document.getElementById('imagesFileInfo');
-    info.classList.remove('hidden');
-    info.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;">
-        ${files.map(f => `<div style="position:relative;">
-            <img src="${URL.createObjectURL(f)}" style="width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid #E5E4D5;">
-        </div>`).join('')}
-        <p style="width:100%;text-align:center;font-size:12px;color:#957A54;margin-top:4px;">${files.length} image${files.length > 1 ? 's' : ''} selected</p>
-    </div>`;
-}
-
-// ============================================================
-// TOAST
-// ============================================================
-function showToast(msg, type = 'success') {
-    const t = document.createElement('div');
-    Object.assign(t.style, { position:'fixed', bottom:'24px', right:'24px', zIndex:'100', display:'flex', alignItems:'center', gap:'10px', padding:'12px 16px', borderRadius:'12px', boxShadow:'0 8px 24px rgba(19,63,83,0.2)', fontFamily:"'DM Sans',sans-serif", fontSize:'13px', fontWeight:'500', background: type==='success' ? '#133F53' : '#B02A2A', color:'#fff', transform:'translateY(16px)', opacity:'0', transition:'all 0.3s ease' });
-    t.innerHTML = `<i class="fas fa-${type==='success'?'circle-check':'circle-exclamation'}" style="color:#D89F34;font-size:15px;"></i>${msg}`;
-    document.body.appendChild(t);
-    requestAnimationFrame(() => { t.style.transform = 'translateY(0)'; t.style.opacity = '1'; });
-    setTimeout(() => { t.style.transform = 'translateY(8px)'; t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3200);
-}
-
-// ============================================================
-// EXPORT INVENTORY
-// ============================================================
-function exportInventory() {
-    const dataToExport = filteredInventory.length > 0 ? filteredInventory : allInventory;
-
-    if (!dataToExport || dataToExport.length === 0) {
-        showToast('No inventory data to export', 'error');
-        return;
     }
 
-    // Build rows — one row per inventory item (product + variant side by side)
-    const rows = dataToExport.map(item => ({
-        // ── Inventory Info ──
-        'Inventory ID':             item.inventoryId,
-        'SKU':                      item.sku,
-        'Total Stock':              item.totalStock,
-        'Available Stock':          item.availableStock,
-        'Low Stock Threshold':      item.lowStockThreshold,
-        'Stock Status':             getStatus(item) === 'ok'  ? 'In Stock'
-                                  : getStatus(item) === 'low' ? 'Low Stock'
-                                  : 'Out of Stock',
-        'Last Updated':             item.updatedAt
-                                        ? new Date(item.updatedAt).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })
-                                        : '—',
-        'Created At':               item.createdAt
-                                        ? new Date(item.createdAt).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })
-                                        : '—',
+    // ============================================================
+    // TOAST
+    // ============================================================
+    function showToast(msg, type = 'success') {
+        const t = document.createElement('div');
+        Object.assign(t.style, { position:'fixed', bottom:'24px', right:'24px', zIndex:'100', display:'flex', alignItems:'center', gap:'10px', padding:'12px 16px', borderRadius:'12px', boxShadow:'0 8px 24px rgba(19,63,83,0.2)', fontFamily:"'DM Sans',sans-serif", fontSize:'13px', fontWeight:'500', background: type==='success' ? '#133F53' : '#B02A2A', color:'#fff', transform:'translateY(16px)', opacity:'0', transition:'all 0.3s ease' });
+        t.innerHTML = `<i class="fas fa-${type==='success'?'circle-check':'circle-exclamation'}" style="color:#D89F34;font-size:15px;"></i>${msg}`;
+        document.body.appendChild(t);
+        requestAnimationFrame(() => { t.style.transform = 'translateY(0)'; t.style.opacity = '1'; });
+        setTimeout(() => { t.style.transform = 'translateY(8px)'; t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3200);
+    }
 
-        // ── Main Product Info ──
-        'Product ID':               item.product?.productStrId   ?? '—',
-        'Product Title':            item.product?.title          ?? '—',
-        'Category':                 item.product?.productCategory    ?? '—',
-        'Sub-Category':             item.product?.productSubCategory ?? '—',
-        'Main Product Stock':       item.product?.currentStock   ?? '—',
-        'Main Selling Price (₹)':   item.product?.currentSellingPrice ?? '—',
-        'Main MRP Price (₹)':       item.product?.currentMrpPrice    ?? '—',
+    // ============================================================
+    // EXPORT INVENTORY
+    // ============================================================
+    function exportInventory() {
+        const dataToExport = filteredInventory.length > 0 ? filteredInventory : allInventory;
 
-        // ── Variant Info ──
-        'Variant Title':            item.product?.variantTitle       ?? '—',
-        'Variant Stock':            item.product?.variantStock       ?? '—',
-        'Variant Selling Price (₹)':item.product?.variantSellingPrice ?? '—',
-        'Variant MRP Price (₹)':    item.product?.variantMrpPrice    ?? '—',
-    }));
+        if (!dataToExport || dataToExport.length === 0) {
+            showToast('No inventory data to export', 'error');
+            return;
+        }
 
-    // Create workbook + worksheet
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(rows);
+        // Build rows — one row per inventory item (product + variant side by side)
+        const rows = dataToExport.map(item => ({
+            // ── Inventory Info ──
+            'Inventory ID':             item.inventoryId,
+            'SKU':                      item.sku,
+            'Total Stock':              item.totalStock,
+            'Available Stock':          item.availableStock,
+            'Low Stock Threshold':      item.lowStockThreshold,
+            'Stock Status':             getStatus(item) === 'ok'  ? 'In Stock'
+                                    : getStatus(item) === 'low' ? 'Low Stock'
+                                    : 'Out of Stock',
+            'Last Updated':             item.updatedAt
+                                            ? new Date(item.updatedAt).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })
+                                            : '—',
+            'Created At':               item.createdAt
+                                            ? new Date(item.createdAt).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })
+                                            : '—',
 
-    // ── Column widths ──
-    ws['!cols'] = [
-        { wch: 14 }, // Inventory ID
-        { wch: 18 }, // SKU
-        { wch: 13 }, // Total Stock
-        { wch: 16 }, // Available Stock
-        { wch: 20 }, // Low Stock Threshold
-        { wch: 14 }, // Stock Status
-        { wch: 15 }, // Last Updated
-        { wch: 15 }, // Created At
-        { wch: 18 }, // Product ID
-        { wch: 32 }, // Product Title
-        { wch: 20 }, // Category
-        { wch: 20 }, // Sub-Category
-        { wch: 20 }, // Main Product Stock
-        { wch: 22 }, // Main Selling Price
-        { wch: 20 }, // Main MRP Price
-        { wch: 24 }, // Variant Title
-        { wch: 16 }, // Variant Stock
-        { wch: 26 }, // Variant Selling Price
-        { wch: 22 }, // Variant MRP Price
-    ];
+            // ── Main Product Info ──
+            'Product ID':               item.product?.productStrId   ?? '—',
+            'Product Title':            item.product?.title          ?? '—',
+            'Category':                 item.product?.productCategory    ?? '—',
+            'Sub-Category':             item.product?.productSubCategory ?? '—',
+            'Main Product Stock':       item.product?.currentStock   ?? '—',
+            'Main Selling Price (₹)':   item.product?.currentSellingPrice ?? '—',
+            'Main MRP Price (₹)':       item.product?.currentMrpPrice    ?? '—',
 
-    // ── Freeze header row ──
-    ws['!freeze'] = { xSplit: 0, ySplit: 1 };
+            // ── Variant Info ──
+            'Variant Title':            item.product?.variantTitle       ?? '—',
+            'Variant Stock':            item.product?.variantStock       ?? '—',
+            'Variant Selling Price (₹)':item.product?.variantSellingPrice ?? '—',
+            'Variant MRP Price (₹)':    item.product?.variantMrpPrice    ?? '—',
+        }));
 
-    XLSX.utils.book_append_sheet(wb, ws, 'Inventory');
+        // Create workbook + worksheet
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(rows);
 
-    // ── File name: Artezo_Inventory_DD-Mon-YYYY ──
-    const today = new Date().toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }).replace(/ /g, '-');
-    const fileName = `Artezo_Inventory_${today}.xlsx`;
+        // ── Column widths ──
+        ws['!cols'] = [
+            { wch: 14 }, // Inventory ID
+            { wch: 18 }, // SKU
+            { wch: 13 }, // Total Stock
+            { wch: 16 }, // Available Stock
+            { wch: 20 }, // Low Stock Threshold
+            { wch: 14 }, // Stock Status
+            { wch: 15 }, // Last Updated
+            { wch: 15 }, // Created At
+            { wch: 18 }, // Product ID
+            { wch: 32 }, // Product Title
+            { wch: 20 }, // Category
+            { wch: 20 }, // Sub-Category
+            { wch: 20 }, // Main Product Stock
+            { wch: 22 }, // Main Selling Price
+            { wch: 20 }, // Main MRP Price
+            { wch: 24 }, // Variant Title
+            { wch: 16 }, // Variant Stock
+            { wch: 26 }, // Variant Selling Price
+            { wch: 22 }, // Variant MRP Price
+        ];
 
-    XLSX.writeFile(wb, fileName);
-    showToast(`Exported ${rows.length} item${rows.length !== 1 ? 's' : ''} successfully`);
-}
+        // ── Freeze header row ──
+        ws['!freeze'] = { xSplit: 0, ySplit: 1 };
+
+        XLSX.utils.book_append_sheet(wb, ws, 'Inventory');
+
+        // ── File name: Artezo_Inventory_DD-Mon-YYYY ──
+        const today = new Date().toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }).replace(/ /g, '-');
+        const fileName = `Artezo_Inventory_${today}.xlsx`;
+
+        XLSX.writeFile(wb, fileName);
+        showToast(`Exported ${rows.length} item${rows.length !== 1 ? 's' : ''} successfully`);
+    }
 
 </script>
-
-<script src="/js/auth.js"></script>
-    <script src="/js/components.js"></script>
 </body>
 </html>

@@ -3,77 +3,264 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="apple-touch-icon" sizes="180x180" href="/favicon_io/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon_io/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png">
-
-    <title>Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="/css/components.css">
+    <title>Product Review Management</title>
     
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../css/components.css">
+    
+    <style>
+        body {
+            background-color: #f5f3ef;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #D89F34;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #957A54;
+        }
+        
+        /* Animation keyframes */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .animate-fadeIn {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .animate-slideIn {
+            animation: slideIn 0.3s ease-out;
+        }
+    </style>
 </head>
-<style>
-   /* Barcode Loader CSS */
-.barcode-loader {
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    height: 80px;
-    gap: 4px;
-}
-
-.bar {
-    width: 8px;
-    background: linear-gradient(180deg, #133F53 0%, #D89F34 70%, #957A54 100%);
-    border-radius: 4px 4px 0 0;
-    animation: scan-wave 1.2s ease-in-out infinite;
-    transform-origin: bottom;
-}
-
-@keyframes scan-wave {
-    0%, 100% {
-        transform: scaleY(1);
-        opacity: 0.8;
-        background: linear-gradient(180deg, #133F53 0%, #D89F34 70%, #957A54 100%);
-    }
-    50% {
-        transform: scaleY(1.4);
-        opacity: 1;
-        background: linear-gradient(180deg, #D89F34 0%, #133F53 70%, #957A54 100%);
-    }
-}
-</style>
-<body class="bg-[#F2F2E8]">
-
-
-    <div class="flex h-screen overflow-hidden">
-        <!-- Sidebar will be loaded here -->
+<body class="bg-[#f5f3ef]">
+     <!-- Sidebar container - linking to existing sidebar.html -->
         <div id="sidebar-container"></div>
-
-        <!-- Main Content Area -->
-        <div class="flex-1 flex flex-col overflow-hidden">
-            <!-- Header will be loaded here -->
-            <div id="header-container"></div>
-
-            <!-- Main Content -->
-            <main class="flex-1 overflow-y-auto p-6">
-              <div>
-                <h1 class="text-2xl font-semibold" style="color: #133F53;">Product Review Management</h1>
-                <p class="text-sm" style="color: #957A54;">Manage registered customers product reviews.</p>
+    
+    <!-- Header Container -->
+    
+    <!-- Main Content -->
+    <div class="flex-1 transition-all duration-300 main-content-normal">
+        <div id="header-container"></div>
+        <main class="flex-1 overflow-y-auto p-6">
+            <!-- Page Header -->
+            <div class="mb-8 animate-fadeIn">
+                <h1 id="page-title" class="text-2xl font-semibold" style="color: #133F53;">Product Review Management / Overview</h1>
+                <p class="text-sm mt-2" style="color: #957A54;">Manage and moderate customer product reviews</p>
             </div>
-     
-            </main>
-        </div>
+            
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 animate-fadeIn">
+
+                <div class="bg-white rounded-xl shadow-sm p-6 border border-[#D89F34] hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium" style="color: #957A54;">Total Reviews</p>
+                            <p class="text-xl font-bold mt-2" style="color: #133F53;" id="total-reviews">0</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-full bg-[#D89F34] bg-opacity-20 flex items-center justify-center">
+                            <i class="fa-regular fa-star text-xl" style="color: #D89F34;"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-sm p-6 border border-[#D89F34] hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium" style="color: #957A54;">Average Rating</p>
+                            <p class="text-xl font-bold mt-2" style="color: #133F53;" id="avg-rating">0.0</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-full bg-[#D89F34] bg-opacity-20 flex items-center justify-center">
+                            <i class="fa-solid fa-chart-line text-xl" style="color: #D89F34;"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-sm p-6 border border-[#D89F34] hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium" style="color: #957A54;">Pending Approval</p>
+                            <p class="text-xl font-bold mt-2" style="color: #133F53;" id="pending-reviews">0</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-full bg-[#D89F34] bg-opacity-20 flex items-center justify-center">
+                            <i class="fa-regular fa-clock text-xl" style="color: #D89F34;"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-sm p-6 border border-[#D89F34] hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium" style="color: #957A54;">Flagged Reviews</p>
+                            <p class="text-xl font-bold mt-2" style="color: #133F53;" id="flagged-reviews">0</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                            <i class="fa-solid fa-flag text-xl text-red-500"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Filters and Actions -->
+            <div class="bg-white rounded-xl border border-gray-400 shadow-sm p-4 mb-6 animate-fadeIn">
+                <div class="flex flex-wrap gap-4 items-center justify-between">
+                    <div class="flex flex-wrap gap-3">
+                        <select id="status-filter" class="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#D89F34] text-sm" style="color: #133F53;">
+                            <option value="all">All Reviews</option>
+                            <option value="approved">Approved</option>
+                            <option value="pending">Pending</option>
+                            <option value="flagged">Flagged</option>
+                        </select>
+                        
+                        <select id="rating-filter" class="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#D89F34] text-sm" style="color: #133F53;">
+                            <option value="all">All Ratings</option>
+                            <option value="5">5 Stars</option>
+                            <option value="4">4 Stars</option>
+                            <option value="3">3 Stars</option>
+                            <option value="2">2 Stars</option>
+                            <option value="1">1 Star</option>
+                        </select>
+                        
+                        <div class="relative">
+                            <input type="text" id="search-review" placeholder="Search by product or customer..." class="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#D89F34] w-64 text-sm" style="color: #133F53;">
+                            <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        </div>
+                    </div>
+                    
+                    <button id="bulk-approve-btn" class="px-4 py-2 bg-[#D89F34] text-white rounded-lg hover:bg-opacity-90 transition-colors text-sm font-medium flex items-center gap-2">
+                        <i class="fa-regular fa-check-circle"></i>
+                        Bulk Approve
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Reviews Table -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-400 overflow-hidden animate-fadeIn">
+                <div class="overflow-auto h-[400px]">
+                    <table class="w-full">
+                        <thead class="bg-[#F8F8EA] border-b border-[#e2dccd] sticky top-0">
+                            <tr>
+                                <th class="px-6 py-4 text-left">
+                                    <input type="checkbox" id="select-all" class="rounded border-gray-300 text-[#D89F34] focus:ring-[#D89F34]">
+                                </th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold" style="color: #133F53;">Product</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold" style="color: #133F53;">Customer</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold" style="color: #133F53;">Rating</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold" style="color: #133F53;">Review</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold" style="color: #133F53;">Date</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold" style="color: #133F53;">Status</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold" style="color: #133F53;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reviews-table-body">
+                            <!-- Reviews will be dynamically inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+                    <p class="text-sm" style="color: #957A54;" id="pagination-info">Showing 0 to 0 of 0 results</p>
+                    <div class="flex gap-2">
+                        <button id="prev-page" class="px-3 py-1 border border-gray-200 rounded-lg hover:bg-[#F8F8EA] transition-colors disabled:opacity-50 disabled:cursor-not-allowed" style="color: #133F53;">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                        <span id="current-page" class="px-3 py-1 bg-[#D89F34] text-white rounded-lg">1</span>
+                        <button id="next-page" class="px-3 py-1 border border-gray-200 rounded-lg hover:bg-[#F8F8EA] transition-colors disabled:opacity-50 disabled:cursor-not-allowed" style="color: #133F53;">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
-<!-- Modals will be loaded here dynamically -->
+    
+    <!-- Modals Container -->
     <div id="modals-container"></div>
     
+    <!-- View Review Modal -->
+    <div id="view-review-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl w-full max-w-2xl mx-4 animate-fadeIn">
+            <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+                <h3 class="text-xl font-bold" style="color: #133F53;">Review Details</h3>
+                <button id="close-view-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fa-solid fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6" id="review-details-content">
+                <!-- Review details will be inserted here -->
+            </div>
+            <div class="p-6 border-t border-gray-100 flex justify-end gap-3">
+                <button id="close-view-modal-btn" class="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors" style="color: #133F53;">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Reply Modal -->
+    <div id="reply-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl w-full max-w-lg mx-4 animate-fadeIn">
+            <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+                <h3 class="text-xl font-bold" style="color: #133F53;">Reply to Review</h3>
+                <button id="close-reply-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fa-solid fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <p class="text-sm mb-3" style="color: #957A54;" id="reply-product-info">Replying to review for: <span class="font-semibold" style="color: #133F53;"></span></p>
+                <textarea id="reply-content" rows="4" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#D89F34] resize-none" placeholder="Write your reply here..."></textarea>
+            </div>
+            <div class="p-6 border-t border-gray-100 flex justify-end gap-3">
+                <button id="cancel-reply-btn" class="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors" style="color: #133F53;">Cancel</button>
+                <button id="submit-reply-btn" class="px-4 py-2 bg-[#D89F34] text-white rounded-lg hover:bg-opacity-90 transition-colors">Send Reply</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="/ProductReview_Management/productReview.js"></script> 
+    <script src="/js/order-badge.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/components.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-    
-    
-<script src="/js/auth.js"></script>
-<script src="/js/components.js"></script>
-    
 </body>
 </html>

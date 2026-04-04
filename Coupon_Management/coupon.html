@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -307,13 +306,13 @@
                     <!-- Coupon Statistics Cards -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                         <!-- Total Coupons -->
-                        <div class="bg-white p-4 rounded-lg shadow-sm coupon-card">
+                        <div class="bg-white p-4 border border-[#D89F34] rounded-lg shadow-sm coupon-card">
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-xs text-gray-500">Total Coupons</p>
                                     <p class="text-xl font-bold" style="color: #133F53;">156</p>
                                 </div>
-                                <div class="w-10 h-10 rounded-full bg-[#F8F8EA] flex items-center justify-center">
+                                <div class="w-10 h-10 rounded-full border border-[#D89F34] bg-[#F8F8EA] flex items-center justify-center">
                                     <i class="fa-solid fa-ticket" style="color: #D89F34;"></i>
                                 </div>
                             </div>
@@ -324,13 +323,13 @@
                         </div>
 
                         <!-- Active Coupons -->
-                        <div class="bg-white p-4 rounded-lg shadow-sm coupon-card">
+                        <div class="bg-white p-4 border border-[#D89F34] rounded-lg shadow-sm coupon-card">
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-xs text-gray-500">Active</p>
                                     <p class="text-xl font-bold" style="color: #133F53;">98</p>
                                 </div>
-                                <div class="w-10 h-10 rounded-full bg-[#F8F8EA] flex items-center justify-center">
+                                <div class="w-10 h-10 rounded-full border border-[#D89F34] bg-[#F8F8EA] flex items-center justify-center">
                                     <i class="fa-regular fa-circle-check" style="color: #10B981;"></i>
                                 </div>
                             </div>
@@ -341,13 +340,13 @@
                         </div>
 
                         <!-- Expired Coupons -->
-                        <div class="bg-white p-4 rounded-lg shadow-sm coupon-card">
+                        <div class="bg-white p-4 rounded-lg border border-[#D89F34] shadow-sm coupon-card">
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-xs text-gray-500">Expired</p>
                                     <p class="text-xl font-bold" style="color: #133F53;">42</p>
                                 </div>
-                                <div class="w-10 h-10 rounded-full bg-[#F8F8EA] flex items-center justify-center">
+                                <div class="w-10 h-10 rounded-full border border-[#D89F34] bg-[#F8F8EA] flex items-center justify-center">
                                     <i class="fa-regular fa-calendar-xmark" style="color: #EF4444;"></i>
                                 </div>
                             </div>
@@ -358,13 +357,13 @@
                         </div>
 
                         <!-- Total Savings -->
-                        <div class="bg-white p-4 rounded-lg shadow-sm coupon-card">
+                        <div class="bg-white p-4 rounded-lg border border-[#D89F34] shadow-sm coupon-card">
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-xs text-gray-500">Total Savings</p>
                                     <p class="text-xl font-bold" style="color: #133F53;">$12,450</p>
                                 </div>
-                                <div class="w-10 h-10 rounded-full bg-[#F8F8EA] flex items-center justify-center">
+                                <div class="w-10 h-10 rounded-full border border-[#D89F34] bg-[#F8F8EA] flex items-center justify-center">
                                     <i class="fa-solid fa-dollar-sign" style="color: #D89F34;"></i>
                                 </div>
                             </div>
@@ -376,14 +375,14 @@
                     </div>
 
                     <!-- Filters and Search -->
-                    <div class="bg-white p-4 rounded-lg shadow-sm mb-6">
+                    <div class="bg-white p-4 rounded-lg border border-gray-400 shadow-sm mb-6">
                         <div class="flex flex-col lg:flex-row gap-4 items-center justify-between">
                             <!-- Search with Debounce -->
                             <div class="relative w-full lg:w-96">
                                 <i
                                     class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
                                 <input type="text" id="searchCoupon" placeholder="Search by code, description, or type..."
-                                    class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D89F34] text-sm"
+                                    class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#D89F34] text-sm"
                                     onkeyup="debounceSearch()">
                                 <!-- Loading indicator for search -->
                                 <div id="searchLoading" class="absolute right-3 top-1/2 transform -translate-y-1/2 hidden">
@@ -507,10 +506,10 @@
                     </div>
 
                     <!-- Coupons Table -->
-                    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-                        <div class="overflow-x-auto">
+                    <div class="bg-white rounded-lg border border-gray-400 shadow-sm overflow-hidden">
+                        <div class="overflow-auto h-[400px]">
                             <table class="w-full" id="couponsTable">
-                                <thead>
+                                <thead class="sticky top-0">
                                     <tr class="border-b border-gray-200" style="background-color: #F8F8EA;">
                                         <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">
                                             <input type="checkbox" id="selectAll" onclick="toggleAll()">
@@ -775,7 +774,10 @@
         </div>
     </div>
 
-    <script src="../js/components.js"></script>
+    <script src="/js/order-badge.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/components.js"></script>
+
     <script>
         // Sample coupon data
         let coupons = [
@@ -1696,8 +1698,5 @@
             }, 3000);
         }
     </script>
-    <script src="/js/auth.js"></script>
-    <script src="/js/components.js"></script>
 </body>
-
 </html>

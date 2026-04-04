@@ -328,7 +328,10 @@
     </div>
 </div>
 
-<script src="../js/components.js"></script>
+<script src="/js/order-badge.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/components.js"></script>
+
 <script>
     // ==================== CONSTANTS ====================
     const BASE_URL = 'http://localhost:8085/api/users';
@@ -804,7 +807,7 @@
                             <p>${formatDate(user.createdAt)}</p>
                         </div>
                         <div>
-                            <p class="text-xs" style="color:#957A54;">Default Address ID</p>
+                            <p class="text-xs" style="color:#957A54;">Default Shipping Address ID</p>
                             <p>${user.defaultShippingAddressId || '—'}</p>
                         </div>
                     </div>
@@ -924,7 +927,6 @@
         el._t = setTimeout(() => el.classList.add('hidden'), 3500);
     }
 </script>
-<script src="/js/auth.js"></script>
-<script src="/js/components.js"></script>
+
 </body>
 </html>

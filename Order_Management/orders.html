@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -267,8 +266,8 @@ thead th {
                                     <p class="text-xs text-gray-500">Total Orders</p>
                                     <p class="text-xl font-bold" id="statTotal" style="color: #133F53;">0</p>
                                 </div>
-                                <div class="w-10 h-10 rounded-full bg-[#F8F8EA] flex items-center justify-center">
-                                    <i class="fa-solid fa-shopping-cart" style="color: #D89F34;"></i>
+                                <div class="w-10 h-10 rounded-full border border-[#D89F34] bg-[#F8F8EA] flex items-center justify-center">
+                                    <i class="fa-solid fa-shopping-cart" style="color:#D89F34;"></i>
                                 </div>
                             </div>
                             <div class="mt-2 flex items-center text-xs">
@@ -281,7 +280,7 @@ thead th {
                                     <p class="text-xs text-gray-500">Placed / Confirmed</p>
                                     <p class="text-xl font-bold" id="statPlaced" style="color: #133F53;">0</p>
                                 </div>
-                                <div class="w-10 h-10 rounded-full bg-[#F8F8EA] flex items-center justify-center">
+                                <div class="w-10 h-10 rounded-full border border-[#D89F34] bg-[#F8F8EA] flex items-center justify-center">
                                     <i class="fa-regular fa-clock" style="color: #D89F34;"></i>
                                 </div>
                             </div>
@@ -295,7 +294,7 @@ thead th {
                                     <p class="text-xs text-gray-500">Delivered</p>
                                     <p class="text-xl font-bold" id="statDelivered" style="color: #133F53;">0</p>
                                 </div>
-                                <div class="w-10 h-10 rounded-full bg-[#F8F8EA] flex items-center justify-center">
+                                <div class="w-10 h-10 rounded-full border border-[#D89F34] bg-[#F8F8EA] flex items-center justify-center">
                                     <i class="fa-solid fa-circle-check" style="color: #D89F34;"></i>
                                 </div>
                             </div>
@@ -306,7 +305,7 @@ thead th {
                     </div>
 
                     <!-- Filters and Search -->
-                    <div class="bg-white p-4 rounded-lg shadow-sm mb-6 border border-gray-300">
+                    <div class="bg-white p-4 rounded-lg shadow-sm mb-6 border border-gray-400">
                         <div class="flex flex-col lg:flex-row gap-4 items-center justify-between">
                             <div class="relative w-full lg:w-96">
                                 <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
@@ -381,29 +380,29 @@ thead th {
                         </div>
 
                         <!-- Date Filter -->
-                        <div id="dateFilter" class="hidden mt-4 p-4 bg-[#F8F8EA] rounded-lg">
+                        <div id="dateFilter" class="hidden mt-4 p-4 border border-gray-400 bg-[#F8F8EA] rounded-lg">
                             <div class="flex flex-wrap gap-4 items-center">
                                 <div>
-                                    <label class="block text-xs mb-1" style="color: #133F53;">From</label>
+                                    <label class=" text-xs font-semibold text-gray-600 mb-1" style="color: #133F53;">From</label>
                                     <input type="date" id="dateFrom" class="px-3 py-2 border border-gray-200 rounded-lg text-sm">
                                 </div>
                                 <div>
-                                    <label class="block text-xs mb-1" style="color: #133F53;">To</label>
+                                    <label class="text-xs font-semibold text-gray-600 b-1" style="color: #133F53;">To</label>
                                     <input type="date" id="dateTo" class="px-3 py-2 border border-gray-200 rounded-lg text-sm">
                                 </div>
                                 <button class="px-4 py-2 rounded-lg text-sm" style="background-color: #D89F34; color: #133F53;" onclick="applyDateFilter()">Apply</button>
-                                <button class="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-white" style="color: #957A54;" onclick="clearDateFilter()">Clear</button>
+                                <button class="px-4 py-2 text-sm border border border-gray-400 rounded-lg hover:bg-white" style="color: #957A54;" onclick="clearDateFilter()">Clear</button>
                             </div>
                         </div>
-                        <p class="text-sm m-1 text-xs" style="color: #957A54;" ><span class="text-red-600 text-xs">Note</span> : You can export excel sheet based on date selection apply.</p>
+                        <p class="text-sm mt-3 text-xs text-red-700 text-xs">Note :- You can export excel sheet based on date selection apply.</p>
                     </div>
 
                     <!-- Orders Table -->
-                    <div class="bg-white rounded-lg overflow-hidden border border-gray-300">
+                    <div class="bg-white rounded-lg overflow-hidden border border-gray-400">
                         <div class="overflow-x-auto h-[400px] ">
                             <table class="w-full" id="ordersTable">
                                 <thead class="sticky top-0">
-                                    <tr class="border-b border-gray-300" style="background-color: #f4f4d3;">
+                                    <tr class="border-b border-gray-300 ">
                                         <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">
                                             <input type="checkbox" id="selectAll" onclick="toggleAll()">
                                         </th>
@@ -523,10 +522,9 @@ thead th {
         const GET_ORDER_BY_ID_URL = (orderId) => `${API_BASE}/api/orders/get-by-orderId/${orderId}`;
         const PATCH_ORDER_URL     = (orderId)  => `${API_BASE}/api/orders/patch-by-orderId/${orderId}`;
 
-
         // ==================== STATE ====================
-        let orders = [];           // raw API data (list items)
-        let filteredOrders = [];   // after client-side filter/search
+        let orders = [];         
+        let filteredOrders = [];   
         let currentFilter = 'all';
         let selectedOrders = new Set();
         let currentPage = 1;
@@ -536,8 +534,6 @@ thead th {
         let searchTimeout = null;
         const DEBOUNCE_DELAY = 400;
         let openEditDropId     = null;
-
-        // Holds the full detail object of currently viewed order (from detail API)
         let currentViewOrder = null;
 
         // ==================== FORMAT HELPERS ====================
@@ -605,25 +601,53 @@ thead th {
             loadData();
         });
 
-        async function loadData() {
-            try {
-                showSkeleton(true);
-                const response = await fetch(GET_ALL_ORDERS_URL);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                const json = await response.json();
+        // async function loadData() {
+        //     try {
+        //         showSkeleton(true);
+        //         const response = await fetch(GET_ALL_ORDERS_URL);
+        //         if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        //         const json = await response.json();
 
-                // Extract array from paginated response
-                orders = (json.data && json.data.content) ? json.data.content : [];
+        //         // Extract array from paginated response
+        //         orders = (json.data && json.data.content) ? json.data.content : [];
 
-                updateStats();
-                applyFiltersAndRender();
-                showSkeleton(false);
-            } catch (error) {
-                console.error('Error loading orders:', error);
-                showNotification('Error loading orders: ' + error.message, 'error');
-                showSkeleton(false);
-            }
-        }
+        //         updateStats();
+        //         applyFiltersAndRender();
+        //         showSkeleton(false);
+        //     } catch (error) {
+        //         console.error('Error loading orders:', error);
+        //         showNotification('Error loading orders: ' + error.message, 'error');
+        //         showSkeleton(false);
+        //     }
+        // }
+
+     async function loadData() {
+    try {
+        showSkeleton(true);
+ 
+        const probe = await fetch(`${GET_ALL_ORDERS_URL}?page=0&size=1`);
+        if (!probe.ok) throw new Error(`HTTP ${probe.status}`);
+        const probeJson = await probe.json();
+        const total = probeJson?.data?.page?.totalElements || 1;
+ 
+        const response = await fetch(`${GET_ALL_ORDERS_URL}?page=0&size=${total}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const json = await response.json();
+ 
+        orders = (json.data && json.data.content) ? json.data.content : [];
+ 
+        // Updates ob_total only — does NOT touch ob_seen
+        if (typeof OrderBadge !== 'undefined') OrderBadge.setTotal(orders.length);
+ 
+        updateStats();
+        applyFiltersAndRender();
+        showSkeleton(false);
+    } catch (error) {
+        console.error('Error loading orders:', error);
+        showNotification('Error loading orders: ' + error.message, 'error');
+        showSkeleton(false);
+    }
+}
 
         function showSkeleton(show) {
             const skeleton = document.getElementById('skeletonLoader');
@@ -820,8 +844,6 @@ thead th {
             renderOrders();
         }
 
-
-        
         function toggleEditDropdown(key, currentStatus) {
             if (openEditDropId && openEditDropId !== key) {
                 const prev = document.getElementById('editDrop_' + openEditDropId);
@@ -1090,8 +1112,6 @@ thead th {
         }
 
         // ==================== EXPORT CSV ====================
-
-
         function exportOrders() {
             let toExport;
             let label;
@@ -1157,10 +1177,7 @@ thead th {
             showNotification(`Exported ${label}`, 'success');
         }
 
-
-
         // ==================== INVOICE PDF ====================
-        // ==================== FORMAT HELPERS ====================
         /** Format number as Indian Rupee — no rounding, exact value */
         function formatINR(value) {
             const num = Number(value);
@@ -1215,7 +1232,7 @@ thead th {
             doc.setFillColor(...darkBlue);
             doc.rect(0, 0, pageW, 38, 'F');
 
-            doc.setFillColor(...gold);
+            doc.setFillColor(...white);
             doc.roundedRect(margin, 7, 40, 16, 2, 2, 'F');
             doc.setTextColor(...darkBlue);
             doc.setFontSize(9);
@@ -1585,8 +1602,6 @@ thead th {
         });
 
         // ==================== DEBOUNCE SEARCH ====================
-       
-
          function debounceSearch() {
             const loading = document.getElementById('searchLoading');
             const val = (document.getElementById('searchOrder')?.value||'').trim();
@@ -1626,8 +1641,12 @@ thead th {
             notification.classList.remove('hidden');
             setTimeout(() => notification.classList.add('hidden'), 3000);
         }
-    </script>
 
+        window.addEventListener('pagehide', () => {
+            if (typeof OrderBadge !== 'undefined') OrderBadge.markVisited();
+        });
+    </script>
+    <script src="/js/order-badge.js"></script>
     <script src="/js/auth.js"></script>
     <script src="/js/components.js"></script>
 </body>

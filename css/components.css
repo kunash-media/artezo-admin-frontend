@@ -19,6 +19,7 @@
     /* background-color: var(--active-blue) !important; */
     color: var(--aside-bg) !important;
     background:linear-gradient(135deg,#133F53 0%,#1a5570 60%,#0f3344 100%);
+    border : 1px solid rgb(37, 35, 35);
 }
 
 .nav-link.active i {
@@ -49,7 +50,7 @@
 }
 
 .sidebar-collapsed .nav-link {
-    justify-content: center;
+    /* justify-content: center; */
     padding: 12px;
 }
 

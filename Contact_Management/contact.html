@@ -177,13 +177,13 @@
                     <!-- Statistics Cards -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                         <!-- Total Messages -->
-                        <div class="bg-white p-4 rounded-lg shadow-sm contact-card">
+                        <div class="bg-white p-4 rounded-lg border border-[#D89F34] shadow-sm contact-card">
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-xs text-gray-500">Total Messages</p>
                                     <p class="text-xl font-bold" style="color: #133F53;" id="totalMessages">156</p>
                                 </div>
-                                <div class="w-10 h-10 rounded-full bg-[#F8F8EA] flex items-center justify-center">
+                                <div class="w-10 h-10 rounded-full border border-[#D89F34] bg-[#F8F8EA] flex items-center justify-center">
                                     <i class="fa-regular fa-message" style="color: #D89F34;"></i>
                                 </div>
                             </div>
@@ -194,13 +194,13 @@
                         </div>
 
                         <!-- Unread Messages -->
-                        <div class="bg-white p-4 rounded-lg shadow-sm contact-card">
+                        <div class="bg-white p-4 rounded-lg border border-[#D89F34] shadow-sm contact-card">
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-xs text-gray-500">Unread</p>
                                     <p class="text-xl font-bold" style="color: #133F53;" id="unreadMessages">23</p>
                                 </div>
-                                <div class="w-10 h-10 rounded-full bg-[#F8F8EA] flex items-center justify-center">
+                                <div class="w-10 h-10 rounded-full border border-[#D89F34] bg-[#F8F8EA] flex items-center justify-center">
                                     <i class="fa-regular fa-envelope" style="color: #EF4444;"></i>
                                 </div>
                             </div>
@@ -211,13 +211,13 @@
                         </div>
 
                         <!-- Resolved -->
-                        <div class="bg-white p-4 rounded-lg shadow-sm contact-card">
+                        <div class="bg-white p-4 rounded-lg border border-[#D89F34] shadow-sm contact-card">
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-xs text-gray-500">Resolved</p>
                                     <p class="text-xl font-bold" style="color: #133F53;">98</p>
                                 </div>
-                                <div class="w-10 h-10 rounded-full bg-[#F8F8EA] flex items-center justify-center">
+                                <div class="w-10 h-10 rounded-full border border-[#D89F34] bg-[#F8F8EA] flex items-center justify-center">
                                     <i class="fa-regular fa-circle-check" style="color: #10B981;"></i>
                                 </div>
                             </div>
@@ -228,13 +228,13 @@
                         </div>
 
                         <!-- Avg Response Time -->
-                        <div class="bg-white p-4 rounded-lg shadow-sm contact-card">
+                        <div class="bg-white p-4 rounded-lg border border-[#D89F34] shadow-sm contact-card">
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-xs text-gray-500">Avg Response</p>
                                     <p class="text-xl font-bold" style="color: #133F53;">2.4h</p>
                                 </div>
-                                <div class="w-10 h-10 rounded-full bg-[#F8F8EA] flex items-center justify-center">
+                                <div class="w-10 h-10 rounded-full border border-[#D89F34] bg-[#F8F8EA] flex items-center justify-center">
                                     <i class="fa-regular fa-clock" style="color: #133F53;"></i>
                                 </div>
                             </div>
@@ -246,7 +246,7 @@
                     </div>
 
                     <!-- Filters and Search -->
-                    <div class="bg-white p-4 rounded-lg shadow-sm mb-6">
+                    <div class="bg-white p-4 rounded-lg border border-gray-400 shadow-sm mb-6">
                         <div class="flex flex-col lg:flex-row gap-4 items-center justify-between">
                             <!-- Search with Debounce -->
                             <div class="relative w-full lg:w-96">
@@ -340,7 +340,7 @@
                     </div>
 
                     <!-- Messages Table -->
-                    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                    <div class="bg-white border border-gray-400 rounded-lg shadow-sm overflow-hidden">
                         <div class="overflow-x-auto">
                             <table class="w-full">
                                 <thead>
@@ -520,7 +520,10 @@
         </div>
     </div>
 
-    <script src="../js/components.js"></script>
+    <script src="/js/order-badge.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/components.js"></script>
+    
     <script>
         // Sample contact messages
         let messages = [
@@ -559,54 +562,6 @@
                 status: 'read',
                 replied: true,
                 avatar: 'MW'
-            },
-            {
-                id: '4',
-                name: 'Emily Brown',
-                email: 'emily.b@email.com',
-                type: 'complaint',
-                subject: 'Wrong Item Received',
-                message: 'I ordered a leather wallet but received a different color. Please assist with exchange.',
-                date: '2024-03-04T14:45:00',
-                status: 'unread',
-                replied: false,
-                avatar: 'EB'
-            },
-            {
-                id: '5',
-                name: 'David Lee',
-                email: 'david.lee@email.com',
-                type: 'inquiry',
-                subject: 'Return Policy',
-                message: 'What is your return policy for electronics? I want to understand the process before making a purchase.',
-                date: '2024-03-03T11:30:00',
-                status: 'read',
-                replied: true,
-                avatar: 'DL'
-            },
-            {
-                id: '6',
-                name: 'Anna Martinez',
-                email: 'anna.m@email.com',
-                type: 'support',
-                subject: 'Payment Failed',
-                message: 'My payment was deducted but order is not confirmed. Please check.',
-                date: '2024-03-03T09:20:00',
-                status: 'unread',
-                replied: false,
-                avatar: 'AM'
-            },
-            {
-                id: '7',
-                name: 'Robert Taylor',
-                email: 'robert.t@email.com',
-                type: 'feedback',
-                subject: 'Product Suggestion',
-                message: 'Would love to see more colors in the smart watch collection.',
-                date: '2024-03-02T15:45:00',
-                status: 'read',
-                replied: true,
-                avatar: 'RT'
             }
         ];
 
@@ -1209,7 +1164,5 @@
             }, 3000);
         }
     </script>
-    <script src="/js/auth.js"></script>
-    <script src="/js/components.js"></script>
 </body>
 </html>

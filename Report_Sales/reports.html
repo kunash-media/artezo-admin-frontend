@@ -3,735 +3,788 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="apple-touch-icon" sizes="180x180" href="/favicon_io/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon_io/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png">
-
     <title>Reports & Sales</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="../css/components.css">
+    <!-- SheetJS for Excel export -->
+    <link rel="stylesheet" href="/css/components.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
     <style>
-        .report-card {
-            transition: all 0.2s ease;
+        :root {
+            --primary: #133F53;
+            --accent: #D89F34;
+            --muted: #957A54;
+            --bg: #F2F2E8;
+            --surface: #F8F8EA;
+            --white: #ffffff;
+            --border: #D89F34;
+            --green: #16a34a;
+            --red: #dc2626;
         }
-        .report-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
-        }
-        .status-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-        }
+
+        * { box-sizing: border-box; }
+        body { background: var(--bg); font-family: 'Segoe UI', system-ui, sans-serif; }
+
+        /* ── Skeleton ── */
         .skeleton {
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background: linear-gradient(90deg, #e8e8dc 25%, #d8d8cc 50%, #e8e8dc 75%);
             background-size: 200% 100%;
-            animation: loading 1.5s infinite;
+            animation: shimmer 1.4s infinite;
+            border-radius: 6px;
         }
-        @keyframes loading {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-        .skeleton-text {
-            height: 1rem;
-            border-radius: 0.25rem;
-            margin-bottom: 0.5rem;
-        }
-        .content-hidden {
-            display: none !important;
-        }
-        .content-visible {
-            display: block !important;
-        }
-        .chart-bar {
-            transition: height 0.3s ease;
-        }
-        .filter-btn.active {
-            background-color: #133F53;
-            color: #F8F8EA;
-        }
-        .filter-btn {
-            transition: all 0.2s ease;
-        }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        /* ── Period tabs ── */
         .period-btn {
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            font-size: 0.875rem;
-            transition: all 0.2s ease;
+            padding: 0.4rem 0.9rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--primary);
+            transition: all 0.18s;
+            cursor: pointer;
+            border: 1px solid transparent;
         }
-        .period-btn.active {
-            background-color: #133F53;
-            color: #F8F8EA;
+        .period-btn:hover { background: var(--surface); border-color: var(--border); }
+        .period-btn.active { background: var(--primary); color: var(--surface); border-color: var(--primary); }
+
+        /* ── KPI Cards ── */
+        .kpi-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.1rem 1.25rem;
+            transition: box-shadow 0.18s, transform 0.18s;
         }
-        .period-btn:hover {
-            background-color: #F8F8EA;
+        .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px -4px rgba(19,63,83,.1); }
+
+        .kpi-icon {
+            width: 42px; height: 42px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+
+        /* ── Charts ── */
+        .chart-wrap { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; }
+
+        /* Bar chart */
+        .bar-group { display: flex; flex-direction: column; align-items: center; flex: 1; }
+        .bar-outer { width: 100%; display: flex; align-items: flex-end; justify-content: center; height: 160px; }
+        .bar-fill { width: 60%; max-width: 32px; background: var(--accent); border-radius: 4px 4px 0 0; transition: height 0.4s ease; position: relative; cursor: pointer; }
+        .bar-fill:hover { background: var(--primary); }
+        .bar-fill:hover .bar-tooltip { opacity: 1; transform: translateY(-4px); }
+        .bar-tooltip {
+            position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%) translateY(0);
+            background: var(--primary); color: #fff; font-size: 0.7rem; padding: 3px 7px;
+            border-radius: 4px; white-space: nowrap; opacity: 0; transition: opacity 0.15s, transform 0.15s;
+            pointer-events: none; margin-bottom: 4px;
+        }
+        .bar-label { font-size: 0.72rem; color: var(--muted); margin-top: 6px; }
+
+        /* Category progress bars */
+        .cat-bar-track { width: 100%; background: #e8e8dc; border-radius: 99px; height: 7px; }
+        .cat-bar-fill { background: var(--accent); border-radius: 99px; height: 7px; transition: width 0.5s ease; }
+
+        /* ── Table ── */
+        .data-table thead th {
+            font-size: 0.72rem; font-weight: 600; letter-spacing: .05em;
+            text-transform: uppercase; color: var(--primary);
+            padding: 0.7rem 1rem; background: var(--surface);
+            border-bottom: 1px solid #e0dfd0;
+        }
+        .data-table tbody td { padding: 0.75rem 1rem; font-size: 0.84rem; border-bottom: 1px solid #f0f0e4; color: var(--primary); }
+        .data-table tbody tr:last-child td { border-bottom: none; }
+        .data-table tbody tr:hover td { background: var(--surface); }
+
+        /* ── Badges ── */
+        .badge { display: inline-flex; align-items: center; gap: 3px; font-size: 0.72rem; font-weight: 500; padding: 2px 8px; border-radius: 99px; }
+        .badge-cat { background: var(--surface); color: var(--muted); }
+        .badge-up { color: var(--green); }
+        .badge-down { color: var(--red); }
+
+        /* ── Summary panels ── */
+        .summary-row { display: flex; justify-content: space-between; align-items: center; padding: 0.45rem 0; border-bottom: 1px solid #f0f0e4; }
+        .summary-row:last-child { border-bottom: none; }
+
+        /* ── Buttons ── */
+        .btn-outline { padding: 0.45rem 1rem; border-radius: 7px; font-size: 0.82rem; font-weight: 500; border: 1px solid var(--border); color: var(--primary); background: transparent; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.15s; }
+        .btn-outline:hover { background: var(--surface); }
+        .btn-primary { padding: 0.45rem 1rem; border-radius: 7px; font-size: 0.82rem; font-weight: 500; background: var(--accent); color: var(--primary); border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: opacity 0.15s; }
+        .btn-primary:hover { opacity: 0.88; }
+
+        /* ── Dropdown Export ── */
+        .export-dropdown { position: relative; display: inline-block; }
+        .export-menu { position: absolute; top: calc(100% + 6px); right: 0; background: #fff; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px -4px rgba(0,0,0,.12); min-width: 160px; z-index: 50; display: none; overflow: hidden; }
+        .export-menu.open { display: block; }
+        .export-menu button { width: 100%; text-align: left; padding: 0.55rem 1rem; font-size: 0.82rem; color: var(--primary); background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+        .export-menu button:hover { background: var(--surface); }
+
+        /* ── Notification ── */
+        #notification { position: fixed; top: 1rem; right: 1rem; z-index: 999; min-width: 220px; padding: 0.6rem 1rem; border-radius: 8px; font-size: 0.82rem; color: #fff; display: none; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(0,0,0,.15); }
+
+        /* ── Donut chart (SVG) ── */
+        .donut-segment { transition: opacity 0.2s; cursor: pointer; }
+        .donut-segment:hover { opacity: 0.8; }
+
+        /* ── Responsive ── */
+        @media(max-width: 768px) {
+            .bar-fill { max-width: 20px; }
         }
     </style>
 </head>
 <body class="bg-[#F2F2E8]">
-    <div class="flex h-screen overflow-hidden">
-        <!-- Sidebar container -->
-        <div id="sidebar-container"></div>
 
-        <!-- Main Content Area -->
-        <div class="flex-1 flex flex-col overflow-hidden">
-            <!-- Header container -->
-            <div id="header-container"></div>
+<div class="flex h-screen overflow-hidden">
 
-            <!-- Reports & Sales Content -->
-            <main class="flex-1 overflow-y-auto p-6">
-                <!-- Skeleton Loading -->
-                <div id="skeletonLoader" class="content-visible">
-                    <!-- Statistics Cards Skeleton -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                        <div class="bg-white p-4 rounded-lg shadow-sm">
-                            <div class="skeleton skeleton-text w-24 h-4 mb-2"></div>
-                            <div class="skeleton skeleton-text w-16 h-8 mb-2"></div>
-                            <div class="skeleton skeleton-text w-32 h-3"></div>
-                        </div>
-                        <div class="bg-white p-4 rounded-lg shadow-sm">
-                            <div class="skeleton skeleton-text w-24 h-4 mb-2"></div>
-                            <div class="skeleton skeleton-text w-16 h-8 mb-2"></div>
-                            <div class="skeleton skeleton-text w-32 h-3"></div>
-                        </div>
-                        <div class="bg-white p-4 rounded-lg shadow-sm">
-                            <div class="skeleton skeleton-text w-24 h-4 mb-2"></div>
-                            <div class="skeleton skeleton-text w-16 h-8 mb-2"></div>
-                            <div class="skeleton skeleton-text w-32 h-3"></div>
-                        </div>
-                        <div class="bg-white p-4 rounded-lg shadow-sm">
-                            <div class="skeleton skeleton-text w-24 h-4 mb-2"></div>
-                            <div class="skeleton skeleton-text w-16 h-8 mb-2"></div>
-                            <div class="skeleton skeleton-text w-32 h-3"></div>
-                        </div>
-                    </div>
+    <!-- Sidebar -->
+    <div id="sidebar-container"></div>
 
-                    <!-- Period Selector Skeleton -->
-                    <div class="bg-white p-4 rounded-lg shadow-sm mb-6">
-                        <div class="skeleton skeleton-text w-64 h-10"></div>
-                    </div>
+    <!-- Right column: header + scrollable main -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <div id="header-container"></div>
 
-                    <!-- Charts Skeleton -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                        <div class="bg-white p-4 rounded-lg shadow-sm">
-                            <div class="skeleton skeleton-text w-48 h-6 mb-4"></div>
-                            <div class="skeleton skeleton-text w-full h-64"></div>
-                        </div>
-                        <div class="bg-white p-4 rounded-lg shadow-sm">
-                            <div class="skeleton skeleton-text w-48 h-6 mb-4"></div>
-                            <div class="skeleton skeleton-text w-full h-64"></div>
-                        </div>
-                    </div>
+        <main class="flex-1 overflow-y-auto p-6">
 
-                    <!-- Table Skeleton -->
-                    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-                        <div class="p-4">
-                            <div class="skeleton skeleton-text w-full h-12 mb-2"></div>
-                            <div class="skeleton skeleton-text w-full h-12 mb-2"></div>
-                            <div class="skeleton skeleton-text w-full h-12 mb-2"></div>
-                            <div class="skeleton skeleton-text w-full h-12 mb-2"></div>
-                            <div class="skeleton skeleton-text w-full h-12"></div>
-                        </div>
-                    </div>
+
+    <!-- ════ PAGE HEADER ════ -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div>
+            <h1 class="text-2xl font-semibold" style="color:var(--primary)">Reports & Sales</h1>
+            <p class="text-xs md:text-sm mt-0.5" style="color:var(--muted)">Sales performance, revenue trends &amp; analytics</p>
+        </div>
+        <div class="flex gap-2 flex-wrap">
+            <!-- Export dropdown -->
+            <div class="export-dropdown">
+                <button class="btn-outline" onclick="toggleExportMenu()">
+                    <i class="fa-solid fa-download text-xs"></i> Export
+                    <i class="fa-solid fa-chevron-down text-xs"></i>
+                </button>
+                <div class="export-menu" id="exportMenu">
+                    <button onclick="exportPDF()"><i class="fa-regular fa-file-pdf" style="color:#e53e3e"></i> Export as PDF</button>
+                    <button onclick="exportExcel()"><i class="fa-regular fa-file-excel" style="color:#16a34a"></i> Export as Excel</button>
+                    <button onclick="exportCSV()"><i class="fa-regular fa-file-lines" style="color:var(--muted)"></i> Export as CSV</button>
                 </div>
-
-                <!-- Actual Content -->
-                <div id="actualContent" class="content-hidden">
-                    <!-- Page Header -->
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                        <div>
-                            <h1 class="text-2xl font-semibold" style="color: #133F53;">Reports & Sales</h1>
-                            <p class="text-sm" style="color: #957A54;">View and analyze sales performance, revenue, and trends</p>
-                        </div>
-                        <div class="flex gap-2">
-                            <button class="px-4 py-2 rounded-lg text-sm flex items-center gap-2 border"
-                                style="border-color: #D89F34; color: #133F53;" onclick="exportReport()">
-                                <i class="fa-solid fa-download"></i>
-                                Export Report
-                            </button>
-                            <button class="px-4 py-2 rounded-lg text-sm flex items-center gap-2"
-                                style="background-color: #D89F34; color: #133F53;" onclick="generateReport()">
-                                <i class="fa-solid fa-chart-line"></i>
-                                Generate Report
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Period Selector -->
-                    <div class="bg-white p-4 rounded-lg shadow-sm mb-6">
-                        <div class="flex flex-wrap gap-2 items-center">
-                            <span class="text-sm font-medium mr-2" style="color: #133F53;">Period:</span>
-                            <button class="period-btn active" onclick="setPeriod('today')" id="period-today">Today</button>
-                            <button class="period-btn" onclick="setPeriod('week')" id="period-week">This Week</button>
-                            <button class="period-btn" onclick="setPeriod('month')" id="period-month">This Month</button>
-                            <button class="period-btn" onclick="setPeriod('quarter')" id="period-quarter">This Quarter</button>
-                            <button class="period-btn" onclick="setPeriod('year')" id="period-year">This Year</button>
-                            <div class="ml-auto flex gap-2">
-                                <input type="date" id="startDate" class="px-3 py-2 border border-gray-200 rounded-lg text-sm">
-                                <span class="text-sm" style="color: #957A54;">to</span>
-                                <input type="date" id="endDate" class="px-3 py-2 border border-gray-200 rounded-lg text-sm">
-                                <button class="px-4 py-2 bg-[#D89F34] text-[#133F53] rounded-lg text-sm" onclick="applyCustomRange()">Apply</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Statistics Cards -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                        <!-- Total Revenue -->
-                        <div class="bg-white p-4 rounded-lg shadow-sm report-card">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-xs text-gray-500">Total Revenue</p>
-                                    <p class="text-2xl font-bold" style="color: #133F53;" id="totalRevenue">$128,430</p>
-                                </div>
-                                <div class="w-12 h-12 rounded-full bg-[#F8F8EA] flex items-center justify-center">
-                                    <i class="fa-solid fa-dollar-sign text-xl" style="color: #D89F34;"></i>
-                                </div>
-                            </div>
-                            <div class="mt-2 flex items-center text-xs">
-                                <span class="text-green-600">↑ 12.5%</span>
-                                <span class="text-gray-400 ml-2">vs last period</span>
-                            </div>
-                        </div>
-
-                        <!-- Total Orders -->
-                        <div class="bg-white p-4 rounded-lg shadow-sm report-card">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-xs text-gray-500">Total Orders</p>
-                                    <p class="text-2xl font-bold" style="color: #133F53;" id="totalOrders">1,250</p>
-                                </div>
-                                <div class="w-12 h-12 rounded-full bg-[#F8F8EA] flex items-center justify-center">
-                                    <i class="fa-solid fa-shopping-cart text-xl" style="color: #D89F34;"></i>
-                                </div>
-                            </div>
-                            <div class="mt-2 flex items-center text-xs">
-                                <span class="text-green-600">↑ 8.3%</span>
-                                <span class="text-gray-400 ml-2">vs last period</span>
-                            </div>
-                        </div>
-
-                        <!-- Average Order Value -->
-                        <div class="bg-white p-4 rounded-lg shadow-sm report-card">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-xs text-gray-500">Avg. Order Value</p>
-                                    <p class="text-2xl font-bold" style="color: #133F53;" id="avgOrderValue">$102.74</p>
-                                </div>
-                                <div class="w-12 h-12 rounded-full bg-[#F8F8EA] flex items-center justify-center">
-                                    <i class="fa-solid fa-chart-simple text-xl" style="color: #133F53;"></i>
-                                </div>
-                            </div>
-                            <div class="mt-2 flex items-center text-xs">
-                                <span class="text-green-600">↑ 3.2%</span>
-                                <span class="text-gray-400 ml-2">vs last period</span>
-                            </div>
-                        </div>
-
-                        <!-- Conversion Rate -->
-                        <div class="bg-white p-4 rounded-lg shadow-sm report-card">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-xs text-gray-500">Conversion Rate</p>
-                                    <p class="text-2xl font-bold" style="color: #133F53;">3.8%</p>
-                                </div>
-                                <div class="w-12 h-12 rounded-full bg-[#F8F8EA] flex items-center justify-center">
-                                    <i class="fa-solid fa-percent text-xl" style="color: #957A54;"></i>
-                                </div>
-                            </div>
-                            <div class="mt-2 flex items-center text-xs">
-                                <span class="text-green-600">↑ 0.5%</span>
-                                <span class="text-gray-400 ml-2">vs last period</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Charts Section -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                        <!-- Sales Trend Chart -->
-                        <div class="bg-white p-4 rounded-lg shadow-sm">
-                            <div class="flex justify-between items-center mb-4">
-                                <h3 class="font-semibold" style="color: #133F53;">Sales Trend</h3>
-                                <select id="chartType" class="px-3 py-1 border border-gray-200 rounded-lg text-sm" onchange="changeChartType()">
-                                    <option value="daily">Daily</option>
-                                    <option value="weekly">Weekly</option>
-                                    <option value="monthly">Monthly</option>
-                                </select>
-                            </div>
-                            <div class="h-64 relative" id="salesChart">
-                                <div class="absolute inset-0 flex items-end justify-between px-2">
-                                    <div class="w-1/7 flex flex-col items-center">
-                                        <div class="w-12 bg-[#D89F34] chart-bar rounded-t" style="height: 120px;" title="$12,450"></div>
-                                        <span class="text-xs mt-2" style="color: #957A54;">Mon</span>
-                                    </div>
-                                    <div class="w-1/7 flex flex-col items-center">
-                                        <div class="w-12 bg-[#D89F34] chart-bar rounded-t" style="height: 95px;" title="$9,850"></div>
-                                        <span class="text-xs mt-2" style="color: #957A54;">Tue</span>
-                                    </div>
-                                    <div class="w-1/7 flex flex-col items-center">
-                                        <div class="w-12 bg-[#D89F34] chart-bar rounded-t" style="height: 145px;" title="$15,200"></div>
-                                        <span class="text-xs mt-2" style="color: #957A54;">Wed</span>
-                                    </div>
-                                    <div class="w-1/7 flex flex-col items-center">
-                                        <div class="w-12 bg-[#D89F34] chart-bar rounded-t" style="height: 110px;" title="$11,300"></div>
-                                        <span class="text-xs mt-2" style="color: #957A54;">Thu</span>
-                                    </div>
-                                    <div class="w-1/7 flex flex-col items-center">
-                                        <div class="w-12 bg-[#D89F34] chart-bar rounded-t" style="height: 165px;" title="$17,800"></div>
-                                        <span class="text-xs mt-2" style="color: #957A54;">Fri</span>
-                                    </div>
-                                    <div class="w-1/7 flex flex-col items-center">
-                                        <div class="w-12 bg-[#D89F34] chart-bar rounded-t" style="height: 140px;" title="$14,600"></div>
-                                        <span class="text-xs mt-2" style="color: #957A54;">Sat</span>
-                                    </div>
-                                    <div class="w-1/7 flex flex-col items-center">
-                                        <div class="w-12 bg-[#D89F34] chart-bar rounded-t" style="height: 98px;" title="$10,200"></div>
-                                        <span class="text-xs mt-2" style="color: #957A54;">Sun</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Revenue by Category Chart -->
-                        <div class="bg-white p-4 rounded-lg shadow-sm">
-                            <h3 class="font-semibold mb-4" style="color: #133F53;">Revenue by Category</h3>
-                            <div class="space-y-4">
-                                <div>
-                                    <div class="flex justify-between text-sm mb-1">
-                                        <span style="color: #133F53;">Electronics</span>
-                                        <span class="font-medium" style="color: #133F53;">$45,200</span>
-                                    </div>
-                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
-                                        <div class="bg-[#D89F34] h-2.5 rounded-full" style="width: 45%"></div>
-                                    </div>
-                                    <p class="text-xs text-gray-400 mt-1">45% of total</p>
-                                </div>
-                                <div>
-                                    <div class="flex justify-between text-sm mb-1">
-                                        <span style="color: #133F53;">Fashion</span>
-                                        <span class="font-medium" style="color: #133F53;">$28,500</span>
-                                    </div>
-                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
-                                        <div class="bg-[#D89F34] h-2.5 rounded-full" style="width: 28%"></div>
-                                    </div>
-                                    <p class="text-xs text-gray-400 mt-1">28% of total</p>
-                                </div>
-                                <div>
-                                    <div class="flex justify-between text-sm mb-1">
-                                        <span style="color: #133F53;">Home & Living</span>
-                                        <span class="font-medium" style="color: #133F53;">$18,300</span>
-                                    </div>
-                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
-                                        <div class="bg-[#D89F34] h-2.5 rounded-full" style="width: 18%"></div>
-                                    </div>
-                                    <p class="text-xs text-gray-400 mt-1">18% of total</p>
-                                </div>
-                                <div>
-                                    <div class="flex justify-between text-sm mb-1">
-                                        <span style="color: #133F53;">Beauty</span>
-                                        <span class="font-medium" style="color: #133F53;">$9,400</span>
-                                    </div>
-                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
-                                        <div class="bg-[#D89F34] h-2.5 rounded-full" style="width: 9%"></div>
-                                    </div>
-                                    <p class="text-xs text-gray-400 mt-1">9% of total</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Top Products Table -->
-                    <div class="bg-white rounded-lg shadow-sm overflow-hidden mb-6">
-                        <div class="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
-                            <h3 class="font-semibold" style="color: #133F53;">Top Selling Products</h3>
-                            <select id="productFilter" class="px-3 py-1 border border-gray-200 rounded-lg text-sm" onchange="filterProducts()">
-                                <option value="all">All Categories</option>
-                                <option value="electronics">Electronics</option>
-                                <option value="fashion">Fashion</option>
-                                <option value="home">Home & Living</option>
-                                <option value="beauty">Beauty</option>
-                            </select>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full">
-                                <thead>
-                                    <tr class="border-b border-gray-200" style="background-color: #F8F8EA;">
-                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">Product</th>
-                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">Category</th>
-                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">Units Sold</th>
-                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">Revenue</th>
-                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">Growth</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="productsTableBody">
-                                    <!-- Products will be loaded dynamically -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Additional Reports -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <!-- Daily Sales Summary -->
-                        <div class="bg-white p-4 rounded-lg shadow-sm">
-                            <h3 class="font-semibold mb-3" style="color: #133F53;">Today's Summary</h3>
-                            <div class="space-y-2">
-                                <div class="flex justify-between text-sm">
-                                    <span style="color: #957A54;">Sales</span>
-                                    <span class="font-medium" style="color: #133F53;">$4,250</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span style="color: #957A54;">Orders</span>
-                                    <span class="font-medium" style="color: #133F53;">42</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span style="color: #957A54;">Customers</span>
-                                    <span class="font-medium" style="color: #133F53;">38</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span style="color: #957A54;">Avg. Order</span>
-                                    <span class="font-medium" style="color: #133F53;">$101.19</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Top Categories -->
-                        <div class="bg-white p-4 rounded-lg shadow-sm">
-                            <h3 class="font-semibold mb-3" style="color: #133F53;">Top Categories</h3>
-                            <div class="space-y-2">
-                                <div class="flex justify-between text-sm">
-                                    <span style="color: #957A54;">Electronics</span>
-                                    <span class="font-medium" style="color: #133F53;">45%</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span style="color: #957A54;">Fashion</span>
-                                    <span class="font-medium" style="color: #133F53;">28%</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span style="color: #957A54;">Home</span>
-                                    <span class="font-medium" style="color: #133F53;">18%</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span style="color: #957A54;">Beauty</span>
-                                    <span class="font-medium" style="color: #133F53;">9%</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Payment Methods -->
-                        <div class="bg-white p-4 rounded-lg shadow-sm">
-                            <h3 class="font-semibold mb-3" style="color: #133F53;">Payment Methods</h3>
-                            <div class="space-y-2">
-                                <div class="flex justify-between text-sm">
-                                    <span style="color: #957A54;">Credit Card</span>
-                                    <span class="font-medium" style="color: #133F53;">65%</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span style="color: #957A54;">PayPal</span>
-                                    <span class="font-medium" style="color: #133F53;">20%</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span style="color: #957A54;">Debit Card</span>
-                                    <span class="font-medium" style="color: #133F53;">10%</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span style="color: #957A54;">Cash on Delivery</span>
-                                    <span class="font-medium" style="color: #133F53;">5%</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </main>
+            </div>
         </div>
     </div>
 
-    <!-- Modals Container -->
-    <div id="modals-container"></div>
+    <!-- ════ SKELETON ════ -->
+    <div id="skeletonLoader">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+            <div class="skeleton h-24 rounded-lg"></div>
+            <div class="skeleton h-24 rounded-lg"></div>
+            <div class="skeleton h-24 rounded-lg"></div>
+            <div class="skeleton h-24 rounded-lg"></div>
+        </div>
+        <div class="skeleton h-14 rounded-lg mb-5"></div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
+            <div class="skeleton h-64 rounded-lg"></div>
+            <div class="skeleton h-64 rounded-lg"></div>
+        </div>
+        <div class="skeleton h-72 rounded-lg mb-5"></div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="skeleton h-48 rounded-lg"></div>
+            <div class="skeleton h-48 rounded-lg"></div>
+            <div class="skeleton h-48 rounded-lg"></div>
+        </div>
+    </div>
 
-    <!-- Report Generation Modal -->
-    <div id="reportModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 modal-enter">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold" style="color: #133F53;">Generate Report</h3>
-                <button onclick="closeReportModal()" class="text-gray-500 hover:text-gray-700">
-                    <i class="fa-solid fa-times"></i>
-                </button>
+    <!-- ════ ACTUAL CONTENT ════ -->
+    <div id="actualContent" class="hidden">
+
+        <!-- ── Period Selector ── -->
+        <div class="bg-white border border-[#D89F34] rounded-lg p-3 mb-5 flex flex-wrap gap-2 items-center">
+            <span class="text-xs font-semibold mr-1" style="color:var(--primary)">Period</span>
+            <button class="period-btn active" id="period-today"   onclick="setPeriod('today')">Today</button>
+            <button class="period-btn"        id="period-week"    onclick="setPeriod('week')">This Week</button>
+            <button class="period-btn"        id="period-month"   onclick="setPeriod('month')">This Month</button>
+            <button class="period-btn"        id="period-quarter" onclick="setPeriod('quarter')">This Quarter</button>
+            <button class="period-btn"        id="period-year"    onclick="setPeriod('year')">This Year</button>
+            <div class="ml-auto flex flex-wrap gap-2 items-center">
+                <input type="date" id="startDate" class="px-2 py-1.5 border border-gray-200 rounded-lg text-xs" style="color:var(--primary)">
+                <span class="text-xs" style="color:var(--muted)">to</span>
+                <input type="date" id="endDate"   class="px-2 py-1.5 border border-gray-200 rounded-lg text-xs" style="color:var(--primary)">
+                <button class="btn-primary text-xs py-1.5" onclick="applyCustomRange()">Apply</button>
+            </div>
+        </div>
+
+        <!-- ── KPI Cards ── -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5" id="kpiGrid">
+            <!-- dynamically rendered -->
+        </div>
+
+        <!-- ── Charts Row ── -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
+
+            <!-- Sales Trend Bar Chart -->
+            <div class="chart-wrap">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <p class="text-sm font-semibold" style="color:var(--primary)">Sales Trend</p>
+                        <p class="text-xs" style="color:var(--muted)" id="trendSubtitle">Daily revenue this week</p>
+                    </div>
+                    <select id="chartGranularity" class="text-xs px-2 py-1.5 border border-gray-200 rounded-lg" style="color:var(--primary)" onchange="renderBarChart()">
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
+                <!-- Y-axis labels + bars -->
+                <div class="flex gap-1 items-end" style="height:180px" id="barChartArea">
+                    <!-- rendered by JS -->
+                </div>
+                <div class="flex justify-between mt-1" id="barChartLabels"></div>
+                <!-- Y axis hint -->
+                <p class="text-xs mt-3" style="color:var(--muted)">Revenue in USD · hover bar for exact value</p>
             </div>
 
-            <form id="reportForm" class="space-y-4" onsubmit="generateCustomReport(event)">
-                <div>
-                    <label class="block text-sm font-medium mb-1" style="color: #133F53;">Report Type</label>
-                    <select id="reportType" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
-                        <option value="sales">Sales Report</option>
-                        <option value="products">Products Report</option>
-                        <option value="customers">Customers Report</option>
-                        <option value="inventory">Inventory Report</option>
+            <!-- Revenue by Category (Donut + legend) -->
+            <div class="chart-wrap">
+                <p class="text-sm font-semibold mb-4" style="color:var(--primary)">Revenue by Category</p>
+                <div class="flex gap-6 items-center">
+                    <!-- Donut -->
+                    <div class="flex-shrink-0">
+                        <svg id="donutSvg" width="130" height="130" viewBox="0 0 130 130"></svg>
+                    </div>
+                    <!-- Progress bars + legend -->
+                    <div class="flex-1 space-y-3" id="catLegend"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Top Products Table ── -->
+        <div class="bg-white border border-[#D89F34] rounded-lg overflow-hidden mb-5">
+            <div class="flex flex-wrap gap-3 items-center px-4 py-3 border-b border-gray-100">
+                <p class="text-sm font-semibold flex-1" style="color:var(--primary)">Top Selling Products</p>
+                <div class="flex gap-2 items-center flex-wrap">
+                    <select id="productFilter" class="text-xs px-2 py-1.5 border border-gray-200 rounded-lg" style="color:var(--primary)" onchange="renderTable()">
+                        <option value="all">All Categories</option>
+                        <option value="electronics">Electronics</option>
+                        <option value="fashion">Fashion</option>
+                        <option value="home">Home &amp; Living</option>
+                        <option value="beauty">Beauty</option>
+                    </select>
+                    <select id="sortBy" class="text-xs px-2 py-1.5 border border-gray-200 rounded-lg" style="color:var(--primary)" onchange="renderTable()">
+                        <option value="revenue">Sort: Revenue</option>
+                        <option value="units">Sort: Units</option>
+                        <option value="growth">Sort: Growth</option>
                     </select>
                 </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full data-table">
+                    <thead>
+                        <tr>
+                            <th class="text-left">#</th>
+                            <th class="text-left">Product</th>
+                            <th class="text-left">Category</th>
+                            <th class="text-right">Units Sold</th>
+                            <th class="text-right">Revenue</th>
+                            <th class="text-right">Avg. Price</th>
+                            <th class="text-right">Growth</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productsTableBody"></tbody>
+                </table>
+            </div>
+            <!-- table footer totals -->
+            <div class="flex flex-wrap gap-4 px-4 py-3 border-t border-gray-100 bg-[#F8F8EA] text-xs" style="color:var(--primary)" id="tableTotals"></div>
+        </div>
 
+        <!-- ── Summary Panels ── -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+            <!-- Today's Summary -->
+            <div class="bg-white border border-[#D89F34] rounded-lg p-4">
+                <p class="text-sm font-semibold mb-3" style="color:var(--primary)">Today's Summary</p>
+                <div id="todaySummary"></div>
+            </div>
+
+            <!-- Payment Methods -->
+            <div class="bg-white border border-[#D89F34] rounded-lg p-4">
+                <p class="text-sm font-semibold mb-3" style="color:var(--primary)">Payment Methods</p>
+                <div id="paymentMethods"></div>
+            </div>
+
+            <!-- Order Status -->
+            <div class="bg-white border border-[#D89F34] rounded-lg p-4">
+                <p class="text-sm font-semibold mb-3" style="color:var(--primary)">Order Status Breakdown</p>
+                <div id="orderStatus"></div>
+            </div>
+        </div>
+
+    </div><!-- /actualContent -->
+
+        </main>
+    </div>
+
+</div>
+
+<!-- ── Notification ── -->
+<div id="notification" style="display:none; position:fixed; top:1rem; right:1rem; z-index:999; min-width:220px; padding:0.6rem 1rem; border-radius:8px; font-size:0.82rem; color:#fff; align-items:center; gap:8px; box-shadow:0 4px 16px rgba(0,0,0,.15);">
+    <i id="notifIcon"></i>
+    <span id="notifMsg"></span>
+</div>
+
+<!-- ════════════ SCRIPTS ════════════ -->
+<script>
+
+// ── DATA ─────────────────────────────────────────────────────────────────────
+// All monetary values are in cents to avoid floating-point drift; displayed /100
+const DATA = {
+    kpis: [
+        { label: 'Total Revenue',   value: 12843000, type: 'currency', icon: 'fa-dollar-sign',   delta: 12.5, deltaUp: true },
+        { label: 'Total Orders',    value: 1250,     type: 'number',   icon: 'fa-shopping-bag',  delta: 8.3,  deltaUp: true },
+        { label: 'Avg. Order Value',value: 1027440,  type: 'currency', icon: 'fa-receipt',       delta: 3.9,  deltaUp: true },
+        { label: 'Conversion Rate', value: 38,       type: 'percent',  icon: 'fa-percent',       delta: 0.5,  deltaUp: true }
+    ],
+    trends: {
+        daily:   [ {l:'Mon',v:1245000},{l:'Tue',v:985000},{l:'Wed',v:1520000},{l:'Thu',v:1130000},{l:'Fri',v:1780000},{l:'Sat',v:1460000},{l:'Sun',v:1020000} ],
+        weekly:  [ {l:'Wk 1',v:7420000},{l:'Wk 2',v:8310000},{l:'Wk 3',v:9100000},{l:'Wk 4',v:7600000} ],
+        monthly: [ {l:'Jan',v:9800000},{l:'Feb',v:11200000},{l:'Mar',v:13500000},{l:'Apr',v:12843000} ]
+    },
+    categories: [
+        { name: 'Electronics',   revenue: 4520000, pct: 45, color: '#133F53' },
+        { name: 'Fashion',       revenue: 2850000, pct: 28, color: '#D89F34' },
+        { name: 'Home & Living', revenue: 1830000, pct: 18, color: '#957A54' },
+        { name: 'Beauty',        revenue:  940000, pct:  9, color: '#a0c4a0' }
+    ],
+    products: [
+        { name: 'Wireless Headphones Pro', cat: 'Electronics',   units: 234, revenue: 2320000, growth:  15 },
+        { name: 'Smart Watch Series 5',    cat: 'Electronics',   units: 156, revenue: 2340000, growth:  22 },
+        { name: 'Tablet Pro 11"',          cat: 'Electronics',   units:  92, revenue: 2760000, growth:  25 },
+        { name: 'Designer Leather Jacket', cat: 'Fashion',       units:  89, revenue: 1780000, growth:   8 },
+        { name: 'Running Shoes',           cat: 'Fashion',       units: 178, revenue: 1424000, growth:  18 },
+        { name: 'Premium Coffee Maker',    cat: 'Home & Living', units:  67, revenue: 1340000, growth:  -2 },
+        { name: 'Smart Home Hub',          cat: 'Home & Living', units:  45, revenue:  675000, growth:  -5 },
+        { name: 'Organic Skincare Set',    cat: 'Beauty',        units: 145, revenue:  870000, growth:  12 }
+    ],
+    today: [
+        { label: 'Revenue',         value: 425000,  type: 'currency' },
+        { label: 'Orders',          value: 42,       type: 'number'  },
+        { label: 'Unique Customers',value: 38,       type: 'number'  },
+        { label: 'Avg. Order Value',value: 10119,    type: 'currency'},
+        { label: 'Refunds',         value: 2,        type: 'number'  }
+    ],
+    payments: [
+        { label: 'Credit Card', pct: 65 },
+        { label: 'PayPal',      pct: 20 },
+        { label: 'Debit Card',  pct: 10 },
+        { label: 'Cash on Delivery', pct: 5 }
+    ],
+    orderStatus: [
+        { label: 'Delivered',   count: 892, pct: 71 },
+        { label: 'Shipped',     count: 187, pct: 15 },
+        { label: 'Processing',  count: 113, pct:  9 },
+        { label: 'Cancelled',   count:  58, pct:  5 }
+    ]
+};
+
+// ── FORMATTERS ────────────────────────────────────────────────────────────────
+function fmtCurrency(cents) {
+    // exact cents → dollars, no rounding errors
+    const dollars = Math.floor(cents / 100);
+    const c       = cents % 100;
+    const dStr    = dollars.toLocaleString('en-US');
+    return '$' + dStr + '.' + String(c).padStart(2,'0');
+}
+function fmtNumber(n)  { return n.toLocaleString('en-US'); }
+function fmtPercent(v) { return (v / 10).toFixed(1) + '%'; } // stored as tenths e.g. 38 → 3.8%
+function fmtValue(v, type) {
+    if (type === 'currency') return fmtCurrency(v);
+    if (type === 'percent')  return fmtPercent(v);
+    return fmtNumber(v);
+}
+
+// ── KPI CARDS ─────────────────────────────────────────────────────────────────
+function renderKPIs() {
+    const grid = document.getElementById('kpiGrid');
+    grid.innerHTML = DATA.kpis.map(k => `
+        <div class="kpi-card">
+            <div class="flex justify-between items-start gap-2">
                 <div>
-                    <label class="block text-sm font-medium mb-1" style="color: #133F53;">Date Range</label>
-                    <div class="grid grid-cols-2 gap-2">
-                        <input type="date" id="reportStartDate" class="px-3 py-2 border border-gray-200 rounded-lg text-sm">
-                        <input type="date" id="reportEndDate" class="px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                    <p class="text-xs mb-1" style="color:var(--muted)">${k.label}</p>
+                    <p class="text-xl font-bold" style="color:var(--primary)">${fmtValue(k.value, k.type)}</p>
+                </div>
+                <div class="kpi-icon"><i class="fa-solid ${k.icon} text-sm" style="color:var(--accent)"></i></div>
+            </div>
+            <p class="text-xs mt-2 ${k.deltaUp ? 'text-green-600' : 'text-red-600'}">
+                ${k.deltaUp ? '↑' : '↓'} ${k.delta}% <span style="color:#9ca3af">vs last period</span>
+            </p>
+        </div>
+    `).join('');
+}
+
+// ── BAR CHART ─────────────────────────────────────────────────────────────────
+function renderBarChart() {
+    const granularity = document.getElementById('chartGranularity').value;
+    const series = DATA.trends[granularity];
+    const max = Math.max(...series.map(d => d.v));
+    const area   = document.getElementById('barChartArea');
+    const labels = document.getElementById('barChartLabels');
+    const subtitles = { daily: 'Daily revenue', weekly: 'Weekly revenue', monthly: 'Monthly revenue' };
+    document.getElementById('trendSubtitle').textContent = subtitles[granularity];
+
+    area.innerHTML = series.map(d => {
+        const h = Math.round((d.v / max) * 150);
+        return `
+            <div class="bar-group" style="flex:1">
+                <div class="bar-outer">
+                    <div class="bar-fill" style="height:${h}px">
+                        <div class="bar-tooltip">${fmtCurrency(d.v)}</div>
                     </div>
                 </div>
+                <span class="bar-label">${d.l}</span>
+            </div>`;
+    }).join('');
+    labels.innerHTML = '';
+}
 
-                <div>
-                    <label class="block text-sm font-medium mb-1" style="color: #133F53;">Format</label>
-                    <select id="reportFormat" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
-                        <option value="pdf">PDF</option>
-                        <option value="excel">Excel</option>
-                        <option value="csv">CSV</option>
-                    </select>
-                </div>
+// ── DONUT CHART ───────────────────────────────────────────────────────────────
+function renderDonut() {
+    const size = 130, cx = 65, cy = 65, r = 48, sw = 18;
+    const circumference = 2 * Math.PI * r;
+    let offset = 0;
+    const svg = document.getElementById('donutSvg');
 
-                <div class="space-y-2">
-                    <label class="flex items-center gap-2">
-                        <input type="checkbox" id="includeCharts" checked class="rounded border-gray-300">
-                        <span class="text-sm" style="color: #133F53;">Include Charts</span>
-                    </label>
-                    <label class="flex items-center gap-2">
-                        <input type="checkbox" id="includeTables" checked class="rounded border-gray-300">
-                        <span class="text-sm" style="color: #133F53;">Include Tables</span>
-                    </label>
-                    <label class="flex items-center gap-2">
-                        <input type="checkbox" id="includeSummary" checked class="rounded border-gray-300">
-                        <span class="text-sm" style="color: #133F53;">Include Summary</span>
-                    </label>
-                </div>
+    // background circle
+    svg.innerHTML = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#e8e8dc" stroke-width="${sw}"/>`;
 
-                <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
-                    <button type="button" onclick="closeReportModal()"
-                        class="px-4 py-2 border border-gray-200 rounded-lg text-sm">Cancel</button>
-                    <button type="submit" class="px-4 py-2 rounded-lg text-sm"
-                        style="background-color: #D89F34; color: #133F53;">Generate</button>
-                </div>
-            </form>
+    DATA.categories.forEach(cat => {
+        const dash  = (cat.pct / 100) * circumference;
+        const gap   = circumference - dash;
+        const seg = document.createElementNS('http://www.w3.org/2000/svg','circle');
+        seg.setAttribute('cx', cx); seg.setAttribute('cy', cy); seg.setAttribute('r', r);
+        seg.setAttribute('fill','none');
+        seg.setAttribute('stroke', cat.color);
+        seg.setAttribute('stroke-width', sw);
+        seg.setAttribute('stroke-dasharray', `${dash} ${gap}`);
+        seg.setAttribute('stroke-dashoffset', -offset);
+        seg.setAttribute('transform', `rotate(-90 ${cx} ${cy})`);
+        seg.setAttribute('class','donut-segment');
+        seg.setAttribute('title', cat.name);
+        svg.appendChild(seg);
+        offset += dash;
+    });
+
+    // center label
+    const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+    txt.setAttribute('x', cx); txt.setAttribute('y', cy+5);
+    txt.setAttribute('text-anchor','middle');
+    txt.setAttribute('font-size','12');
+    txt.setAttribute('font-weight','600');
+    txt.setAttribute('fill','#133F53');
+    txt.textContent = fmtCurrency(DATA.categories.reduce((s,c)=>s+c.revenue,0));
+    svg.appendChild(txt);
+}
+
+function renderCatLegend() {
+    document.getElementById('catLegend').innerHTML = DATA.categories.map(c => `
+        <div>
+            <div class="flex justify-between text-xs mb-1">
+                <span style="color:var(--primary);font-weight:500;display:flex;align-items:center;gap:5px">
+                    <span style="width:8px;height:8px;border-radius:50%;background:${c.color};display:inline-block"></span>
+                    ${c.name}
+                </span>
+                <span style="color:var(--primary);font-weight:600">${fmtCurrency(c.revenue)}</span>
+            </div>
+            <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${c.pct}%;background:${c.color}"></div></div>
+            <p class="text-xs mt-0.5" style="color:var(--muted)">${c.pct}% of total</p>
         </div>
-    </div>
+    `).join('');
+}
 
-    <!-- Notification -->
-    <div id="notification" class="fixed top-4 right-4 px-4 py-2 rounded-lg shadow-lg z-50 hidden" style="min-width: 250px;">
-        <div class="flex items-center gap-2">
-            <i id="notificationIcon" class=""></i>
-            <span id="notificationMessage" class="text-sm"></span>
-        </div>
-    </div>
+// ── PRODUCT TABLE ─────────────────────────────────────────────────────────────
+function renderTable() {
+    const filterVal = document.getElementById('productFilter').value;
+    const sortVal   = document.getElementById('sortBy').value;
 
-    <script src="../js/components.js"></script>
-    <script>
-        // Sample sales data
-        const salesData = {
-            totalRevenue: 128430,
-            totalOrders: 1250,
-            avgOrderValue: 102.74,
-            conversionRate: 3.8,
-            salesTrend: [
-                { day: 'Mon', revenue: 12450 },
-                { day: 'Tue', revenue: 9850 },
-                { day: 'Wed', revenue: 15200 },
-                { day: 'Thu', revenue: 11300 },
-                { day: 'Fri', revenue: 17800 },
-                { day: 'Sat', revenue: 14600 },
-                { day: 'Sun', revenue: 10200 }
-            ],
-            categoryRevenue: [
-                { category: 'Electronics', revenue: 45200, percentage: 45 },
-                { category: 'Fashion', revenue: 28500, percentage: 28 },
-                { category: 'Home & Living', revenue: 18300, percentage: 18 },
-                { category: 'Beauty', revenue: 9400, percentage: 9 }
-            ],
-            topProducts: [
-                { id: 1, name: 'Wireless Headphones Pro', category: 'Electronics', units: 234, revenue: 23200, growth: 15 },
-                { id: 2, name: 'Designer Leather Jacket', category: 'Fashion', units: 89, revenue: 17800, growth: 8 },
-                { id: 3, name: 'Smart Watch Series 5', category: 'Electronics', units: 156, revenue: 23400, growth: 22 },
-                { id: 4, name: 'Premium Coffee Maker', category: 'Home & Living', units: 67, revenue: 13400, growth: -2 },
-                { id: 5, name: 'Organic Skincare Set', category: 'Beauty', units: 145, revenue: 8700, growth: 12 },
-                { id: 6, name: 'Running Shoes', category: 'Fashion', units: 178, revenue: 14240, growth: 18 },
-                { id: 7, name: 'Tablet Pro 11"', category: 'Electronics', units: 92, revenue: 27600, growth: 25 },
-                { id: 8, name: 'Smart Home Hub', category: 'Home & Living', units: 45, revenue: 6750, growth: -5 }
-            ]
-        };
+    let rows = [...DATA.products];
+    if (filterVal !== 'all') {
+        rows = rows.filter(p => p.cat.toLowerCase().replace(/[^a-z]/g,'').includes(filterVal.replace(/[^a-z]/g,'')));
+    }
+    rows.sort((a, b) => b[sortVal === 'revenue' ? 'revenue' : sortVal === 'units' ? 'units' : 'growth'] - a[sortVal === 'revenue' ? 'revenue' : sortVal === 'units' ? 'units' : 'growth']);
 
-        // State variables
-        let currentPeriod = 'month';
-        let currentPage = 1;
-        const itemsPerPage = 5;
+    const tbody = document.getElementById('productsTableBody');
+    tbody.innerHTML = rows.map((p, i) => {
+        const avgPrice = Math.round(p.revenue / p.units);
+        const gClass   = p.growth >= 0 ? 'badge-up' : 'badge-down';
+        const gIcon    = p.growth >= 0 ? '↑' : '↓';
+        return `<tr>
+            <td class="text-xs" style="color:var(--muted)">${i+1}</td>
+            <td><span class="text-xs font-medium" style="color:var(--primary)">${p.name}</span></td>
+            <td><span class="badge badge-cat">${p.cat}</span></td>
+            <td class="text-right text-xs">${fmtNumber(p.units)}</td>
+            <td class="text-right text-xs font-semibold">${fmtCurrency(p.revenue)}</td>
+            <td class="text-right text-xs">${fmtCurrency(avgPrice)}</td>
+            <td class="text-right"><span class="badge ${gClass}">${gIcon} ${Math.abs(p.growth)}%</span></td>
+        </tr>`;
+    }).join('');
 
-        // ==================== PAGE LOAD ====================
-        document.addEventListener('DOMContentLoaded', function() {
-            // Show skeleton, hide actual content
-            document.getElementById('skeletonLoader').classList.remove('content-hidden');
-            document.getElementById('skeletonLoader').classList.add('content-visible');
-            document.getElementById('actualContent').classList.remove('content-visible');
-            document.getElementById('actualContent').classList.add('content-hidden');
+    // totals row
+    const totalUnits   = rows.reduce((s,p)=>s+p.units,0);
+    const totalRevenue = rows.reduce((s,p)=>s+p.revenue,0);
+    document.getElementById('tableTotals').innerHTML = `
+        <span>Showing <b>${rows.length}</b> products</span>
+        <span class="ml-auto">Total units: <b>${fmtNumber(totalUnits)}</b></span>
+        <span>Total revenue: <b>${fmtCurrency(totalRevenue)}</b></span>
+    `;
+}
 
-            // Set today's date for custom range
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('startDate').value = today;
-            document.getElementById('endDate').value = today;
+// ── SUMMARY PANELS ────────────────────────────────────────────────────────────
+function renderSummaryPanels() {
+    document.getElementById('todaySummary').innerHTML = DATA.today.map(r => `
+        <div class="summary-row">
+            <span class="text-xs" style="color:var(--muted)">${r.label}</span>
+            <span class="text-xs font-semibold" style="color:var(--primary)">${fmtValue(r.value, r.type)}</span>
+        </div>`).join('');
 
-            // Load data
-            loadData();
-        });
+    document.getElementById('paymentMethods').innerHTML = DATA.payments.map(p => `
+        <div class="summary-row">
+            <span class="text-xs" style="color:var(--muted)">${p.label}</span>
+            <span class="text-xs font-semibold" style="color:var(--primary)">${p.pct}%</span>
+        </div>`).join('');
 
-        async function loadData() {
-            try {
-                await new Promise(resolve => setTimeout(resolve, 800));
-                renderProducts();
-                updateStatistics();
+    document.getElementById('orderStatus').innerHTML = DATA.orderStatus.map(s => `
+        <div class="mb-2">
+            <div class="flex justify-between text-xs mb-1">
+                <span style="color:var(--muted)">${s.label}</span>
+                <span style="color:var(--primary);font-weight:600">${fmtNumber(s.count)} (${s.pct}%)</span>
+            </div>
+            <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${s.pct}%"></div></div>
+        </div>`).join('');
+}
 
-                document.getElementById('skeletonLoader').classList.remove('content-visible');
-                document.getElementById('skeletonLoader').classList.add('content-hidden');
-                document.getElementById('actualContent').classList.remove('content-hidden');
-                document.getElementById('actualContent').classList.add('content-visible');
-            } catch (error) {
-                console.error('Error loading data:', error);
-                showNotification('Error loading reports', 'error');
-            }
-        }
+// ── PERIOD SELECTOR ───────────────────────────────────────────────────────────
+function setPeriod(p) {
+    document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('period-' + p).classList.add('active');
+    notify('Showing data for: ' + p, 'info');
+}
+function applyCustomRange() {
+    const s = document.getElementById('startDate').value;
+    const e = document.getElementById('endDate').value;
+    if (!s || !e) { notify('Please select both dates', 'error'); return; }
+    if (new Date(s) > new Date(e)) { notify('Start date must be before end date', 'error'); return; }
+    notify(`Filtered: ${s} → ${e}`, 'success');
+}
 
-        function updateStatistics() {
-            document.getElementById('totalRevenue').textContent = '$' + salesData.totalRevenue.toLocaleString();
-            document.getElementById('totalOrders').textContent = salesData.totalOrders.toLocaleString();
-            document.getElementById('avgOrderValue').textContent = '$' + salesData.avgOrderValue.toFixed(2);
-        }
+// ── EXPORT ────────────────────────────────────────────────────────────────────
+function toggleExportMenu() {
+    document.getElementById('exportMenu').classList.toggle('open');
+}
+document.addEventListener('click', e => {
+    if (!e.target.closest('.export-dropdown')) document.getElementById('exportMenu').classList.remove('open');
+});
 
-        function renderProducts() {
-            const tbody = document.getElementById('productsTableBody');
-            if (!tbody) return;
+function exportCSV() {
+    document.getElementById('exportMenu').classList.remove('open');
+    const headers = ['#','Product','Category','Units Sold','Revenue (USD)','Avg Price (USD)','Growth %'];
+    const rows = DATA.products.map((p,i) => [
+        i+1, p.name, p.cat, p.units,
+        (p.revenue/100).toFixed(2),
+        (Math.round(p.revenue/p.units)/100).toFixed(2),
+        p.growth
+    ]);
+    const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+    downloadBlob(new Blob([csv],{type:'text/csv'}), 'sales-report.csv');
+    notify('CSV exported', 'success');
+}
 
-            const filter = document.getElementById('productFilter')?.value || 'all';
-            let filteredProducts = salesData.topProducts;
-            
-            if (filter !== 'all') {
-                filteredProducts = filteredProducts.filter(p => p.category.toLowerCase().includes(filter));
-            }
+function exportExcel() {
+    document.getElementById('exportMenu').classList.remove('open');
+    if (typeof XLSX === 'undefined') { notify('Excel library not loaded', 'error'); return; }
+    const wsData = [
+        ['Sales & Reports Export'],
+        [],
+        ['KPI Summary'],
+        ['Metric','Value'],
+        ...DATA.kpis.map(k => [k.label, fmtValue(k.value, k.type)]),
+        [],
+        ['Top Products'],
+        ['#','Product','Category','Units Sold','Revenue','Avg Price','Growth %'],
+        ...DATA.products.map((p,i) => [
+            i+1, p.name, p.cat, p.units,
+            (p.revenue/100).toFixed(2),
+            (Math.round(p.revenue/p.units)/100).toFixed(2),
+            p.growth
+        ]),
+        [],
+        ['Category Revenue'],
+        ['Category','Revenue','% Share'],
+        ...DATA.categories.map(c => [c.name, (c.revenue/100).toFixed(2), c.pct + '%']),
+        [],
+        ['Payment Methods'],
+        ['Method','Share %'],
+        ...DATA.payments.map(p => [p.label, p.pct + '%'])
+    ];
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    ws['!cols'] = [{wch:30},{wch:40},{wch:18},{wch:14},{wch:16},{wch:16},{wch:12}];
+    XLSX.utils.book_append_sheet(wb, ws, 'Sales Report');
+    XLSX.writeFile(wb, 'sales-report.xlsx');
+    notify('Excel exported', 'success');
+}
 
-            tbody.innerHTML = '';
-            filteredProducts.forEach(product => {
-                const row = document.createElement('tr');
-                row.className = 'border-b border-gray-100 hover:bg-[#F8F8EA]';
-                
-                const growthClass = product.growth >= 0 ? 'text-green-600' : 'text-red-600';
-                const growthIcon = product.growth >= 0 ? '↑' : '↓';
+function exportPDF() {
+    document.getElementById('exportMenu').classList.remove('open');
 
-                row.innerHTML = `
-                    <td class="py-3 px-4">
-                        <span class="text-sm font-medium" style="color: #133F53;">${product.name}</span>
-                    </td>
-                    <td class="py-3 px-4">
-                        <span class="text-xs px-2 py-1 bg-[#F8F8EA] rounded-full" style="color: #957A54;">${product.category}</span>
-                    </td>
-                    <td class="py-3 px-4 text-sm" style="color: #133F53;">${product.units}</td>
-                    <td class="py-3 px-4 text-sm font-medium" style="color: #133F53;">$${product.revenue.toLocaleString()}</td>
-                    <td class="py-3 px-4">
-                        <span class="text-sm ${growthClass}">${growthIcon} ${Math.abs(product.growth)}%</span>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
+    function esc(str) {
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
 
-        // ==================== PERIOD FUNCTIONS ====================
-        function setPeriod(period) {
-            currentPeriod = period;
-            
-            // Update active button
-            document.querySelectorAll('.period-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            document.getElementById(`period-${period}`).classList.add('active');
-            
-            showNotification(`Showing data for: ${period}`, 'info');
-            // Here you would fetch data for selected period
-        }
+    var rows = DATA.products.map(function(p, i) {
+        return '<tr>'
+            + '<td>' + esc(i + 1)   + '<\/td>'
+            + '<td>' + esc(p.name)  + '<\/td>'
+            + '<td>' + esc(p.cat)   + '<\/td>'
+            + '<td>' + esc(p.units) + '<\/td>'
+            + '<td>$' + (p.revenue / 100).toFixed(2) + '<\/td>'
+            + '<td>' + (p.growth >= 0 ? '+' : '') + esc(p.growth) + '%<\/td>'
+            + '<\/tr>';
+    }).join('\n');
 
-        function applyCustomRange() {
-            const start = document.getElementById('startDate').value;
-            const end = document.getElementById('endDate').value;
-            
-            if (start && end) {
-                showNotification(`Filtering from ${start} to ${end}`, 'success');
-                // Here you would fetch data for custom date range
-            } else {
-                showNotification('Please select both dates', 'error');
-            }
-        }
+    var kpiHtml = DATA.kpis.map(function(k) {
+        return '<div class="kpi"><strong>' + esc(fmtValue(k.value, k.type)) + '<\/strong><br><small>' + esc(k.label) + '<\/small><\/div>';
+    }).join('');
 
-        // ==================== CHART FUNCTIONS ====================
-        function changeChartType() {
-            const type = document.getElementById('chartType').value;
-            showNotification(`Chart type changed to: ${type}`, 'info');
-            // Here you would update the chart
-        }
+    var catHtml = DATA.categories.map(function(c) {
+        return '<tr><td>' + esc(c.name) + '<\/td><td>$' + (c.revenue / 100).toFixed(2) + '<\/td><td>' + esc(c.pct) + '%<\/td><\/tr>';
+    }).join('');
 
-        // ==================== FILTER FUNCTIONS ====================
-        function filterProducts() {
-            renderProducts();
-        }
+    var payHtml = DATA.payments.map(function(p) {
+        return '<tr><td>' + esc(p.label) + '<\/td><td>' + esc(p.pct) + '%<\/td><\/tr>';
+    }).join('');
 
-        // ==================== REPORT FUNCTIONS ====================
-        function exportReport() {
-            showNotification('Report exported successfully', 'success');
-        }
+    var genDate = new Date().toLocaleString();
 
-        function generateReport() {
-            document.getElementById('reportModal').classList.remove('hidden');
-            document.getElementById('reportModal').classList.add('flex');
-        }
+    // Read template from <script type="text/plain"> tag — HTML parser ignores its contents entirely,
+    // so no closing tags inside it can ever terminate THIS script block.
+    var tpl = document.getElementById('pdfTemplate').textContent;
+    var html = tpl
+        .replace('{{genDate}}',  genDate)
+        .replace('{{kpiHtml}}',  kpiHtml)
+        .replace('{{rows}}',     rows)
+        .replace('{{catHtml}}',  catHtml)
+        .replace('{{payHtml}}',  payHtml);
 
-        function closeReportModal() {
-            document.getElementById('reportModal').classList.add('hidden');
-            document.getElementById('reportModal').classList.remove('flex');
-        }
+    var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    var url  = URL.createObjectURL(blob);
+    var win  = window.open(url, '_blank');
+    if (!win) {
+        notify('Popup blocked — please allow popups for this site', 'error');
+        URL.revokeObjectURL(url);
+        return;
+    }
+    setTimeout(function() { URL.revokeObjectURL(url); }, 10000);
+    notify('PDF report opened — use Print / Save PDF button', 'success');
+}
+function downloadBlob(blob, filename) {
+    const a = document.createElement('a');
+    a.href  = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
 
-        function generateCustomReport(event) {
-            event.preventDefault();
-            
-            const type = document.getElementById('reportType').value;
-            const format = document.getElementById('reportFormat').value;
-            
-            showNotification(`Generating ${type} report in ${format.toUpperCase()} format...`, 'info');
-            
-            setTimeout(() => {
-                closeReportModal();
-                showNotification('Report generated successfully!', 'success');
-            }, 1500);
-        }
+// ── NOTIFICATION ──────────────────────────────────────────────────────────────
+let notifTimer = null;
+function notify(msg, type = 'info') {
+    const el    = document.getElementById('notification');
+    const icon  = document.getElementById('notifIcon');
+    const msgEl = document.getElementById('notifMsg');
+    const cfg   = { success:{bg:'#16a34a',cls:'fa-solid fa-circle-check'}, error:{bg:'#dc2626',cls:'fa-solid fa-circle-exclamation'}, info:{bg:'#2563eb',cls:'fa-solid fa-circle-info'} };
+    el.style.background = cfg[type].bg;
+    icon.className = cfg[type].cls;
+    msgEl.textContent = msg;
+    el.style.display = 'flex';
+    clearTimeout(notifTimer);
+    notifTimer = setTimeout(()=>{ el.style.display='none'; }, 3000);
+}
 
-        // ==================== NOTIFICATION FUNCTION ====================
-        function showNotification(message, type = 'info') {
-            const notification = document.getElementById('notification');
-            const icon = document.getElementById('notificationIcon');
-            const messageEl = document.getElementById('notificationMessage');
+// ── INIT ──────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('startDate').value = today;
+    document.getElementById('endDate').value   = today;
 
-            const colors = {
-                success: { bg: '#10B981', icon: 'fa-regular fa-circle-check' },
-                error: { bg: '#EF4444', icon: 'fa-solid fa-circle-exclamation' },
-                info: { bg: '#3B82F6', icon: 'fa-solid fa-circle-info' }
-            };
+    // Simulate async data load
+    setTimeout(() => {
+        renderKPIs();
+        renderBarChart();
+        renderDonut();
+        renderCatLegend();
+        renderTable();
+        renderSummaryPanels();
 
-            notification.style.backgroundColor = colors[type].bg;
-            notification.style.color = 'white';
-            icon.className = colors[type].icon;
-            messageEl.textContent = message;
+        document.getElementById('skeletonLoader').style.display = 'none';
+        document.getElementById('actualContent').classList.remove('hidden');
+    }, 750);
+});
+</script>
 
-            notification.classList.remove('hidden');
+<!-- PDF template — stored as text/plain so HTML parser ignores all tags inside -->
+<script type="text/plain" id="pdfTemplate">
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Sales Report</title>
+<style>
+  @media print { .no-print { display:none } }
+  body { font-family: sans-serif; padding: 28px; color: #133F53; margin: 0 }
+  h1 { color: #133F53; border-bottom: 2px solid #D89F34; padding-bottom: 8px; margin-bottom: 4px }
+  h2 { font-size: 0.95rem; margin: 20px 0 8px; color: #133F53 }
+  .meta { color: #957A54; font-size: 0.8rem; margin-bottom: 20px }
+  .kpis { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px }
+  .kpi { background: #F8F8EA; border: 1px solid #D89F34; border-radius: 8px; padding: 10px 14px; min-width: 110px }
+  .kpi strong { font-size: 1.1rem; display: block }
+  .kpi small { color: #957A54; font-size: 0.72rem }
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-bottom: 24px }
+  th { background: #F8F8EA; text-align: left; padding: 7px 10px; border-bottom: 2px solid #D89F34; color: #133F53; font-size: 0.75rem; text-transform: uppercase; letter-spacing: .04em }
+  td { padding: 6px 10px; border-bottom: 1px solid #eee; color: #133F53 }
+  tr:last-child td { border-bottom: none }
+  .footer { margin-top: 24px; font-size: 0.72rem; color: #957A54; border-top: 1px solid #eee; padding-top: 10px }
+  .print-btn { position: fixed; top: 16px; right: 16px; padding: 8px 18px; background: #D89F34; color: #133F53; border: none; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer }
+</style>
+</head>
+<body>
+<button class="print-btn no-print" onclick="window.print()">Print / Save PDF</button>
+<h1>Sales &amp; Revenue Report</h1>
+<p class="meta">Generated: {{genDate}}</p>
+<div class="kpis">{{kpiHtml}}</div>
+<h2>Top Selling Products</h2>
+<table>
+  <thead><tr><th>#</th><th>Product</th><th>Category</th><th>Units</th><th>Revenue</th><th>Growth</th></tr></thead>
+  <tbody>{{rows}}</tbody>
+</table>
+<h2>Revenue by Category</h2>
+<table>
+  <thead><tr><th>Category</th><th>Revenue</th><th>Share</th></tr></thead>
+  <tbody>{{catHtml}}</tbody>
+</table>
+<h2>Payment Methods</h2>
+<table>
+  <thead><tr><th>Method</th><th>Share</th></tr></thead>
+  <tbody>{{payHtml}}</tbody>
+</table>
+<div class="footer">All monetary values in USD &middot; Revenue stored as exact integer cents, displayed to 2 decimal places.</div>
+</body>
+</html>
+</script>
 
-            setTimeout(() => {
-                notification.classList.add('hidden');
-            }, 3000);
-        }
-    </script>
-    <script src="/js/auth.js"></script>
-    <script src="/js/components.js"></script>
+<script src="/js/order-badge.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/components.js"></script>
+
 </body>
 </html>

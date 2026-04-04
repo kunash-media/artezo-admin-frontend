@@ -123,7 +123,6 @@
 
     .input-group input::placeholder { color: #133F53; font-weight: 300; }
 
-    /* disabled state while loading */
     .input-group input:disabled {
       opacity: 0.6;
       cursor: not-allowed;
@@ -179,7 +178,6 @@
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* error message under inputs */
     .error-msg {
       color: #c0392b;
       font-size: 0.88rem;
@@ -308,7 +306,6 @@
             />
           </div>
 
-          <!-- inline error message -->
           <div class="error-msg" id="errorMsg"></div>
 
           <button type="submit" class="btn" id="loginBtn">
@@ -322,7 +319,7 @@
     </div>
   </div>
 
-  <!-- Modal for errors/success -->
+  <!-- Modal -->
   <div class="modal-overlay" id="messageModal">
     <div class="modal-content">
       <div class="modal-header">
@@ -336,22 +333,31 @@
     </div>
   </div>
 
-  <!-- ① load auth.js first -->
+  <!--
+    IMPORTANT: components.js is intentionally NOT loaded here.
+    components.js calls Auth.requireLogin() on DOMContentLoaded which:
+      1. calls isAuthenticated() → hits /api/admin/get-admin-by-adminId/...
+      2. gets 401 (not logged in yet)
+      3. redirects to /index.html
+      4. page reloads → repeat forever → infinite blinking loop
+
+    The login page only needs auth.js for Auth.login() and Auth.redirectIfLoggedIn().
+  -->
   <script src="/js/auth.js"></script>
 
-  <!-- ② login page logic -->
   <script>
-    // ── redirect away if already logged in ──
+    // Redirect to dashboard if session cookie is already valid
+    // (e.g. user navigates back to login after already logging in)
     document.addEventListener('DOMContentLoaded', () => {
       Auth.redirectIfLoggedIn();
     });
-    const loginForm  = document.getElementById('loginForm');
-    const mobileInput = document.getElementById('mobile');
-    const passwordInput = document.getElementById('password');
-    const loginBtn   = document.getElementById('loginBtn');
-    const errorMsg   = document.getElementById('errorMsg');
 
-    // modal
+    const loginForm     = document.getElementById('loginForm');
+    const mobileInput   = document.getElementById('mobile');
+    const passwordInput = document.getElementById('password');
+    const loginBtn      = document.getElementById('loginBtn');
+    const errorMsg      = document.getElementById('errorMsg');
+
     const modal      = document.getElementById('messageModal');
     const modalTitle = document.getElementById('modalTitle');
     const modalMsg   = document.getElementById('modalMessage');
@@ -382,12 +388,11 @@
 
     function setLoading(loading) {
       loginBtn.classList.toggle('loading', loading);
-      loginBtn.disabled = loading;
-      mobileInput.disabled  = loading;
-      passwordInput.disabled = loading;
+      loginBtn.disabled       = loading;
+      mobileInput.disabled    = loading;
+      passwordInput.disabled  = loading;
     }
 
-    // ── form submit ──
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       clearError();
@@ -395,7 +400,6 @@
       const mobile   = mobileInput.value.trim();
       const password = passwordInput.value;
 
-      // basic client-side validation
       if (mobile.length !== 10 || !/^\d{10}$/.test(mobile)) {
         showError('Enter a valid 10-digit mobile number');
         return;
@@ -408,13 +412,11 @@
 
       setLoading(true);
 
-      // ── call backend via auth.js ──
       const result = await Auth.login(mobile, password);
 
       setLoading(false);
 
       if (result.success) {
-        // short success flash before redirect
         showModal('Welcome!', 'Login successful. Redirecting to dashboard...');
         setTimeout(() => {
           window.location.href = '/dashboard.html';
@@ -424,7 +426,7 @@
       }
     });
 
-    // only allow digits in mobile field
+    // Allow digits only in mobile field
     mobileInput.addEventListener('input', () => {
       mobileInput.value = mobileInput.value.replace(/\D/g, '');
     });

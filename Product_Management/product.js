@@ -281,21 +281,21 @@ let stepCounter = 0;
 
 // Templates (unchanged from your original)
 const variantTemplate = `
-<div class="variant-block p-4 border border-gray-200 rounded-lg space-y-4">
+<div class="variant-block p-4 border border border-[#D89F34] rounded-lg space-y-4">
     <div class="flex justify-between items-center">
         <h4 class="font-medium text-gray-900">Variant <span class="variant-index"></span></h4>
         <button type="button" class="remove-variant text-red-500 hover:text-red-700 text-sm">Remove</button>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <input type="text" class="variant-title px-3 py-2 border border-gray-300 rounded-lg" placeholder="Title Name (glossy)">
-        <input type="text" class="variant-color px-3 py-2 border border-gray-300 rounded-lg" placeholder="Color (Golden)">
-        <input type="text" class="variant-sku px-3 py-2 border border-gray-300 rounded-lg" placeholder="SKU">
-        <input type="number" step="0.01" class="variant-price px-3 py-2 border border-gray-300 rounded-lg" placeholder="Price">
-        <input type="number" step="0.01" class="variant-mrp px-3 py-2 border border-gray-300 rounded-lg" placeholder="MRP">
+        <input type="text" class="variant-title px-3 py-2 border border-gray-400 rounded-lg" placeholder="Title Name (glossy)">
+        <input type="text" class="variant-color px-3 py-2 border border-gray-400 rounded-lg" placeholder="Color (Golden)">
+        <input type="text" class="variant-sku px-3 py-2 border border-gray-400 rounded-lg" placeholder="SKU">
+        <input type="number" step="0.01" class="variant-price px-3 py-2 border border-gray-400 rounded-lg" placeholder="Price">
+        <input type="number" step="0.01" class="variant-mrp px-3 py-2 border border-gray-400 rounded-lg" placeholder="MRP">
         <input type="number" min="0" class="variant-stock px-3 py-2 border border-gray-300 rounded-lg" placeholder="Stock">
-        <input type="date" class="variant-mfgdate px-3 py-2 border border-gray-300 rounded-lg">
-        <input type="date" class="variant-expdate px-3 py-2 border border-gray-300 rounded-lg" placeholder="Exp Date (optional)">
-        <input type="text" class="variant-size px-3 py-2 border border-gray-300 rounded-lg" placeholder="Size">
+        <input type="date" class="variant-mfgdate px-3 py-2 border border-gray-400 rounded-lg">
+        <input type="date" class="variant-expdate px-3 py-2 border border-gray-400 rounded-lg" placeholder="Exp Date (optional)">
+        <input type="text" class="variant-size px-3 py-2 border border-gray-400 rounded-lg" placeholder="Size">
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
@@ -312,12 +312,12 @@ const variantTemplate = `
 </div>`;
 
 const heroBannerTemplate = `
-<div class="hero-banner-block p-4 border border-gray-200 rounded-lg space-y-3">
+<div class="hero-banner-block p-4 border border border-[#D89F34] rounded-lg space-y-3">
     <div class="flex justify-between items-center">
         <h4 class="font-medium text-gray-900">Banner <span class="banner-index"></span></h4>
         <button type="button" class="remove-banner text-red-500 hover:text-red-700 text-sm">Remove</button>
     </div>
-    <textarea class="banner-description w-full px-3 py-2 border border-gray-300 rounded-lg" rows="2" placeholder="e.g. Golden premium finish close-up"
+    <textarea class="banner-description w-full px-3 py-2 border border-gray-400 rounded-lg" rows="2" placeholder="e.g. Golden premium finish close-up"
             focus:outline-none focus:ring-1 focus:ring-[#D89F34]/30 focus:border-[#957A54]"></textarea>
     <div>
         <label class="block text-sm font-medium text-gray-700 mb-1.5">Banner Image</label>
@@ -328,27 +328,27 @@ const heroBannerTemplate = `
 </div>`;
 
 const installationStepTemplate = `
-<div class="step-block p-4 border border-gray-200 rounded-lg space-y-3">
+<div class="step-block p-4 border border border-[#D89F34] rounded-lg space-y-3">
     <div class="flex justify-between items-center">
         <h4 class="font-medium text-gray-900">Step <span class="step-index"></span></h4>
         <button type="button" class="remove-step text-red-500 hover:text-red-700 text-sm">Remove</button>
     </div>
-    <input type="text" class="step-title w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Title"
+    <input type="text" class="step-title w-full px-3 py-2 border border-gray-400 rounded-lg" placeholder="Title"
        focus:outline-none focus:ring-1 focus:ring-[#D89F34]/30 focus:border-[#957A54] ">
-    <textarea class="step-shortdesc w-full px-3 py-2 border border-gray-300 rounded-lg" rows="2" placeholder="Short description"
+    <textarea class="step-shortdesc w-full px-3 py-2 border border-gray-400 rounded-lg" rows="2" placeholder="Short description"
        focus:outline-none focus:ring-1 focus:ring-[#D89F34]/30 focus:border-[#957A54] "></textarea>
-    <input type="text" class="step-shortnote w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Short note"
+    <input type="text" class="step-shortnote w-full px-3 py-2 border border-gray-400 rounded-lg" placeholder="Short note"
         focus:outline-none focus:ring-1 focus:ring-[#D89F34]/30 focus:border-[#957A54] ">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1.5">Step Image</label>
-            <input type="file" accept="image/*" class="step-image w-full px-3 py-2 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#957A54]/10 file:text-[#957A54]
+            <input type="file" accept="image/*" class="step-image w-full px-3 py-2 border border-gray-400 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#957A54]/10 file:text-[#957A54]
                focus:outline-none focus:ring-1 focus:ring-[#D89F34]/30 focus:border-[#957A54] ">
             <div class="step-image-preview mt-2"></div>
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1.5">Step Video (optional)</label>
-            <input type="file" accept="video/*" class="step-video w-full px-3 py-2 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#957A54]/10 file:text-[#957A54]
+            <input type="file" accept="video/*" class="step-video w-full px-3 py-2 border border-gray-400 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#957A54]/10 file:text-[#957A54]
                 focus:outline-none focus:ring-1 focus:ring-[#D89F34]/30 focus:border-[#957A54] ">
             <div class="step-video-preview mt-2 text-sm text-gray-500"></div>
         </div>
@@ -357,7 +357,7 @@ const installationStepTemplate = `
 
 // PATCH: Custom field template
 const customFieldTemplate = `
-<div class="custom-field-block p-4 border border-gray-200 rounded-lg space-y-3 bg-gray-50">
+<div class="custom-field-block p-4 border border border-[#D89F34] rounded-lg space-y-3 bg-gray-50">
     <div class="flex justify-between items-center">
         <h4 class="font-medium text-gray-900 text-sm">Field <span class="field-index"></span></h4>
         <button type="button" class="remove-custom-field text-red-500 hover:text-red-700 text-sm">Remove</button>
@@ -365,11 +365,11 @@ const customFieldTemplate = `
     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">Field Name <span class="text-red-400">*</span></label>
-            <input type="text" class="cf-fieldname w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#D89F34]/30 focus:border-[#957A54]" placeholder="e.g. Size, Color, upload Imgae">
+            <input type="text" class="cf-fieldname w-full px-3 py-2 border border-gray-400 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#D89F34]/30 focus:border-[#957A54]" placeholder="e.g. Size, Color, upload Imgae">
         </div>
         <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">Input Type</label>
-            <select class="cf-fieldtype w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#D89F34]/30 focus:border-[#957A54] bg-white">
+            <select class="cf-fieldtype w-full px-3 py-2 border border-gray-400 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#D89F34]/30 focus:border-[#957A54] bg-white">
                 <option value="text">✏️  Text</option>
                 <option value="number">🔢  Number</option>
                 <option value="checkbox">☑️  Checkbox</option>
@@ -380,12 +380,12 @@ const customFieldTemplate = `
         </div>
         <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">Note (optional)</label>
-            <input type="text" class="cf-note w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#D89F34]/30 focus:border-[#957A54]" placeholder="e.g. in cm">
+            <input type="text" class="cf-note w-full px-3 py-2 border border-gray-400 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#D89F34]/30 focus:border-[#957A54]" placeholder="e.g. in cm">
         </div>
         <div class="cf-dropdown-options hidden space-y-2 pt-1">
             <label class="block text-xs font-medium text-gray-600 mb-1">Dropdown Options</label>
             <div class="cf-options-list space-y-2"></div>
-            <button type="button" class="cf-add-option mt-1 px-3 py-1.5 text-xs bg-[#957A54]/10 text-[#957A54] rounded-lg hover:bg-[#957A54]/20">+ Add Option</button>
+            <button type="button" class="cf-add-option mt-1 px-3 py-1.5 text-xs border border-[#D89F34] bg-[#957A54]/10 text-[#957A54] rounded-lg hover:bg-[#957A54]/20">+ Add Option</button>
         </div>
     </div>`;
 // END PATCH template
@@ -765,9 +765,9 @@ function renderTable(data, state = 'empty') {
             <td class="px-4 py-3" style="white-space:nowrap;text-align:right;">₹${(p.currentMrpPrice || 0).toFixed(2)}</td>
             <td class="px-4 py-3" style="white-space:nowrap;text-align:center;">
                 <div style="display:flex;gap:10px;justify-content:center;align-items:center;">
-                    <button onclick="viewProduct(${p.productId})" class="text-[#D89F33] hover:text-[#133F53]"><i class="fas fa-eye"></i></button>
-                    <button onclick="editProduct(${p.productId})" class="text-green-600 hover:text-green-800"><i class="fas fa-edit"></i></button>
-                    <button onclick="confirmDelete(${p.productId})" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
+                    <button onclick="viewProduct(${p.productPrimeId})" class="text-[#D89F33] hover:text-[#133F53]"><i class="fas fa-eye"></i></button>
+                    <button onclick="editProduct(${p.productPrimeId})" class="text-green-600 hover:text-green-800"><i class="fas fa-edit"></i></button>
+                    <button onclick="confirmDelete(${p.productPrimeId})" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
                 </div>
             </td>`;
         tbody.appendChild(tr);
@@ -1155,12 +1155,12 @@ document.addEventListener('DOMContentLoaded', initImagePreviews);
 
 // Actions
 function viewProduct(id) {
-    const p = products.find(x => x.productId === id);
+    const p = products.find(x => x.productPrimeId === id);
     if (p) openForm('view', p, true);
 }
 
 function editProduct(id) {
-    const p = products.find(x => x.productId === id);
+    const p = products.find(x => x.productPrimeId === id);
     if (p) openForm('edit', p, false);
 }
 
@@ -1168,6 +1168,8 @@ function confirmDelete(id) {
     currentProductId = id;
     document.getElementById('delete-modal').style.display = 'flex';
 }
+
+
 
 async function deleteProduct() {
     if (!currentProductId) return;
