@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Welcome</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Segoe UI", Roboto, Arial, sans-serif;
+        }
+
+        body {
+            background: #f5f7fb;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: #ffffff;
+            padding: 40px;
+            width: 380px;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 20px;
+            color: #202124;
+            margin-bottom: 15px;
+        }
+
+        .sub-text {
+            font-size: 14px;
+            color: #5f6368;
+            margin-bottom: 25px;
+        }
+
+        .success-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #ea4335;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        button:hover {
+            background: #d93025;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #5f6368;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <div class="success-icon">✅</div>
+
+    <h1>Welcome!</h1>
+    <p class="sub-text">You have successfully logged in.</p>
+
+    <button id="logoutBtn">Logout</button>
+
+    <div class="footer">
+        Secure session active
+    </div>
+</div>
+
+<script src="/sign-with-gogle/welcome.js" defer></script>
+
+</body>
+</html>
