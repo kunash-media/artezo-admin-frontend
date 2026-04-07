@@ -843,7 +843,7 @@ function exportCSV() {
     document.getElementById('exportMenu').classList.remove('open');
     if (!STATE.products || STATE.products.length === 0) { notify('No product data to export', 'error'); return; }
 
-    const headers = ['#', 'Product', 'Brand', 'Category', 'Units Sold', 'Revenue (INR)', 'Avg Price (INR)', 'Growth %'];
+    const headers = ['#Sr.', 'Product', 'Brand', 'Category', 'Units Sold', 'Revenue (INR)', 'Avg Price (INR)'];
     const rows = STATE.products.map((p, i) => [
         i + 1,
         p.productName,
@@ -856,7 +856,7 @@ function exportCSV() {
     ]);
 
     const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
-    downloadBlob(new Blob([csv], { type: 'text/csv' }), 'sales-report.csv');
+    downloadBlob(new Blob([csv], { type: 'text/csv' }), 'Artezo-sales-report.csv');
     notify('CSV exported', 'success');
 }
 
@@ -875,7 +875,7 @@ function exportExcel() {
         ...(d.kpis || []).map(k => [k.label, k.displayValue]),
         [],
         ['Top Products'],
-        ['#', 'Product', 'Brand', 'Category', 'Units Sold', 'Revenue (INR)', 'Avg Price (INR)', 'Growth %'],
+        ['#Sr.', 'Product', 'Brand', 'Category', 'Units Sold', 'Revenue (INR)', 'Avg Price (INR)'],
         ...(d.topProducts || []).map((p, i) => [
             i + 1,
             p.productName,
@@ -884,20 +884,20 @@ function exportExcel() {
             p.unitsSold,
             p.revenue != null ? p.revenue.toFixed(2) : '0.00',
             p.avgPrice != null ? p.avgPrice.toFixed(2) : '0.00',
-            p.growthPercent != null ? p.growthPercent.toFixed(2) : '0.00'
+            // p.growthPercent != null ? p.growthPercent.toFixed(2) : '0.00'
         ]),
         [],
         ['Revenue by Category'],
-        ['Category', 'Revenue (INR)', '% Share'],
-        ...(d.categories || []).map(c => [c.categoryName, c.revenue != null ? c.revenue.toFixed(2) : '0.00', c.percentage + '%']),
+        ['Category', 'Revenue (INR)'],
+        ...(d.categories || []).map(c => [c.categoryName, c.revenue != null ? c.revenue.toFixed(2) : '0.00']),
         [],
         ['Payment Methods'],
-        ['Method', 'Count', 'Share %'],
-        ...(d.paymentMethods || []).map(m => [m.label, m.count, m.percentage + '%']),
+        ['Method', 'Count'],
+        ...(d.paymentMethods || []).map(m => [m.label, m.count]),
         [],
         ['Order Status'],
-        ['Status', 'Count', 'Share %'],
-        ...(d.orderStatus || []).map(s => [s.status, s.count, s.percentage + '%']),
+        ['Status', 'Count'],
+        ...(d.orderStatus || []).map(s => [s.status, s.count]),
         [],
         ["Today's Summary"],
         ['Metric', 'Value'],
@@ -914,7 +914,7 @@ function exportExcel() {
     const ws = XLSX.utils.aoa_to_sheet(wsData);
     ws['!cols'] = [{ wch: 30 }, { wch: 40 }, { wch: 20 }, { wch: 18 }, { wch: 14 }, { wch: 18 }, { wch: 18 }, { wch: 12 }];
     XLSX.utils.book_append_sheet(wb, ws, 'Sales Report');
-    XLSX.writeFile(wb, 'sales-report.xlsx');
+    XLSX.writeFile(wb, 'Artezo-sales-report.xlsx');
     notify('Excel exported', 'success');
 }
 

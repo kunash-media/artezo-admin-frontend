@@ -713,8 +713,8 @@ function renderTable(data, state = 'empty') {
                 <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px 24px;gap:14px;font-family:inherit;">
                     ${icon}
                     <div style="text-align:center;">
-                        <p style="margin:0;font-size:15px;font-weight:600;color:#374151;">${isError ? 'Failed to load products' : 'No products found'}</p>
-                        <p style="margin:6px 0 0;font-size:13px;color:#9ca3af;max-width:300px;line-height:1.6;">${isError ? 'Something went wrong. Please refresh and try again.' : 'No products to display. Try adjusting your filters or add a new product.'}</p>
+                        <p style="margin:0; font-size:15px; font-weight:600; color:#374151;">${isError ? 'Failed to load products' : 'No products found'}</p>
+                        <p style="margin:6px 0 0; font-size:13px;color:#9ca3af;max-width:300px; line-height:1.6;">${isError ? 'Something went wrong. Please refresh and try again.' : 'No products to display. Try adjusting your filters or add a new product.'}</p>
                     </div>
                 </div>
             </td></tr>`;

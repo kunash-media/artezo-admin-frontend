@@ -65,6 +65,11 @@ class LayoutComponents {
         this.setupLogoutModal();            // safe — modals already in DOM
         this.setupNotificationModal();
         this.loadUserDisplay();             // last: header DOM must exist first
+
+        // Prevent memory leak / ghost intervals on page navigation
+        window.addEventListener('beforeunload', () => {
+            if (this._pollingInterval) clearInterval(this._pollingInterval);
+        });
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -373,74 +378,276 @@ class LayoutComponents {
     // ─────────────────────────────────────────────────────────────
     //  Notification bell modal
     // ─────────────────────────────────────────────────────────────
+
+
+    // ── Get adminId from your auth profile ──────────────────────
+    _getAdminId() {
+        const profile = Auth.getProfile();
+        return profile?.adminId || null;
+    }
+
     setupNotificationModal() {
-        const bell   = document.getElementById('notification-bell');
-        const modal  = document.getElementById('notification-modal');
-        const markAll = document.getElementById('mark-all-read');
-        if (!bell || !modal) return;
+    const bell    = document.getElementById('notification-bell');
+    const modal   = document.getElementById('notification-modal');
+    const markAll = document.getElementById('mark-all-read');
+    if (!bell || !modal) return;
 
-        let isOpen = false;
+    let isOpen     = false;
+    let hasOpened  = false;   // tracks if dropdown was ever opened this session
 
-        bell.addEventListener('click', (e) => {
-            e.stopPropagation();
-            isOpen = !isOpen;
-            modal.classList.toggle('hidden', !isOpen);
-        });
+    // ── Initial badge fetch on page load ─────────────────────────
+    this.fetchNotificationsBadge();
 
-        document.addEventListener('click', (e) => {
-            if (!bell.contains(e.target) && !modal.contains(e.target)) {
-                modal.classList.add('hidden');
-                isOpen = false;
+    // ── Polling every 2 minutes ───────────────────────────────────
+    this._pollingInterval = setInterval(async () => {
+        await this.fetchNotificationsBadge();
+
+        // Always refresh dropdown data in background so it's never stale
+        // whether open or closed — next open will have fresh data ready
+        if (hasOpened) {
+            await this.fetchNotifications(isOpen);  // pass isOpen to control DOM update
+        }
+    }, 2 * 60 * 1000);
+
+    bell.addEventListener('click', (e) => {
+        e.stopPropagation();
+        isOpen = !isOpen;
+        modal.classList.toggle('hidden', !isOpen);
+
+        if (isOpen) {
+            hasOpened = true;
+            this.fetchNotifications(true);   // always re-fetch on every open
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!bell.contains(e.target) && !modal.contains(e.target)) {
+            modal.classList.add('hidden');
+            isOpen = false;
+        }
+    });
+
+    markAll?.addEventListener('click', (e) => {
+        e.preventDefault();
+        this._markAllNotificationsRead();
+    });
+
+    // ── Clean up on page unload ───────────────────────────────────
+    window.addEventListener('beforeunload', () => {
+        if (this._pollingInterval) clearInterval(this._pollingInterval);
+    });
+}
+
+    // ── Badge-only silent fetch ──────────────────────────────────
+    // async fetchNotificationsBadge() {
+    //     const adminId = this._getAdminId();
+    //     if (!adminId) return;
+    //     try {
+    //         const res = await fetch(`/api/notifications/alerts?adminId=${adminId}`);
+    //         if (!res.ok) return;
+    //         const data = await res.json();
+    //         const badge = document.getElementById('notification-badge');
+    //          console.log("badge variable checking =======>",badge);
+
+    //         if (!badge) return;
+    //         badge.textContent = data.totalUnread;
+    //          console.log("badge.textContent =======>",badge.textContent);
+    //         badge.classList.toggle('hidden', data.totalUnread === 0);
+    //     } catch (err) {
+    //         console.warn('Badge poll failed:', err);
+    //     }
+    // }
+    // ── Badge-only silent fetch ──────────────────────────────────
+    async fetchNotificationsBadge() {
+        const adminId = this._getAdminId();
+        if (!adminId) return;
+
+        const badge = document.getElementById('notification-badge');
+        if (!badge) return;
+
+        try {
+            const res = await fetch(`/api/notifications/alerts?adminId=${adminId}`);
+            if (!res.ok) {
+                badge.classList.add('hidden');
+                return;
             }
-        });
 
-        markAll?.addEventListener('click', (e) => {
-            e.preventDefault();
-            this._markAllNotificationsRead();
-        });
-    }
+            const data = await res.json();
+            const count = parseInt(data.totalUnread) || 0;
 
-    _markAllNotificationsRead() {
-        document.querySelectorAll('.notification-item.unread').forEach(item => {
-            item.classList.remove('unread');
-        });
-        document.querySelectorAll('.unread-dot').forEach(dot => {
-            dot.style.display = 'none';
-        });
-        const badge = document.getElementById('notification-badge');
-        if (badge) {
-            badge.textContent = '0';
+            badge.textContent = count;
+
+            if (count > 0) {
+                // Show badge with proper colors
+                badge.classList.remove('hidden');
+                badge.classList.add('bg-[#D89F34]', 'text-[#133F53]');
+            } else {
+                // Hide badge completely when count is 0
+                badge.classList.add('hidden');
+                // Optional: remove colors when hidden (cleaner)
+                badge.classList.remove('bg-[#D89F34]', 'text-[#133F53]');
+            }
+
+            console.log("Badge updated →", count);
+
+        } catch (err) {
+            console.warn('Badge poll failed:', err);
             badge.classList.add('hidden');
+            badge.classList.remove('bg-[#D89F34]', 'text-[#133F53]');
         }
-        this.showNotification('All notifications marked as read', 'success');
     }
 
-    addNotification(notification) {
-        const list  = document.getElementById('notification-list');
-        const badge = document.getElementById('notification-badge');
-        if (!list) return;
 
-        const count = parseInt(badge?.textContent) || 0;
-        const item  = document.createElement('div');
-        item.className = 'px-4 py-3 hover:bg-[#F8F8EA] transition-colors border-b border-gray-50 notification-item unread';
-        item.innerHTML = `
-            <div class="flex items-start gap-3">
-                <div class="w-8 h-8 rounded-full bg-[#D89F34] bg-opacity-20 flex items-center justify-center flex-shrink-0">
-                    <i class="fa-regular ${notification.icon || 'fa-bell'} text-sm" style="color:#D89F34;"></i>
-                </div>
-                <div class="flex-1">
-                    <p class="text-sm" style="color:#133F53;">${notification.message}</p>
-                    <p class="text-xs mt-1" style="color:#957A54;">${notification.time || 'Just now'}</p>
-                </div>
-                <div class="w-2 h-2 rounded-full bg-[#D89F34] unread-dot"></div>
+    // ─────────────────────────────────────────────────────────────
+    //  fetchNotifications — called on bell click (lazy load)
+    // ─────────────────────────────────────────────────────────────
+    // ── Full dropdown fetch ──────────────────────────────────────
+    async fetchNotifications(renderDOM = true) {
+    const adminId = this._getAdminId();
+    const list    = document.getElementById('notification-list');
+    const badge   = document.getElementById('notification-badge');
+   
+    if (!list || !adminId) return;
+
+    // Only show loading spinner if dropdown is visible
+    if (renderDOM) {
+        list.innerHTML = `
+            <div class="px-4 py-6 text-center">
+                <p class="text-sm" style="color:#957A54;">Loading...</p>
             </div>`;
+    }
 
-        list.insertBefore(item, list.firstChild);
+    try {
+        const res = await fetch(`/api/notifications/alerts?adminId=${adminId}`);
+        if (!res.ok) throw new Error('Failed');
+        const data = await res.json();
+        this._lastNotifData = data;   // always cache latest data
 
-        if (badge) {
-            badge.textContent = count + 1;
-            badge.classList.remove('hidden');
+        // Only touch the DOM if dropdown is visible
+        if (renderDOM) {
+            list.innerHTML = '';
+
+            const allItems = [
+                ...data.lowStock.map(item => ({
+                    icon: 'fa-solid fa-boxes-stacked',
+                    fingerprint: item.fingerprint,
+                    visited: item.visited,
+                    message: `<span style="background:rgba(220,38,38,0.1);color:#dc2626;border:1px solid rgba(220,38,38,0.25);padding:1px 7px;border-radius:999px;font-size:11px;font-weight:600;">Low stock</span> <strong>${item.productName}</strong> — only <strong style="color:#dc2626">${item.availableStock}</strong> left (threshold: ${item.lowStockThreshold})`,
+                    time: 'Inventory alert',
+                    visitLink: '/Inventory_Management/inventory.html'
+                })),
+                ...data.recentUsers.map(u => ({
+                    icon: 'fa-solid fa-user',
+                    fingerprint: u.fingerprint,
+                    visited: u.visited,
+                    message: `New user registered: <strong>${u.firstName} ${u.lastName}</strong>`,
+                    time: this._timeAgo(u.createdAt),
+                    visitLink: '/User_Management/user.html'
+                })),
+                ...data.contactEnquiries.map(c => ({
+                    icon: 'fa-solid fa-envelope',
+                    fingerprint: c.fingerprint,
+                    visited: c.visited,
+                    message: `Contact enquiry from <strong>${c.name}</strong>: ${c.messagePreview}`,
+                    time: this._timeAgo(c.createdAt),
+                    visitLink: '/Contact_Management/contact.html'
+                }))
+            ];
+
+            const visibleItems = allItems.filter(i => !i.visited);
+
+            if (visibleItems.length === 0) {
+                list.innerHTML = `
+                    <div class="px-4 py-6 text-center">
+                        <p class="text-sm" style="color:#957A54;">No new notifications</p>
+                    </div>`;
+            } else {
+                visibleItems.forEach(item => {
+                    const el = document.createElement('div');
+                    el.className = 'px-4 py-3 hover:bg-[#F8F8EA] transition-colors rounded-lg m-2 border border-[#D89F34] notification-item unread';
+                    el.innerHTML = `
+                        <div class="flex items-start gap-3">
+                            <div class="w-8 h-8 rounded-full bg-[#D89F34] bg-opacity-20 flex items-center justify-center flex-shrink-0">
+                                <i class="${item.icon} text-sm" style="color:#D89F34;"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm" style="color:#133F53;">${item.message}</p>
+                                <div class="flex justify-between">
+                                    <p class="text-xs mt-1" style="color:#957A54;">${item.time}</p>
+                                    <a href="${item.visitLink}"
+                                        title="click to see"
+                                        data-fingerprint="${item.fingerprint}"
+                                        class="visit-btn border border-[#D89F34] inline-flex items-center gap-1 mt-2 text-xs font-medium px-2 py-1 rounded-md"
+                                        style="color:#133F53;background:rgba(216,159,52,0.15);">
+                                            <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                                            Visit
+                                    </a>
+                                </div>
+                                
+                            </div>
+                            <div class="w-2 h-2 rounded-full bg-[#D89F34] unread-dot flex-shrink-0 mt-1"></div>
+                        </div>`;
+
+                    el.querySelector('.visit-btn').addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        const fp   = e.currentTarget.dataset.fingerprint;
+                        const href = e.currentTarget.getAttribute('href');
+                        await fetch(`/api/notifications/visit?adminId=${adminId}&fingerprint=${encodeURIComponent(fp)}`, {
+                            method: 'POST'
+                        });
+                        window.location.href = href;
+                    });
+
+                    list.appendChild(el);
+                });
+            }
         }
+
+        // Always update badge regardless of renderDOM
+        if (badge) {
+            badge.textContent = data.totalUnread;
+            badge.classList.toggle('hidden', data.totalUnread === 0);
+        }
+
+    } catch (err) {
+        console.error('Notification fetch failed:', err);
+        if (renderDOM) {
+            list.innerHTML = `
+                <div class="px-4 py-6 text-center">
+                    <p class="text-sm text-red-500">Failed to load notifications</p>
+                </div>`;
+        }
+    }
+}
+
+    // ── Mark all read — hits backend, then re-fetches ────────────
+    async _markAllNotificationsRead() {
+        const adminId = this._getAdminId();
+        if (!adminId) return;
+
+        try {
+            await fetch(`/api/notifications/mark-all-read?adminId=${adminId}`, {
+                method: 'POST'
+            });
+            // Re-fetch so UI reflects DB state immediately
+            await this.fetchNotifications();
+            this.showNotification('All notifications marked as read', 'success');
+        } catch (err) {
+            console.error('Mark all read failed:', err);
+        }
+    }
+
+    
+
+    // ── Relative time helper ─────────────────────────────────────
+    _timeAgo(isoString) {
+        if (!isoString) return '';
+        const date = new Date(isoString);
+        const diff = Math.floor((Date.now() - date.getTime()) / 1000);
+        if (diff < 60)   return 'Just now';
+        if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+        return `${Math.floor(diff / 86400)} days ago`;
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -619,6 +826,7 @@ if (!document.querySelector('#loader-style')) {
     `;
     document.head.appendChild(style);
 }
+
 
 
 

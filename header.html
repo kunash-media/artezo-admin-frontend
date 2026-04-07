@@ -7,75 +7,24 @@
     </div>
     <div class="flex items-center gap-5 relative">
         <!-- Notification Bell with Modal -->
-        <div class="relative" id="notification-container">
+        <div class="relative flex gap-4" id="notification-container">
             <button id="notification-bell" class="relative focus:outline-none">
                 <i class="fa-regular fa-bell text-xl cursor-pointer hover:opacity-70 transition-colors relative" style="color: #133F53;">
-                    <span class="absolute -top-1 -right-1 bg-[#D89F34] text-[#133F53] text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold" id="notification-badge">3</span>
+                    <span class="absolute -top-1 -right-1 text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold" id="notification-badge"></span>
                 </i>
             </button>
 
             <!-- Notification Modal/Dropdown -->
-            <div id="notification-modal" class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg py-2 hidden z-50 border border-gray-100">
-                <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-                    <h3 class="text-sm font-semibold" style="color: #133F53;">Notifications</h3>
+            <div id="notification-modal" class=" border border-gray-400 absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg py-2 hidden z-50 border border-gray-100">
+                <div class="px-4 py-3 border-b border-gray-400 flex items-center justify-between">
+                    <h3 class="text-sm font-semibold" style="color: #133F53;">Notifications <i class="ml-1 fa-regular fa-bell text-md"></i></h3>
                     <button id="mark-all-read" class="text-xs" style="color: #D89F34;">Mark all as read</button>
                 </div>
                 
-                <div class="max-h-96 overflow-y-auto" id="notification-list">
-                    <!-- Notification Items will be dynamically added here -->
-                    <div class="px-4 py-3 hover:bg-[#F8F8EA] transition-colors border-b border-gray-50 notification-item unread">
-                        <div class="flex items-start gap-3">
-                            <div class="w-8 h-8 rounded-full bg-[#D89F34] bg-opacity-20 flex items-center justify-center flex-shrink-0">
-                                <i class="fa-regular fa-circle-check text-sm" style="color: #D89F34;"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="text-sm" style="color: #133F53;">New order #1234 has been placed</p>
-                                <p class="text-xs mt-1" style="color: #957A54;">2 minutes ago</p>
-                            </div>
-                            <div class="w-2 h-2 rounded-full bg-[#D89F34] unread-dot"></div>
-                        </div>
-                    </div>
-
-                    <div class="px-4 py-3 hover:bg-[#F8F8EA] transition-colors border-b border-gray-50 notification-item unread">
-                        <div class="flex items-start gap-3">
-                            <div class="w-8 h-8 rounded-full bg-[#D89F34] bg-opacity-20 flex items-center justify-center flex-shrink-0">
-                                <i class="fa-regular fa-user text-sm" style="color: #D89F34;"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="text-sm" style="color: #133F53;">New user registered: John Doe</p>
-                                <p class="text-xs mt-1" style="color: #957A54;">1 hour ago</p>
-                            </div>
-                            <div class="w-2 h-2 rounded-full bg-[#D89F34] unread-dot"></div>
-                        </div>
-                    </div>
-
-                    <div class="px-4 py-3 hover:bg-[#F8F8EA] transition-colors border-b border-gray-50 notification-item">
-                        <div class="flex items-start gap-3">
-                            <div class="w-8 h-8 rounded-full bg-[#D89F34] bg-opacity-20 flex items-center justify-center flex-shrink-0">
-                                <i class="fa-regular fa-star text-sm" style="color: #D89F34;"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="text-sm" style="color: #133F53;">Product review received for "Premium T-shirt"</p>
-                                <p class="text-xs mt-1" style="color: #957A54;">3 hours ago</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="px-4 py-3 hover:bg-[#F8F8EA] transition-colors notification-item">
-                        <div class="flex items-start gap-3">
-                            <div class="w-8 h-8 rounded-full bg-[#D89F34] bg-opacity-20 flex items-center justify-center flex-shrink-0">
-                                <i class="fa-regular fa-clock text-sm" style="color: #D89F34;"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="text-sm" style="color: #133F53;">Payment received for order #1230</p>
-                                <p class="text-xs mt-1" style="color: #957A54;">5 hours ago</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="px-4 py-3 border-t border-gray-100 text-center">
-                    <a href="#" class="text-sm" style="color: #D89F34;">View all notifications</a>
+                <!-- In header.html — replace the 4 hardcoded notification divs with this: -->
+            <div class="max-h-96 overflow-y-auto" id="notification-list">
+                <div id="notification-loading" class="px-4 py-6 text-center">
+                    <p class="text-sm" style="color: #957A54;">Loading notifications...</p>
                 </div>
             </div>
         </div>
