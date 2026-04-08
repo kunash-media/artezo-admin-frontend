@@ -74,6 +74,8 @@
             animation: dropdownFade 0.2s ease;
             max-height: 300px;
             overflow-y: auto;
+            background-color: #EF4444;
+            z-index: 100px;
             scrollbar-width: thin;
             scrollbar-color: #D89F34 #F8F8EA;
         }
@@ -164,7 +166,7 @@
 thead th {
     position: sticky;
     top: 0;
-    z-index: 50;            /* Higher than dropdown's z-40 */
+    z-index: 10;            /* Higher than dropdown's z-40 */
     background: #faf2e4;      /* Important for sticky */
     box-shadow: 0 1px 0 rgba(0,0,0,0.1);
 }
@@ -329,7 +331,7 @@ thead th {
                                             id="statusDropdownArrow" style="color: #957A54;"></i>
                                     </button>
                                     <div id="statusDropdown"
-                                        class="absolute right-0 mt-1 w-full bg-white rounded-lg shadow-lg py-1 hidden z-50 border border-gray-100">
+                                        class="absolute right-0 mt-1 w-full z-50 bg-white rounded-lg shadow-lg py-1 hidden border border-gray-100">
                                         <button class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between" onclick="selectStatus('all', 'All Orders')">
                                             <span style="color: #133F53;">All Orders</span>
                                             <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;" id="check-status-all"></i>
@@ -338,14 +340,7 @@ thead th {
                                             <span style="color: #133F53;">Placed</span>
                                             <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;" id="check-status-PLACED"></i>
                                         </button>
-                                        <button class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between" onclick="selectStatus('CONFIRMED', 'Confirmed')">
-                                            <span style="color: #133F53;">Confirmed</span>
-                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;" id="check-status-CONFIRMED"></i>
-                                        </button>
-                                        <button class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between" onclick="selectStatus('PROCESSING', 'Processing')">
-                                            <span style="color: #133F53;">Processing</span>
-                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;" id="check-status-PROCESSING"></i>
-                                        </button>
+                                        
                                         <button class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between" onclick="selectStatus('SHIPPED', 'Shipped')">
                                             <span style="color: #133F53;">Shipped</span>
                                             <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;" id="check-status-SHIPPED"></i>
@@ -401,7 +396,7 @@ thead th {
                     <div class="bg-white rounded-lg overflow-hidden border border-gray-400">
                         <div class="overflow-x-auto h-[400px] ">
                             <table class="w-full" id="ordersTable">
-                                <thead class="sticky top-0">
+                                <thead class="sticky z-50 top-0">
                                     <tr class="border-b border-gray-300 ">
                                         <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">
                                             <input type="checkbox" id="selectAll" onclick="toggleAll()">
@@ -601,53 +596,35 @@ thead th {
             loadData();
         });
 
-        // async function loadData() {
-        //     try {
-        //         showSkeleton(true);
-        //         const response = await fetch(GET_ALL_ORDERS_URL);
-        //         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        //         const json = await response.json();
-
-        //         // Extract array from paginated response
-        //         orders = (json.data && json.data.content) ? json.data.content : [];
-
-        //         updateStats();
-        //         applyFiltersAndRender();
-        //         showSkeleton(false);
-        //     } catch (error) {
-        //         console.error('Error loading orders:', error);
-        //         showNotification('Error loading orders: ' + error.message, 'error');
-        //         showSkeleton(false);
-        //     }
-        // }
+    
 
      async function loadData() {
-    try {
-        showSkeleton(true);
- 
-        const probe = await fetch(`${GET_ALL_ORDERS_URL}?page=0&size=1`);
-        if (!probe.ok) throw new Error(`HTTP ${probe.status}`);
-        const probeJson = await probe.json();
-        const total = probeJson?.data?.page?.totalElements || 1;
- 
-        const response = await fetch(`${GET_ALL_ORDERS_URL}?page=0&size=${total}`);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const json = await response.json();
- 
-        orders = (json.data && json.data.content) ? json.data.content : [];
- 
-        // Updates ob_total only — does NOT touch ob_seen
-        if (typeof OrderBadge !== 'undefined') OrderBadge.setTotal(orders.length);
- 
-        updateStats();
-        applyFiltersAndRender();
-        showSkeleton(false);
-    } catch (error) {
-        console.error('Error loading orders:', error);
-        showNotification('Error loading orders: ' + error.message, 'error');
-        showSkeleton(false);
-    }
-}
+            try {
+                showSkeleton(true);
+        
+                const probe = await fetch(`${GET_ALL_ORDERS_URL}?page=0&size=1`);
+                if (!probe.ok) throw new Error(`HTTP ${probe.status}`);
+                const probeJson = await probe.json();
+                const total = probeJson?.data?.page?.totalElements || 1;
+        
+                const response = await fetch(`${GET_ALL_ORDERS_URL}?page=0&size=${total}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const json = await response.json();
+        
+                orders = (json.data && json.data.content) ? json.data.content : [];
+        
+                // Updates ob_total only — does NOT touch ob_seen
+                if (typeof OrderBadge !== 'undefined') OrderBadge.setTotal(orders.length);
+        
+                updateStats();
+                applyFiltersAndRender();
+                showSkeleton(false);
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                showNotification('Error loading orders: ' + error.message, 'error');
+                showSkeleton(false);
+            }
+        }
 
         function showSkeleton(show) {
             const skeleton = document.getElementById('skeletonLoader');
