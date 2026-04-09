@@ -14,12 +14,20 @@
     margin: 0 auto;
 }
 
+.nav-link {
+    border: 1px solid transparent;
+    transition: 
+        background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+        border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
 /* Sidebar Styles */
 .nav-link.active {
     /* background-color: var(--active-blue) !important; */
     color: var(--aside-bg) !important;
     background:linear-gradient(135deg,#133F53 0%,#1a5570 60%,#0f3344 100%);
-    border : 1px solid rgb(37, 35, 35);
+    /* border : 1px solid rgb(37, 35, 35); */
 }
 
 .nav-link.active i {
@@ -34,6 +42,7 @@
 
 .nav-link:not(.active):hover {
     background-color: #e5e0d1;
+    border: 1px solid #bc8827;
 }
 
 /* Collapsed Sidebar */

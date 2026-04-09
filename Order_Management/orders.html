@@ -74,7 +74,7 @@
             animation: dropdownFade 0.2s ease;
             max-height: 300px;
             overflow-y: auto;
-            background-color: #EF4444;
+            background-color: white;
             z-index: 100px;
             scrollbar-width: thin;
             scrollbar-color: #D89F34 #F8F8EA;
@@ -396,7 +396,7 @@ thead th {
                     <div class="bg-white rounded-lg overflow-hidden border border-gray-400">
                         <div class="overflow-x-auto h-[400px] ">
                             <table class="w-full" id="ordersTable">
-                                <thead class="sticky z-50 top-0">
+                                <thead class="sticky z-40 top-0">
                                     <tr class="border-b border-gray-300 ">
                                         <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">
                                             <input type="checkbox" id="selectAll" onclick="toggleAll()">
@@ -453,7 +453,7 @@ thead th {
     <!-- View Order Details Modal -->
     <div id="viewOrderModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
         <div class="bg-white rounded-xl max-w-3xl w-full mx-4 modal-enter modal-inner" style="max-height:90vh; overflow-y:auto;">
-            <div class="sticky top-0 bg-white z-10 flex justify-between items-center px-6 pt-6 pb-4 border-b border-gray-100">
+            <div class="sticky top-0 bg-white z-50 flex justify-between items-center px-6 pt-6 pb-4 border-b border-gray-100">
                 <h3 class="text-xl font-bold" style="color: #133F53;">Order Details</h3>
                 <div class="flex gap-2 items-center">
                     <!-- Download Invoice Button -->
@@ -1230,7 +1230,7 @@ thead th {
             // ---- GSTIN below Order ID ----
             doc.setFontSize(7);
             doc.setTextColor(...gold);
-            doc.text('GSTIN: 27AABCU9603R1ZX', pageW - margin, 35, { align: 'right' });
+            doc.text('GSTIN: 27BTMPC0023P1ZN', pageW - margin, 35, { align: 'right' });
 
             let y = 46;
 
