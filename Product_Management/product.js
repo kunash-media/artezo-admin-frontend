@@ -179,14 +179,39 @@ async function openForm(mode = 'create', product = null, readOnly = false) {
             if (full.mainImage) {
                 document.getElementById('main-image-preview').innerHTML = `<img src="${BASE_URL}${full.mainImage}" class="max-h-20 rounded">`;
             }
+            
+            // if (full.mockupImages?.length) {
+            //     const cont = document.getElementById('mockup-preview');
+            //     full.mockupImages.forEach(url => {
+            //         cont.innerHTML += `<img src="${BASE_URL}${url}" class="max-h-20 rounded ml-2">`;
+            //     });
+            // }
+
             if (full.mockupImages?.length) {
+                // ✅ FIX: use correct container ID — 'mockup-preview' (no trailing s) matches your HTML
                 const cont = document.getElementById('mockup-preview');
-                full.mockupImages.forEach(url => {
-                    cont.innerHTML += `<img src="${BASE_URL}${url}" class="max-h-20 rounded ml-2">`;
-                });
+                if (cont) {
+                    cont.innerHTML = ''; // clear stale previews first
+                    full.mockupImages.forEach(url => {
+                        cont.innerHTML += `<img src="${BASE_URL}${url}" class="max-h-20 rounded ml-2" onerror="this.style.opacity='0.3'">`;
+                    });
+                }
             }
+            // if (full.productVideoUrl) {
+            //     document.getElementById('product-video-preview').innerHTML = 'Video available';
+            // }
+
             if (full.productVideoUrl) {
-                document.getElementById('product-video-preview').innerHTML = 'Video available';
+                // ✅ FIX: render actual video element with poster fallback for thumbnail
+                document.getElementById('product-video-preview').innerHTML = `
+                    <video 
+                        src="${BASE_URL}${full.productVideoUrl}" 
+                        class="max-h-32 rounded mt-1" 
+                        preload="metadata"
+                        controls
+                        playsinline
+                        onerror="this.outerHTML='<p class=\'text-xs text-gray-400 mt-1\'>Video available (preview unsupported)</p>'"
+                    ></video>`;
             }
 
             // Variants
@@ -209,10 +234,18 @@ async function openForm(mode = 'create', product = null, readOnly = false) {
                     if (v.mainImage) {
                         last.querySelector('.variant-preview').innerHTML = `<img src="${BASE_URL}${v.mainImage}" class="max-h-20 rounded">`;
                     }
+                    // if (v.mockupImages?.length) {
+                    //     const mcont = last.querySelector('.variant-mockup-preview');
+                    //     v.mockupImages.forEach(url => {
+                    //         mcont.innerHTML += `<img src="${url}" class="max-h-20 rounded ml-2">`;
+                    //     });
+                    // }
+
                     if (v.mockupImages?.length) {
                         const mcont = last.querySelector('.variant-mockup-preview');
+                        // ✅ FIX: prefix BASE_URL so relative API path resolves correctly
                         v.mockupImages.forEach(url => {
-                            mcont.innerHTML += `<img src="${url}" class="max-h-20 rounded ml-2">`;
+                            mcont.innerHTML += `<img src="${BASE_URL}${url}" class="max-h-20 rounded ml-2" onerror="this.style.opacity='0.3'">`;
                         });
                     }
                 });
@@ -916,27 +949,53 @@ document.getElementById('product-form').addEventListener('submit', async e => {
     const formData = new FormData();
 
     // ── Variants ──
-    document.querySelectorAll('.variant-block').forEach(b => {
-        payload.variants.push({
-            titleName: b.querySelector('.variant-title').value.trim(),
-            color: b.querySelector('.variant-color').value.trim(),
-            sku: b.querySelector('.variant-sku').value.trim(),
-            price: parseFloat(b.querySelector('.variant-price').value) || null,
-            mrp: parseFloat(b.querySelector('.variant-mrp').value) || null,
-            stock: parseInt(b.querySelector('.variant-stock').value) || 0,
-            mfgDate: b.querySelector('.variant-mfgdate').value || null,
-            expDate: b.querySelector('.variant-expdate').value || null,
-            size: b.querySelector('.variant-size').value.trim()
-        });
+    // document.querySelectorAll('.variant-block').forEach(b => {
+    //     payload.variants.push({
+    //         titleName: b.querySelector('.variant-title').value.trim(),
+    //         color: b.querySelector('.variant-color').value.trim(),
+    //         sku: b.querySelector('.variant-sku').value.trim(),
+    //         price: parseFloat(b.querySelector('.variant-price').value) || null,
+    //         mrp: parseFloat(b.querySelector('.variant-mrp').value) || null,
+    //         stock: parseInt(b.querySelector('.variant-stock').value) || 0,
+    //         mfgDate: b.querySelector('.variant-mfgdate').value || null,
+    //         expDate: b.querySelector('.variant-expdate').value || null,
+    //         size: b.querySelector('.variant-size').value.trim()
+    //     });
+    // });
+
+    // ── Variants ──
+document.querySelectorAll('.variant-block').forEach(b => {
+    // ✅ FIX: count mockup files selected in THIS variant block
+    const mockupInput = b.querySelector('.variant-mockup-images');
+    const mockupCount = mockupInput ? mockupInput.files.length : 0;
+
+    payload.variants.push({
+        titleName: b.querySelector('.variant-title').value.trim(),
+        color: b.querySelector('.variant-color').value.trim(),
+        sku: b.querySelector('.variant-sku').value.trim(),
+        price: parseFloat(b.querySelector('.variant-price').value) || null,
+        mrp: parseFloat(b.querySelector('.variant-mrp').value) || null,
+        stock: parseInt(b.querySelector('.variant-stock').value) || 0,
+        mfgDate: b.querySelector('.variant-mfgdate').value || null,
+        expDate: b.querySelector('.variant-expdate').value || null,
+        size: b.querySelector('.variant-size').value.trim(),
+        mockupImageCount: mockupCount  // ✅ tells controller how many files belong to this variant
     });
+});
 
     // ── Variant files ──
     document.querySelectorAll('.variant-block').forEach(b => {
         const imgInput = b.querySelector('.variant-main-image');
         if (imgInput && imgInput.files[0]) formData.append('variantsMainImages', imgInput.files[0]);
     });
-    document.querySelectorAll('.variant-mockup-images').forEach(input => {
-        Array.from(input.files || []).forEach(f => formData.append('variantMockupImages', f));
+    // document.querySelectorAll('.variant-mockup-images').forEach(input => {
+    //     Array.from(input.files || []).forEach(f => formData.append('variantMockupImages', f));
+    // });
+
+    // ✅ FIX: key must be 'variantsMockupImages' — matches @RequestPart in controller
+    document.querySelectorAll('.variant-block').forEach(b => {
+        const mockupInput = b.querySelector('.variant-mockup-images');
+        Array.from(mockupInput?.files || []).forEach(f => formData.append('variantsMockupImages', f));
     });
 
     // ── Hero banners ──

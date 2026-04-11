@@ -560,8 +560,6 @@ thead th {
             const s = (status || '').toUpperCase();
             const map = {
                 PLACED:      { bg: '#FEF3C7', color: '#92400E', icon: 'fa-regular fa-clock',       label: 'Placed' },
-                CONFIRMED:   { bg: '#DBEAFE', color: '#1E40AF', icon: 'fa-solid fa-rotate',         label: 'Confirmed' },
-                PROCESSING:  { bg: '#E0E7FF', color: '#3730A3', icon: 'fa-solid fa-rotate',         label: 'Processing' },
                 SHIPPED:     { bg: '#E0E7FF', color: '#3730A3', icon: 'fa-solid fa-truck',           label: 'Shipped' },
                 DELIVERED:   { bg: '#D1FAE5', color: '#065F46', icon: 'fa-solid fa-circle-check',   label: 'Delivered' },
                 CANCELLED:   { bg: '#FEE2E2', color: '#991B1B', icon: 'fa-solid fa-circle-xmark',   label: 'Cancelled' },
@@ -807,8 +805,6 @@ thead th {
         // ==================== EDIT STATUS (PATCH) ====================
         const ORDER_STATUSES = [
             { value: 'PLACED',     label: 'Placed' },
-            { value: 'CONFIRMED',  label: 'Confirmed' },
-            { value: 'PROCESSING', label: 'Processing' },
             { value: 'SHIPPED',    label: 'Shipped' },
             { value: 'DELIVERED',  label: 'Delivered' },
             { value: 'CANCELLED',  label: 'Cancelled' },
