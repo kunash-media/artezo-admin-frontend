@@ -640,8 +640,8 @@ function renderPagination(pageInfo) {
                 min-width: 34px; height: 34px;
                 padding: 0 10px;
                 border-radius: 6px;
-                border: 1px solid ${i === current ? '#D89F34' : '#e5e7eb'};
-                background: ${i === current ? '#D89F34' : '#fff'};
+                border: 1px solid ${i === current ? '#133F53' : '#e5e7eb'};
+                background: ${i === current ? '#133F53' : '#fff'};
                 color: ${i === current ? '#fff' : '#374151'};
                 font-size: 13px;
                 font-weight: ${i === current ? '600' : '400'};
@@ -649,7 +649,7 @@ function renderPagination(pageInfo) {
                 transition: all 0.15s ease;
             "
             ${i === current ? 'disabled' : ''}
-            onmouseover="if(${i !== current}) { this.style.background='#f5f3ff'; this.style.borderColor='#6366f1'; this.style.color='#6366f1'; }"
+            onmouseover="if(${i !== current}) { this.style.background='#f5f3ff'; this.style.borderColor='#133F53'; this.style.color='#133F53'; }"
             onmouseout="if(${i !== current}) { this.style.background='#fff'; this.style.borderColor='#e5e7eb'; this.style.color='#374151'; }"
         >${i + 1}</button>
     `).join('');
@@ -697,7 +697,7 @@ function renderPagination(pageInfo) {
                     onclick="loadProducts(${current - 1})"
                     ${current === 0 ? 'disabled' : ''}
                     style="${btnBase}"
-                    onmouseover="if(!this.disabled){ this.style.background='#f5f3ff'; this.style.borderColor='#6366f1'; this.style.color='#6366f1'; }"
+                    onmouseover="if(!this.disabled){ this.style.background='#f5f3ff'; this.style.borderColor='#133F53'; this.style.color='#133F53'; }"
                     onmouseout="this.style.background='#fff'; this.style.borderColor='#e5e7eb'; this.style.color='#374151';"
                 >
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M8.5 10.5L5 7l3.5-3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -707,7 +707,7 @@ function renderPagination(pageInfo) {
                 <!-- Page numbers -->
                 ${pages[0] > 0 ? `
                     <button onclick="loadProducts(0)" style="${btnBase}" onmouseover="this.style.background='#f5f3ff'" onmouseout="this.style.background='#fff'">1</button>
-                    ${pages[0] > 1 ? `<span style="color:#d1d5db; font-size:13px;">…</span>` : ''}
+                    ${pages[0] > 1 ? `<span style="color:#D89F34; font-size:13px;">…</span>` : ''}
                 ` : ''}
 
                 ${pageButtons}
@@ -722,7 +722,7 @@ function renderPagination(pageInfo) {
                     onclick="loadProducts(${current + 1})"
                     ${current >= totalPages - 1 ? 'disabled' : ''}
                     style="${btnBase}"
-                    onmouseover="if(!this.disabled){ this.style.background='#f5f3ff'; this.style.borderColor='#6366f1'; this.style.color='#6366f1'; }"
+                    onmouseover="if(!this.disabled){ this.style.background='#f5f3ff'; this.style.borderColor='#133F53'; this.style.color='#133F53'; }"
                     onmouseout="this.style.background='#fff'; this.style.borderColor='#e5e7eb'; this.style.color='#374151';"
                 >
                     Next

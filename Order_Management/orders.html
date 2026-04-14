@@ -167,7 +167,7 @@ thead th {
     position: sticky;
     top: 0;
     z-index: 10;            /* Higher than dropdown's z-40 */
-    background: #faf2e4;      /* Important for sticky */
+    background: #F8F8EA;      /* Important for sticky */
     box-shadow: 0 1px 0 rgba(0,0,0,0.1);
 }
     </style>
@@ -420,11 +420,11 @@ thead th {
                         <div class="px-4 py-3 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-3">
                             <p class="text-sm" style="color: #957A54;" id="showingInfo">Showing 0 orders</p>
                             <div class="flex gap-2" id="paginationContainer">
-                                <button class="w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA]" onclick="changePage('prev')">
+                                <button class="w-8 h-8 rounded-lg border border-gray-200 hover:bg-[#F8F8EA]" onclick="changePage('prev')">
                                     <i class="fa-solid fa-chevron-left text-xs"></i>
                                 </button>
                                 <div id="pageButtons" class="flex gap-2"></div>
-                                <button class="w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA]" onclick="changePage('next')">
+                                <button class="w-8 h-8 rounded-lg border border-gray-200 hover:bg-[#F8F8EA]" onclick="changePage('next')">
                                     <i class="fa-solid fa-chevron-right text-xs"></i>
                                 </button>
                             </div>
@@ -782,8 +782,8 @@ thead th {
                     const btn = document.createElement('button');
                     btn.textContent = p;
                     btn.className = p === currentPage
-                        ? 'w-8 h-8 rounded bg-[#133F53] text-white text-sm'
-                        : 'w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA] text-sm';
+                        ? 'w-8 h-8 rounded-md bg-[#133F53] text-white text-sm'
+                        : 'w-8 h-8 rounded-md border border-gray-200 hover:bg-[#F8F8EA] text-sm';
                     btn.onclick = () => goToPage(p);
                     container.appendChild(btn);
                 }
