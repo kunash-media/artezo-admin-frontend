@@ -38,6 +38,7 @@ function resetForm() {
     document.getElementById('btn-submit-product').style.display = 'inline-flex';
 
     document.getElementById('product-form').reset();
+
     safeClear('variants-container');
     safeClear('hero-banners-container');
     safeClear('installation-steps-container');
@@ -110,6 +111,13 @@ async function openForm(mode = 'create', product = null, readOnly = false) {
         document.getElementById('current-stock').value = product.currentStock || 0;
         document.getElementById('category-path').value = (product.categoryPath || []).join(', ');
 
+        // document.getElementById('hsn-code').value = product.hsnCode || '';
+
+        document.getElementById('product-weight').value = product.weight || '';
+        document.getElementById('product-height').value = product.height || '';
+        document.getElementById('product-length').value = product.length || '';
+        document.getElementById('product-breadth').value = product.breadth || '';
+
         document.getElementById('has-variants').checked = !!product.hasVariants;
         document.getElementById('is-exchange').checked = product.isExchange ?? true;
         document.getElementById('return-available').checked = product.returnAvailable ?? true;
@@ -127,6 +135,7 @@ async function openForm(mode = 'create', product = null, readOnly = false) {
             if (!res.ok) throw new Error(await res.text());
             const full = await res.json();
 
+            document.getElementById('hsn-code').value = full.hsnCode || '';
             document.getElementById('about-item').value = (full.aboutItem || []).join('\n');
             document.getElementById('specifications').value = Object.entries(full.specifications || {})
                 .map(([k, v]) => `${k}: ${v}`).join('\n');
@@ -231,6 +240,11 @@ async function openForm(mode = 'create', product = null, readOnly = false) {
                     last.querySelector('.variant-mfgdate').value = v.mfgDate || '';
                     last.querySelector('.variant-expdate').value = v.expDate || '';
                     last.querySelector('.variant-size').value = v.size || '';
+
+                    last.querySelector('.variant-weight').value = v.weight || '';
+                    last.querySelector('.variant-height').value = v.height || '';
+                    last.querySelector('.variant-length').value = v.length || '';
+                    last.querySelector('.variant-breadth').value = v.breadth || '';
                     if (v.mainImage) {
                         last.querySelector('.variant-preview').innerHTML = `<img src="${BASE_URL}${v.mainImage}" class="max-h-20 rounded">`;
                     }
@@ -329,6 +343,11 @@ const variantTemplate = `
         <input type="date" class="variant-mfgdate px-3 py-2 border border-gray-400 rounded-lg">
         <input type="date" class="variant-expdate px-3 py-2 border border-gray-400 rounded-lg" placeholder="Exp Date (optional)">
         <input type="text" class="variant-size px-3 py-2 border border-gray-400 rounded-lg" placeholder="Size">
+        
+        <input type="number" step="0.01" class="variant-weight px-3 py-2 border border-gray-400 rounded-lg" placeholder="Weight (kg)">
+        <input type="number" step="0.01" class="variant-height px-3 py-2 border border-gray-400 rounded-lg" placeholder="Height (cm)">
+        <input type="number" step="0.01" class="variant-length px-3 py-2 border border-gray-400 rounded-lg" placeholder="Length (cm)">
+        <input type="number" step="0.01" class="variant-breadth px-3 py-2 border border-gray-400 rounded-lg" placeholder="Breadth (cm)">
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
@@ -561,6 +580,7 @@ document.addEventListener('change', e => {
 // Pagination state
 let currentPage = 0;
 const PAGE_SIZE = 10;
+let totalElements = 0;
 
 async function loadProducts(page = 0) {
 
@@ -573,6 +593,7 @@ async function loadProducts(page = 0) {
         const data = await res.json();
         products = data.content || [];
         currentPage = data.page.number;
+        totalElements = data.page.totalElements;
 
         renderTable(products);
         renderPagination(data.page);
@@ -808,7 +829,7 @@ function renderTable(data, state = 'empty') {
 }
 
 function updateStats() {
-    const total = products.length;
+    const total = totalElements;
     const low = products.filter(p => p.currentStock > 0 && p.currentStock <= 10).length;
     const out = products.filter(p => p.currentStock === 0).length;
     document.getElementById('total-products').textContent = total;
@@ -890,6 +911,13 @@ document.getElementById('product-form').addEventListener('submit', async e => {
         productCategory: document.getElementById('product-category').value.trim(),
         productSubCategory: document.getElementById('product-subcategory').value.trim(),
         categoryPath: document.getElementById('category-path').value.trim().split(',').map(s=>s.trim()).filter(Boolean),
+        
+        hsnCode: document.getElementById('hsn-code').value.trim() || null,
+        weight: parseFloat(document.getElementById('product-weight').value) || null,
+        height: parseFloat(document.getElementById('product-height').value) || null,
+        length: parseFloat(document.getElementById('product-length').value) || null,
+        breadth: parseFloat(document.getElementById('product-breadth').value) || null,
+
         hasVariants: document.getElementById('has-variants').checked,
         isCustomizable: document.getElementById('is-customizable').checked,
         isExchange: document.getElementById('is-exchange').checked,
@@ -979,7 +1007,14 @@ document.querySelectorAll('.variant-block').forEach(b => {
         mfgDate: b.querySelector('.variant-mfgdate').value || null,
         expDate: b.querySelector('.variant-expdate').value || null,
         size: b.querySelector('.variant-size').value.trim(),
+        
+        weight: parseFloat(b.querySelector('.variant-weight').value) || null,
+        height: parseFloat(b.querySelector('.variant-height').value) || null,
+        length: parseFloat(b.querySelector('.variant-length').value) || null,
+        breadth: parseFloat(b.querySelector('.variant-breadth').value) || null,
+
         mockupImageCount: mockupCount  // ✅ tells controller how many files belong to this variant
+
     });
 });
 

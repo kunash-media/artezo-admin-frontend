@@ -58,7 +58,7 @@ body { font-family: 'DM Sans', sans-serif; }
 
 /* Low stock blink */
 @keyframes lowBlink { 0%, 100% { background-color: transparent; } 50% { background-color: rgba(255,167,38,0.1); } }
-.row-low-blink td { animation: lowBlink 2s ease-in-out infinite; }
+.row-low-blink td { animation: lowBlink 2s ease-in-out infinite;}
 .row-low-blink:hover td { animation: none !important; background: #F7F6EC; }
 
 /* Skeleton */
@@ -361,7 +361,10 @@ select.field-input { appearance: none; background-image: url("data:image/svg+xml
 
             <div class="flex items-center justify-between mb-6">
                 <div>
-                    <h1 class="text-2xl font-semibold text-[#133F53] tracking-tight">Inventory Management</h1>
+                    <div class="flex justify-center gap-2">
+                        <h1 class="text-2xl font-semibold text-[#133F53] tracking-tight">Inventory Management</h1>
+                        <span id="resultsCount" class="px-2 py-1 text-center rounded-lg text-sm font-semibold" style="background-color: #F8F8EA; color: #133F53; border: 1px solid #D89F34;">Items</span>
+                    </div>
                     <p class="text-[13px] text-[#957A54] mt-0.5">Monitor stock levels and manage product inventory</p>
                 </div>
 
@@ -829,7 +832,7 @@ select.field-input { appearance: none; background-image: url("data:image/svg+xml
         setPagination(false);
 
         try {
-            const res = await fetch(`${BASE_URL}/api/inventory/get-all-inventories`);
+            const res = await fetch(`${BASE_URL}/api/inventory/get-all-inventories?size=500`);
             if (!res.ok) throw new Error(`Server responded with ${res.status}`);
             const data = await res.json();
             allInventory = data.content || [];
@@ -859,7 +862,7 @@ select.field-input { appearance: none; background-image: url("data:image/svg+xml
         document.body.appendChild(overlay);
 
         try {
-            const res = await fetch(`${BASE_URL}/api/inventory/get-all-inventories`);
+            const res = await fetch(`${BASE_URL}/api/inventory/get-all-inventories?size=500`);
             if (!res.ok) throw new Error(`Server responded with ${res.status}`);
             const data = await res.json();
             allInventory = data.content || [];
@@ -962,8 +965,8 @@ select.field-input { appearance: none; background-image: url("data:image/svg+xml
     }
 
     function getStatus(item) {
-        if (item.availableStock === 0) return 'out';
-        if (item.availableStock <= item.lowStockThreshold) return 'low';
+        if (item.totalStock === 0) return 'out';
+        if (item.totalStock <= item.lowStockThreshold) return 'low';
         return 'ok';
     }
 
@@ -977,8 +980,7 @@ select.field-input { appearance: none; background-image: url("data:image/svg+xml
         const start = (currentPage - 1) * PAGE_SIZE;
         const pageItems = filteredInventory.slice(start, start + PAGE_SIZE);
 
-        document.getElementById('resultsCount').textContent = total > 0 ? `${total} item${total !== 1 ? 's' : ''}` : '';
-        document.getElementById('emptyState').classList.toggle('hidden', pageItems.length > 0);
+        document.getElementById('resultsCount').textContent = total > 0 ? `Total Items: ${total}` : 'Total Items: 0';        document.getElementById('emptyState').classList.toggle('hidden', pageItems.length > 0);
 
         if (pageItems.length === 0) {
             tbody.innerHTML = '';

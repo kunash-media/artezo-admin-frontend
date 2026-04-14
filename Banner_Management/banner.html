@@ -483,6 +483,9 @@
                                 <option value="oldest">Oldest First</option>
                                 <option value="name">Name A-Z</option>
                             </select>
+                             <button onclick="resetFilters()" class="px-2 md:px-3 py-1.5 md:py-2 border border-[#D89F34] rounded-lg text-xs md:text-sm flex items-center gap-1.5 bg-white hover:bg-[#F8F8EA] transition-all whitespace-nowrap" style="color: #133F53;">
+                                <i class="fa-solid fa-rotate-left text-xs" style="color: #957A54;"></i> Reset
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -757,6 +760,13 @@
             } catch (e) { return 'N/A'; }
         }
 
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('statusFilter').value = 'all';
+            document.getElementById('sortSelect').value = 'newest';
+            renderBannersTable();
+        }
+
         function filterBanners() {
             const searchTerm = document.getElementById('searchInput')?.value.toLowerCase() || '';
             const statusFilter = document.getElementById('statusFilter')?.value || 'all';
@@ -769,6 +779,8 @@
             else if (sortBy === 'name') filtered.sort((a, b) => a.pageName.localeCompare(b.pageName));
             renderBannersTable(filtered);
         }
+
+
 
         function renderBannersTable(data = null) {
             const tbody = document.getElementById('bannersTableBody');
