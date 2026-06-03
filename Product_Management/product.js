@@ -105,6 +105,11 @@ async function openForm(mode = 'create', product = null, readOnly = false) {
         document.getElementById('product-category').value = product.productCategory || '';
         document.getElementById('product-subcategory').value = product.productSubCategory || '';
         document.getElementById('selected-color').value = product.selectedColor || '';
+         
+        document.getElementById('description').value = '';
+        document.getElementById('product-size').value = '';
+
+        document.getElementById('product-size').value = product.productSize || '';
         document.getElementById('current-sku').value = product.currentSku || '';
         document.getElementById('current-selling-price').value = product.currentSellingPrice || '';
         document.getElementById('current-mrp-price').value = product.currentMrpPrice || '';
@@ -124,7 +129,8 @@ async function openForm(mode = 'create', product = null, readOnly = false) {
         document.getElementById('is-customizable').checked = !!product.isCustomizable;
         document.getElementById('trending-category').checked = !!product.underTrendCategory;
 
-        document.getElementById('description').value = (product.description || []).join('\n');
+        // document.getElementById('description').value = (product.description || []).join('\n');
+
 
         if (product.hasVariants) {
             document.getElementById('variants-section').classList.remove('hidden');
@@ -136,6 +142,10 @@ async function openForm(mode = 'create', product = null, readOnly = false) {
             const full = await res.json();
 
             document.getElementById('hsn-code').value = full.hsnCode || '';
+            
+            document.getElementById('product-size').value = full.productSize || product.productSize || '';
+            
+            document.getElementById('description').value = (full.description || product.description || []).join('\n');
             document.getElementById('about-item').value = (full.aboutItem || []).join('\n');
             document.getElementById('specifications').value = Object.entries(full.specifications || {})
                 .map(([k, v]) => `${k}: ${v}`).join('\n');
@@ -925,10 +935,13 @@ document.getElementById('product-form').addEventListener('submit', async e => {
         underTrendCategory: document.getElementById('trending-category').checked,
         currentSku: document.getElementById('current-sku').value.trim(),
         selectedColor: document.getElementById('selected-color').value.trim(),
+        productSize : document.getElementById('product-size').value.trim(),
         currentSellingPrice: parseFloat(document.getElementById('current-selling-price').value) || null,
         currentMrpPrice: parseFloat(document.getElementById('current-mrp-price').value) || null,
         currentStock: parseInt(document.getElementById('current-stock').value) || 0,
+        
         description: document.getElementById('description').value.trim().split('\n').map(s=>s.trim()).filter(Boolean),
+        
         aboutItem: document.getElementById('about-item').value.trim().split('\n').map(s=>s.trim()).filter(Boolean),
         specifications: parseKeyValue(document.getElementById('specifications').value),
         additionalInfo: {
@@ -976,20 +989,7 @@ document.getElementById('product-form').addEventListener('submit', async e => {
 
     const formData = new FormData();
 
-    // ── Variants ──
-    // document.querySelectorAll('.variant-block').forEach(b => {
-    //     payload.variants.push({
-    //         titleName: b.querySelector('.variant-title').value.trim(),
-    //         color: b.querySelector('.variant-color').value.trim(),
-    //         sku: b.querySelector('.variant-sku').value.trim(),
-    //         price: parseFloat(b.querySelector('.variant-price').value) || null,
-    //         mrp: parseFloat(b.querySelector('.variant-mrp').value) || null,
-    //         stock: parseInt(b.querySelector('.variant-stock').value) || 0,
-    //         mfgDate: b.querySelector('.variant-mfgdate').value || null,
-    //         expDate: b.querySelector('.variant-expdate').value || null,
-    //         size: b.querySelector('.variant-size').value.trim()
-    //     });
-    // });
+
 
     // ── Variants ──
 document.querySelectorAll('.variant-block').forEach(b => {
@@ -1023,9 +1023,8 @@ document.querySelectorAll('.variant-block').forEach(b => {
         const imgInput = b.querySelector('.variant-main-image');
         if (imgInput && imgInput.files[0]) formData.append('variantsMainImages', imgInput.files[0]);
     });
-    // document.querySelectorAll('.variant-mockup-images').forEach(input => {
-    //     Array.from(input.files || []).forEach(f => formData.append('variantMockupImages', f));
-    // });
+   
+
 
     // ✅ FIX: key must be 'variantsMockupImages' — matches @RequestPart in controller
     document.querySelectorAll('.variant-block').forEach(b => {

@@ -10,7 +10,6 @@
     <title>Coupon Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="../css/components.css">
     <style>
         .coupon-card {
             transition: all 0.2s ease;
@@ -82,18 +81,6 @@
             margin-bottom: 0.5rem;
         }
 
-        .skeleton-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-        }
-
-        .skeleton-button {
-            width: 80px;
-            height: 32px;
-            border-radius: 0.375rem;
-        }
-
         .content-hidden {
             display: none !important;
         }
@@ -102,7 +89,6 @@
             display: block !important;
         }
 
-        /* Search Loading Animation */
         @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
@@ -118,40 +104,6 @@
             animation: dropdownFade 0.2s ease;
             max-height: 300px;
             overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: #D89F34 #F8F8EA;
-        }
-
-        #filterDropdown::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        #filterDropdown::-webkit-scrollbar-track {
-            background: #F8F8EA;
-        }
-
-        #filterDropdown::-webkit-scrollbar-thumb {
-            background: #D89F34;
-            border-radius: 4px;
-        }
-
-        .filter-dropdown-item {
-            transition: all 0.2s ease;
-            position: relative;
-        }
-
-        .filter-dropdown-item:hover {
-            background-color: #F8F8EA;
-            padding-left: 20px;
-        }
-
-        .filter-dropdown-item i {
-            transition: transform 0.2s ease;
-            font-size: 14px;
-        }
-
-        .filter-dropdown-item:hover i {
-            transform: scale(1.1);
         }
 
         @keyframes dropdownFade {
@@ -162,22 +114,6 @@
             to {
                 opacity: 1;
                 transform: translateY(0) scale(1);
-            }
-        }
-
-        /* Advanced Filters Animation */
-        #advancedFilters {
-            animation: slideDown 0.3s ease;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
             }
         }
 
@@ -197,14 +133,33 @@
             }
         }
 
-        /* Responsive adjustments */
-        @media (max-width: 640px) {
-            #filterDropdownButton {
-                width: 100%;
-            }
-            #filterDropdown {
-                width: 100%;
-            }
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .loading-spinner {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .loading-spinner i {
+            font-size: 32px;
+            color: #D89F34;
         }
     </style>
 </head>
@@ -222,9 +177,16 @@
 
             <!-- Coupon Management Content -->
             <main class="flex-1 overflow-y-auto p-6">
+                <!-- Loading Overlay -->
+                <div id="loadingOverlay" class="loading-overlay hidden">
+                    <div class="loading-spinner">
+                        <i class="fa-solid fa-circle-notch fa-spin"></i>
+                        <p style="color: #133F53;">Loading...</p>
+                    </div>
+                </div>
+
                 <!-- Skeleton Loading -->
                 <div id="skeletonLoader" class="content-visible">
-                    <!-- Statistics Cards Skeleton -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                         <div class="bg-white p-4 rounded-lg shadow-sm">
                             <div class="skeleton skeleton-text w-24 h-4 mb-2"></div>
@@ -247,8 +209,6 @@
                             <div class="skeleton skeleton-text w-32 h-3"></div>
                         </div>
                     </div>
-
-                    <!-- Filters Skeleton -->
                     <div class="bg-white p-4 rounded-lg shadow-sm mb-6">
                         <div class="flex flex-wrap gap-4">
                             <div class="skeleton skeleton-text w-96 h-10"></div>
@@ -256,27 +216,12 @@
                             <div class="skeleton skeleton-text w-40 h-10"></div>
                         </div>
                     </div>
-
-                    <!-- Table Skeleton -->
                     <div class="bg-white rounded-lg shadow-sm overflow-hidden">
                         <div class="p-4 space-y-2">
                             <div class="skeleton skeleton-text w-full h-12"></div>
                             <div class="skeleton skeleton-text w-full h-12"></div>
                             <div class="skeleton skeleton-text w-full h-12"></div>
                             <div class="skeleton skeleton-text w-full h-12"></div>
-                            <div class="skeleton skeleton-text w-full h-12"></div>
-                            <div class="skeleton skeleton-text w-full h-12"></div>
-                        </div>
-                    </div>
-
-                    <!-- Pagination Skeleton -->
-                    <div class="mt-4 flex justify-between items-center">
-                        <div class="skeleton skeleton-text w-48 h-8"></div>
-                        <div class="flex gap-2">
-                            <div class="skeleton skeleton-text w-8 h-8"></div>
-                            <div class="skeleton skeleton-text w-8 h-8"></div>
-                            <div class="skeleton skeleton-text w-8 h-8"></div>
-                            <div class="skeleton skeleton-text w-8 h-8"></div>
                         </div>
                     </div>
                 </div>
@@ -305,71 +250,51 @@
 
                     <!-- Coupon Statistics Cards -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                        <!-- Total Coupons -->
                         <div class="bg-white p-4 border border-[#D89F34] rounded-lg shadow-sm coupon-card">
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-xs text-gray-500">Total Coupons</p>
-                                    <p class="text-xl font-bold" style="color: #133F53;">156</p>
+                                    <p class="text-xl font-bold" style="color: #133F53;" id="totalCoupons">0</p>
                                 </div>
                                 <div class="w-10 h-10 rounded-full border border-[#D89F34] bg-[#F8F8EA] flex items-center justify-center">
                                     <i class="fa-solid fa-ticket" style="color: #D89F34;"></i>
                                 </div>
                             </div>
-                            <div class="mt-2 flex items-center text-xs">
-                                <span class="text-green-600">↑ 8</span>
-                                <span class="text-gray-400 ml-2">this month</span>
-                            </div>
                         </div>
 
-                        <!-- Active Coupons -->
                         <div class="bg-white p-4 border border-[#D89F34] rounded-lg shadow-sm coupon-card">
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-xs text-gray-500">Active</p>
-                                    <p class="text-xl font-bold" style="color: #133F53;">98</p>
+                                    <p class="text-xl font-bold" style="color: #133F53;" id="activeCoupons">0</p>
                                 </div>
                                 <div class="w-10 h-10 rounded-full border border-[#D89F34] bg-[#F8F8EA] flex items-center justify-center">
                                     <i class="fa-regular fa-circle-check" style="color: #10B981;"></i>
                                 </div>
                             </div>
-                            <div class="mt-2 flex items-center text-xs">
-                                <span class="text-green-600">62%</span>
-                                <span class="text-gray-400 ml-2">of total</span>
-                            </div>
                         </div>
 
-                        <!-- Expired Coupons -->
                         <div class="bg-white p-4 rounded-lg border border-[#D89F34] shadow-sm coupon-card">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <p class="text-xs text-gray-500">Expired</p>
-                                    <p class="text-xl font-bold" style="color: #133F53;">42</p>
+                                    <p class="text-xs text-gray-500">Expired/Inactive</p>
+                                    <p class="text-xl font-bold" style="color: #133F53;" id="inactiveCoupons">0</p>
                                 </div>
                                 <div class="w-10 h-10 rounded-full border border-[#D89F34] bg-[#F8F8EA] flex items-center justify-center">
                                     <i class="fa-regular fa-calendar-xmark" style="color: #EF4444;"></i>
                                 </div>
                             </div>
-                            <div class="mt-2 flex items-center text-xs">
-                                <span class="text-red-600">27%</span>
-                                <span class="text-gray-400 ml-2">of total</span>
-                            </div>
                         </div>
 
-                        <!-- Total Savings -->
                         <div class="bg-white p-4 rounded-lg border border-[#D89F34] shadow-sm coupon-card">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <p class="text-xs text-gray-500">Total Savings</p>
-                                    <p class="text-xl font-bold" style="color: #133F53;">$12,450</p>
+                                    <p class="text-xs text-gray-500">Total Used</p>
+                                    <p class="text-xl font-bold" style="color: #133F53;" id="totalUsedCount">0</p>
                                 </div>
                                 <div class="w-10 h-10 rounded-full border border-[#D89F34] bg-[#F8F8EA] flex items-center justify-center">
-                                    <i class="fa-solid fa-dollar-sign" style="color: #D89F34;"></i>
+                                    <i class="fa-solid fa-chart-line" style="color: #D89F34;"></i>
                                 </div>
-                            </div>
-                            <div class="mt-2 flex items-center text-xs">
-                                <span class="text-green-600">↑ 23%</span>
-                                <span class="text-gray-400 ml-2">vs last month</span>
                             </div>
                         </div>
                     </div>
@@ -377,22 +302,17 @@
                     <!-- Filters and Search -->
                     <div class="bg-white p-4 rounded-lg border border-gray-400 shadow-sm mb-6">
                         <div class="flex flex-col lg:flex-row gap-4 items-center justify-between">
-                            <!-- Search with Debounce -->
                             <div class="relative w-full lg:w-96">
-                                <i
-                                    class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
-                                <input type="text" id="searchCoupon" placeholder="Search by code, description, or type..."
+                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
+                                <input type="text" id="searchCoupon" placeholder="Search by code or description..."
                                     class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#D89F34] text-sm"
                                     onkeyup="debounceSearch()">
-                                <!-- Loading indicator for search -->
                                 <div id="searchLoading" class="absolute right-3 top-1/2 transform -translate-y-1/2 hidden">
                                     <i class="fa-solid fa-circle-notch fa-spin text-[#D89F34]"></i>
                                 </div>
                             </div>
 
-                            <!-- Filter Dropdown and Sort Section -->
                             <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-                                <!-- Filter Dropdown -->
                                 <div class="relative w-full sm:w-48">
                                     <button id="filterDropdownButton"
                                         class="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm flex items-center justify-between bg-white hover:bg-[#F8F8EA] transition-colors"
@@ -401,106 +321,36 @@
                                         <i class="fa-solid fa-chevron-down text-xs transition-transform duration-200"
                                             id="filterDropdownArrow" style="color: #957A54;"></i>
                                     </button>
-
-                                    <!-- Dropdown Menu -->
                                     <div id="filterDropdown"
-                                        class="absolute right-0 mt-1 w-full bg-white rounded-lg shadow-lg py-1 hidden z-50 border border-gray-100"
-                                        style="max-height: 300px; overflow-y: auto;">
-                                        <button
-                                            class="filter-dropdown-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between"
+                                        class="absolute right-0 mt-1 w-full bg-white rounded-lg shadow-lg py-1 hidden z-50 border border-gray-100">
+                                        <button class="filter-dropdown-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between"
                                             onclick="selectFilter('all', 'All Coupons')">
                                             <span style="color: #133F53;">All Coupons</span>
-                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;"
-                                                id="check-all"></i>
                                         </button>
-                                        <button
-                                            class="filter-dropdown-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between"
+                                        <button class="filter-dropdown-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between"
                                             onclick="selectFilter('active', 'Active')">
                                             <span style="color: #133F53;">Active</span>
-                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;"
-                                                id="check-active"></i>
                                         </button>
-                                        <button
-                                            class="filter-dropdown-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between"
+                                        <button class="filter-dropdown-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between"
+                                            onclick="selectFilter('inactive', 'Inactive')">
+                                            <span style="color: #133F53;">Inactive</span>
+                                        </button>
+                                        <button class="filter-dropdown-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between"
                                             onclick="selectFilter('expired', 'Expired')">
                                             <span style="color: #133F53;">Expired</span>
-                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;"
-                                                id="check-expired"></i>
-                                        </button>
-                                        <button
-                                            class="filter-dropdown-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between"
-                                            onclick="selectFilter('scheduled', 'Scheduled')">
-                                            <span style="color: #133F53;">Scheduled</span>
-                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;"
-                                                id="check-scheduled"></i>
                                         </button>
                                     </div>
                                 </div>
 
-                                <!-- Sort Dropdown and Advanced Filters -->
-                                <div class="flex gap-2 w-full sm:w-auto">
-                                    <select id="sortCoupons"
-                                        class="flex-1 sm:flex-none px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#D89F34] bg-white"
-                                        onchange="sortCoupons()">
-                                        <option value="newest">Newest First</option>
-                                        <option value="oldest">Oldest First</option>
-                                        <option value="discount-high">Discount: High to Low</option>
-                                        <option value="discount-low">Discount: Low to High</option>
-                                        <option value="usage-high">Most Used</option>
-                                    </select>
-
-                                    <button
-                                        class="px-3 py-2 border border-gray-200 rounded-lg hover:bg-[#F8F8EA] transition-colors"
-                                        onclick="toggleAdvancedFilters()" title="Advanced Filters">
-                                        <i class="fa-solid fa-sliders" style="color: #957A54;"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Advanced Filters (Hidden by default) -->
-                        <div id="advancedFilters" class="hidden mt-4 p-4 bg-[#F8F8EA] rounded-lg">
-                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                <div>
-                                    <label class="block text-xs mb-1" style="color: #133F53;">Discount Type</label>
-                                    <select id="filterType"
-                                        class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                                        onchange="filterCoupons()">
-                                        <option value="all">All Types</option>
-                                        <option value="percentage">Percentage</option>
-                                        <option value="fixed">Fixed Amount</option>
-                                        <option value="free-shipping">Free Shipping</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-xs mb-1" style="color: #133F53;">Min Discount</label>
-                                    <input type="number" id="minDiscount" placeholder="Min $" min="0" step="0.01"
-                                        class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                                        onchange="filterCoupons()">
-                                </div>
-                                <div>
-                                    <label class="block text-xs mb-1" style="color: #133F53;">Max Discount</label>
-                                    <input type="number" id="maxDiscount" placeholder="Max $" min="0" step="0.01"
-                                        class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                                        onchange="filterCoupons()">
-                                </div>
-                                <div>
-                                    <label class="block text-xs mb-1" style="color: #133F53;">Usage Limit</label>
-                                    <select id="usageLimit"
-                                        class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                                        onchange="filterCoupons()">
-                                        <option value="all">All</option>
-                                        <option value="unlimited">Unlimited</option>
-                                        <option value="limited">Limited</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="flex justify-end mt-3">
-                                <button
-                                    class="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-white transition-colors"
-                                    style="color: #133F53;" onclick="clearAdvancedFilters()">
-                                    Clear All Filters
-                                </button>
+                                <select id="sortCoupons"
+                                    class="flex-1 sm:flex-none px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#D89F34] bg-white"
+                                    onchange="sortCoupons()">
+                                    <option value="newest">Newest First</option>
+                                    <option value="oldest">Oldest First</option>
+                                    <option value="discount-high">Discount: High to Low</option>
+                                    <option value="discount-low">Discount: Low to High</option>
+                                    <option value="usage-high">Most Used</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -514,65 +364,33 @@
                                         <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">
                                             <input type="checkbox" id="selectAll" onclick="toggleAll()">
                                         </th>
-                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">CODE
-                                        </th>
-                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">
-                                            DESCRIPTION</th>
-                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">
-                                            DISCOUNT</th>
-                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">MIN
-                                            ORDER</th>
-                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">VALID
-                                            FROM</th>
-                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">VALID
-                                            TO</th>
-                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">USAGE
-                                        </th>
-                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">STATUS
-                                        </th>
-                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">
-                                            ACTIONS</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">CODE</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">DESCRIPTION</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">DISCOUNT</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">MIN ORDER</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">VALIDITY</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">USAGE</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">STATUS</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">ACTIONS</th>
                                     </tr>
                                 </thead>
                                 <tbody id="couponsTableBody">
-                                    <!-- Coupons will be loaded here dynamically -->
                                 </tbody>
                             </table>
                         </div>
 
-                        <!-- Pagination -->
-                        <div
-                            class="px-4 py-3 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-3">
-                            <p class="text-sm" style="color: #957A54;" id="showingInfo">Showing 1-10 of 50 coupons</p>
-                            <div class="flex gap-2">
-                                <button class="w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA]"
-                                    onclick="changePage('prev')">
-                                    <i class="fa-solid fa-chevron-left text-xs"></i>
-                                </button>
-                                <button class="w-8 h-8 rounded" style="background-color: #133F53; color: white;" id="page1">1</button>
-                                <button class="w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA]" id="page2" onclick="goToPage(2)">2</button>
-                                <button class="w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA]" id="page3" onclick="goToPage(3)">3</button>
-                                <button class="w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA]" id="page4" onclick="goToPage(4)">4</button>
-                                <button class="w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA]"
-                                    onclick="changePage('next')">
-                                    <i class="fa-solid fa-chevron-right text-xs"></i>
-                                </button>
+                        <div class="px-4 py-3 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-3">
+                            <p class="text-sm" style="color: #957A54;" id="showingInfo">Showing 0 of 0 coupons</p>
+                            <div class="flex gap-2" id="paginationButtons">
                             </div>
                         </div>
                     </div>
 
                     <!-- Bulk Actions -->
                     <div id="bulkActions"
-                        class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-white rounded-lg shadow-lg p-3 hidden"
-                        style="z-index: 40;">
+                        class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-white rounded-lg shadow-lg p-3 hidden z-50">
                         <div class="flex items-center gap-4">
                             <span class="text-sm font-medium" id="selectedCount" style="color: #133F53;">0 selected</span>
-                            <select class="px-3 py-1 border border-gray-200 rounded-lg text-sm" id="bulkStatus">
-                                <option value="">Change Status</option>
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                                <option value="expired">Expired</option>
-                            </select>
                             <button class="px-3 py-1 bg-red-600 text-white rounded-lg text-sm" onclick="bulkDelete()">
                                 <i class="fa-regular fa-trash-can"></i> Delete
                             </button>
@@ -585,9 +403,6 @@
             </main>
         </div>
     </div>
-
-    <!-- Modals Container -->
-    <div id="modals-container"></div>
 
     <!-- Create/Edit Coupon Modal -->
     <div id="couponModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
@@ -602,14 +417,13 @@
             <form id="couponForm" class="space-y-4" onsubmit="saveCoupon(event)">
                 <input type="hidden" id="couponId" value="">
 
-                <!-- Basic Information -->
                 <div class="grid grid-cols-2 gap-3">
                     <div class="col-span-2">
                         <label class="block text-sm font-medium mb-1" style="color: #133F53;">Coupon Code</label>
                         <div class="flex gap-2">
                             <input type="text" id="couponCode" required
                                 class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm uppercase"
-                                placeholder="e.g., SUMMER2024" style="text-transform: uppercase;">
+                                placeholder="e.g., SUMMER2024">
                             <button type="button"
                                 class="px-3 py-2 border border-gray-200 rounded-lg text-sm hover:bg-[#F8F8EA]"
                                 onclick="generateRandomCode()">
@@ -626,29 +440,24 @@
                     </div>
                 </div>
 
-                <!-- Discount Settings -->
                 <div class="border-t border-gray-200 pt-4">
                     <h4 class="font-medium mb-3" style="color: #133F53;">Discount Settings</h4>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs mb-1" style="color: #957A54;">Discount Type</label>
-                            <select id="discountType" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                                onchange="toggleDiscountFields()">
-                                <option value="percentage">Percentage (%)</option>
-                                <option value="fixed">Fixed Amount ($)</option>
-                                <option value="free-shipping">Free Shipping</option>
+                            <select id="discountType" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                                <option value="PERCENTAGE">Percentage (%)</option>
+                                <option value="FLAT">Fixed Amount ($)</option>
                             </select>
                         </div>
-                        <div id="discountValueField">
-                            <label class="block text-xs mb-1" style="color: #957A54;" id="discountLabel">Discount
-                                Value</label>
+                        <div>
+                            <label class="block text-xs mb-1" style="color: #957A54;">Discount Value</label>
                             <input type="number" id="discountValue" min="0" step="0.01"
                                 class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
                         </div>
                     </div>
                 </div>
 
-                <!-- Usage Restrictions -->
                 <div class="border-t border-gray-200 pt-4">
                     <h4 class="font-medium mb-3" style="color: #133F53;">Usage Restrictions</h4>
                     <div class="grid grid-cols-2 gap-3">
@@ -664,19 +473,18 @@
                         </div>
                         <div>
                             <label class="block text-xs mb-1" style="color: #957A54;">Usage Limit Per Coupon</label>
-                            <input type="number" id="usageLimitPerCoupon" min="0" value="0"
+                            <input type="number" id="usageLimit" min="0" value="0"
                                 class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
                             <p class="text-xs text-gray-400 mt-1">0 = unlimited</p>
                         </div>
                         <div>
-                            <label class="block text-xs mb-1" style="color: #957A54;">Usage Limit Per Customer</label>
-                            <input type="number" id="usageLimitPerCustomer" min="0" value="1"
+                            <label class="block text-xs mb-1" style="color: #957A54;">Usage Per Customer</label>
+                            <input type="number" id="usagePerCustomer" min="0" value="1"
                                 class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
                         </div>
                     </div>
                 </div>
 
-                <!-- Validity Period -->
                 <div class="border-t border-gray-200 pt-4">
                     <h4 class="font-medium mb-3" style="color: #133F53;">Validity Period</h4>
                     <div class="grid grid-cols-2 gap-3">
@@ -693,26 +501,36 @@
                     </div>
                 </div>
 
-                <!-- Additional Settings -->
+                <!-- Coupon Type Selection (for advanced users) -->
                 <div class="border-t border-gray-200 pt-4">
-                    <h4 class="font-medium mb-3" style="color: #133F53;">Additional Settings</h4>
-                    <div class="space-y-2">
-                        <label class="flex items-center gap-2">
-                            <input type="checkbox" id="isActive" checked class="rounded border-gray-300">
-                            <span class="text-sm" style="color: #133F53;">Active</span>
-                        </label>
-                        <label class="flex items-center gap-2">
-                            <input type="checkbox" id="excludeSaleItems" class="rounded border-gray-300">
-                            <span class="text-sm" style="color: #133F53;">Exclude sale items</span>
-                        </label>
-                        <label class="flex items-center gap-2">
-                            <input type="checkbox" id="freeShipping" class="rounded border-gray-300">
-                            <span class="text-sm" style="color: #133F53;">Apply free shipping (if not already)</span>
-                        </label>
+                    <h4 class="font-medium mb-3" style="color: #133F53;">Coupon Type (Advanced)</h4>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs mb-1" style="color: #957A54;">Coupon Type</label>
+                            <select id="couponType" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                                <option value="GENERAL">General (All Users)</option>
+                                <option value="PRODUCT_USER">Product Specific</option>
+                                <option value="CATEGORY_USER">Category Specific</option>
+                            </select>
+                        </div>
+                        <div id="categoryNameField" style="display: none;">
+                            <label class="block text-xs mb-1" style="color: #957A54;">Category Name</label>
+                            <input type="text" id="categoryName" placeholder="e.g., Electronics, Footwear"
+                                class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                        </div>
+                    </div>
+                    <div id="productIdsField" style="display: none;" class="mt-2">
+                        <label class="block text-xs mb-1" style="color: #957A54;">Product IDs (comma separated)</label>
+                        <input type="text" id="productIds" placeholder="e.g., 1,2,3"
+                            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                    </div>
+                    <div id="userIdsField" style="display: none;" class="mt-2">
+                        <label class="block text-xs mb-1" style="color: #957A54;">Allowed User IDs (comma separated)</label>
+                        <input type="text" id="userIds" placeholder="e.g., 1,2,3"
+                            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
                     </div>
                 </div>
 
-                <!-- Actions -->
                 <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
                     <button type="button" onclick="closeCouponModal()"
                         class="px-4 py-2 border border-gray-200 rounded-lg text-sm">Cancel</button>
@@ -732,10 +550,7 @@
                     <i class="fa-solid fa-times"></i>
                 </button>
             </div>
-
-            <div id="couponDetails" class="space-y-4">
-                <!-- Coupon details will be loaded here -->
-            </div>
+            <div id="couponDetails" class="space-y-4"></div>
         </div>
     </div>
 
@@ -747,27 +562,20 @@
                     <i class="fa-solid fa-trash-can text-2xl text-red-600"></i>
                 </div>
                 <h3 class="text-xl font-bold mb-2" style="color: #133F53;">Delete Coupon</h3>
-                <p class="text-sm mb-6" style="color: #957A54;">Are you sure you want to delete this coupon? This action
-                    cannot be undone.</p>
-
+                <p class="text-sm mb-6" style="color: #957A54;">Are you sure you want to delete this coupon? This action cannot be undone.</p>
                 <div class="flex gap-3">
                     <button onclick="closeDeleteModal()"
                         class="flex-1 py-2 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                        style="color: #133F53;">
-                        Cancel
-                    </button>
+                        style="color: #133F53;">Cancel</button>
                     <button onclick="confirmDelete()"
-                        class="flex-1 py-2 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                        Delete
-                    </button>
+                        class="flex-1 py-2 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">Delete</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Success/Error Notification -->
-    <div id="notification" class="fixed top-4 right-4 px-4 py-2 rounded-lg shadow-lg z-50 hidden"
-        style="min-width: 250px;">
+    <!-- Notification -->
+    <div id="notification" class="fixed top-4 right-4 px-4 py-2 rounded-lg shadow-lg z-50 hidden" style="min-width: 250px;">
         <div class="flex items-center gap-2">
             <i id="notificationIcon" class=""></i>
             <span id="notificationMessage" class="text-sm"></span>
@@ -779,284 +587,103 @@
     <script src="/js/components.js"></script>
 
     <script>
-        // Sample coupon data
-        let coupons = [
-            {
-                id: '1',
-                code: 'WELCOME20',
-                description: 'Welcome discount for new customers',
-                discountType: 'percentage',
-                discountValue: 20,
-                minOrderAmount: 0,
-                maxDiscountAmount: 50,
-                validFrom: '2024-01-01T00:00',
-                validTo: '2024-12-31T23:59',
-                usageLimit: 1000,
-                usagePerCustomer: 1,
-                usedCount: 345,
-                isActive: true,
-                excludeSaleItems: false,
-                freeShipping: false,
-                createdAt: '2024-01-01'
-            },
-            {
-                id: '2',
-                code: 'SUMMER24',
-                description: 'Summer sale special discount',
-                discountType: 'percentage',
-                discountValue: 15,
-                minOrderAmount: 50,
-                maxDiscountAmount: 30,
-                validFrom: '2024-06-01T00:00',
-                validTo: '2024-08-31T23:59',
-                usageLimit: 500,
-                usagePerCustomer: 2,
-                usedCount: 89,
-                isActive: true,
-                excludeSaleItems: true,
-                freeShipping: false,
-                createdAt: '2024-05-15'
-            },
-            {
-                id: '3',
-                code: 'FLASH10',
-                description: 'Flash sale $10 off',
-                discountType: 'fixed',
-                discountValue: 10,
-                minOrderAmount: 25,
-                maxDiscountAmount: 10,
-                validFrom: '2024-03-15T00:00',
-                validTo: '2024-03-20T23:59',
-                usageLimit: 200,
-                usagePerCustomer: 1,
-                usedCount: 200,
-                isActive: false,
-                excludeSaleItems: false,
-                freeShipping: false,
-                createdAt: '2024-03-10'
-            },
-            {
-                id: '4',
-                code: 'FREESHIP',
-                description: 'Free shipping on all orders',
-                discountType: 'free-shipping',
-                discountValue: 0,
-                minOrderAmount: 0,
-                maxDiscountAmount: 0,
-                validFrom: '2024-01-01T00:00',
-                validTo: '2024-12-31T23:59',
-                usageLimit: 0,
-                usagePerCustomer: 0,
-                usedCount: 567,
-                isActive: true,
-                excludeSaleItems: false,
-                freeShipping: true,
-                createdAt: '2024-01-01'
-            },
-            {
-                id: '5',
-                code: 'VIP50',
-                description: 'VIP members 50% off',
-                discountType: 'percentage',
-                discountValue: 50,
-                minOrderAmount: 100,
-                maxDiscountAmount: 100,
-                validFrom: '2024-02-01T00:00',
-                validTo: '2024-05-31T23:59',
-                usageLimit: 100,
-                usagePerCustomer: 1,
-                usedCount: 45,
-                isActive: true,
-                excludeSaleItems: true,
-                freeShipping: true,
-                createdAt: '2024-01-15'
-            },
-            {
-                id: '6',
-                code: 'EXPIRED20',
-                description: 'Expired discount coupon',
-                discountType: 'percentage',
-                discountValue: 20,
-                minOrderAmount: 30,
-                maxDiscountAmount: 40,
-                validFrom: '2023-01-01T00:00',
-                validTo: '2023-12-31T23:59',
-                usageLimit: 0,
-                usagePerCustomer: 1,
-                usedCount: 1200,
-                isActive: false,
-                excludeSaleItems: false,
-                freeShipping: false,
-                createdAt: '2023-01-01'
-            }
-        ];
-
+        // ==================== API CONFIGURATION ====================
+        const API_BASE_URL = 'http://localhost:8085/api/v1/coupons';
+        
         // State variables
+        let coupons = [];
         let currentFilter = 'all';
         let selectedCoupons = new Set();
         let currentPage = 1;
         const itemsPerPage = 10;
         let deleteId = null;
-        let currentEditId = null;
         let isFilterDropdownOpen = false;
         let searchTimeout = null;
+        let isLoading = false;
         const DEBOUNCE_DELAY = 500;
 
-        // ==================== PAGE LOAD OPTIMIZATION ====================
-        document.addEventListener('DOMContentLoaded', function () {
-            // Show skeleton, hide actual content
-            document.getElementById('skeletonLoader').classList.remove('content-hidden');
-            document.getElementById('skeletonLoader').classList.add('content-visible');
-            document.getElementById('actualContent').classList.remove('content-visible');
-            document.getElementById('actualContent').classList.add('content-hidden');
-
-            // Initialize filter dropdown
-            currentFilter = 'all';
-            document.getElementById('selectedFilterText').textContent = 'All Coupons';
-            updateDropdownCheckmarks();
-
-            // Load data
-            loadData();
-        });
-
-        async function loadData() {
+        // ==================== API CALLS ====================
+        async function apiCall(url, method = 'GET', data = null) {
+            showLoading(true);
             try {
-                // Simulate loading time (remove in production)
-                await new Promise(resolve => setTimeout(resolve, 800));
-
-                // Render coupons
-                renderCoupons();
-
-                // Hide skeleton, show actual content
-                document.getElementById('skeletonLoader').classList.remove('content-visible');
-                document.getElementById('skeletonLoader').classList.add('content-hidden');
-                document.getElementById('actualContent').classList.remove('content-hidden');
-                document.getElementById('actualContent').classList.add('content-visible');
-            } catch (error) {
-                console.error('Error loading data:', error);
-                showNotification('Error loading coupons', 'error');
-            }
-        }
-
-        // ==================== RENDER FUNCTIONS ====================
-        function renderCoupons() {
-            const tbody = document.getElementById('couponsTableBody');
-            if (!tbody) return;
-
-            let filteredCoupons = filterCouponsByStatus();
-
-            // Apply search filter
-            const searchTerm = document.getElementById('searchCoupon')?.value.toLowerCase() || '';
-            if (searchTerm) {
-                filteredCoupons = filteredCoupons.filter(coupon =>
-                    coupon.code.toLowerCase().includes(searchTerm) ||
-                    coupon.description.toLowerCase().includes(searchTerm)
-                );
-            }
-
-            // Apply advanced filters
-            filteredCoupons = applyAdvancedFilters(filteredCoupons);
-
-            // Apply sorting
-            const sortBy = document.getElementById('sortCoupons')?.value || 'newest';
-            filteredCoupons = sortCouponsData(filteredCoupons, sortBy);
-
-            // Pagination
-            const totalPages = Math.ceil(filteredCoupons.length / itemsPerPage);
-            if (currentPage > totalPages) currentPage = 1;
-
-            const start = (currentPage - 1) * itemsPerPage;
-            const paginatedCoupons = filteredCoupons.slice(start, start + itemsPerPage);
-
-            // Update showing info
-            document.getElementById('showingInfo').textContent =
-                `Showing ${start + 1}-${Math.min(start + itemsPerPage, filteredCoupons.length)} of ${filteredCoupons.length} coupons`;
-
-            tbody.innerHTML = '';
-            paginatedCoupons.forEach(coupon => {
-                const row = document.createElement('tr');
-                row.className = 'border-b border-gray-100 coupon-row';
-                row.innerHTML = `
-                    <td class="py-2 px-4">
-                        <input type="checkbox" class="coupon-checkbox" value="${coupon.id}" onchange="updateSelection(this)">
-                    </td>
-                    <td class="py-2 px-4">
-                        <div class="flex items-center gap-2">
-                            <span class="text-sm font-mono font-medium" style="color: #133F53;">${coupon.code}</span>
-                            <i class="fa-regular fa-copy copy-btn text-[#957A54]" onclick="copyToClipboard('${coupon.code}')" title="Copy code"></i>
-                        </div>
-                    </td>
-                    <td class="py-2 px-4">
-                        <div>
-                            <p class="text-sm" style="color: #133F53;">${coupon.description}</p>
-                            <p class="text-xs" style="color: #957A54;">Created: ${formatDate(coupon.createdAt)}</p>
-                        </div>
-                    </td>
-                    <td class="py-2 px-4">
-                        <span class="text-sm font-medium" style="color: #133F53;">${formatDiscount(coupon)}</span>
-                    </td>
-                    <td class="py-2 px-4 text-sm">${formatCurrency(coupon.minOrderAmount)}</td>
-                    <td class="py-2 px-4 text-sm">${formatDateTime(coupon.validFrom)}</td>
-                    <td class="py-2 px-4 text-sm">${getExpiryBadge(coupon)}</td>
-                    <td class="py-2 px-4">
-                        <div>
-                            <p class="text-sm">${coupon.usedCount}/${coupon.usageLimit || '∞'}</p>
-                            <div class="w-16 h-1 bg-gray-200 rounded-full mt-1">
-                                <div class="h-1 rounded-full bg-[#D89F34]" style="width: ${getUsagePercentage(coupon)}%"></div>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="py-2 px-4">${getStatusBadge(coupon)}</td>
-                    <td class="py-2 px-4">
-                        <div class="flex gap-2">
-                            <button onclick="viewCoupon('${coupon.id}')" class="text-[#957A54] hover:text-[#133F53]" title="View">
-                                <i class="fa-regular fa-eye"></i>
-                            </button>
-                            <button onclick="editCoupon('${coupon.id}')" class="text-[#957A54] hover:text-[#D89F34]" title="Edit">
-                                <i class="fa-regular fa-pen-to-square"></i>
-                            </button>
-                            <button onclick="openDeleteModal('${coupon.id}')" class="text-[#957A54] hover:text-red-600" title="Delete">
-                                <i class="fa-regular fa-trash-can"></i>
-                            </button>
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
-
-            // Update select all checkbox
-            updatePaginationButtons(filteredCoupons.length);
-            updateSelectAll();
-        }
-
-        // Update pagination buttons
-        function updatePaginationButtons(totalItems) {
-            const totalPages = Math.ceil(totalItems / itemsPerPage);
-
-            for (let i = 1; i <= 4; i++) {
-                const btn = document.getElementById(`page${i}`);
-                if (btn) {
-                    if (i <= totalPages) {
-                        btn.style.display = 'block';
-                        btn.textContent = i;
-                        btn.onclick = () => goToPage(i);
-                        btn.className = i === currentPage ?
-                            'w-8 h-8 rounded bg-[#133F53] text-white' :
-                            'w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA]';
-                    } else {
-                        btn.style.display = 'none';
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
                     }
+                };
+                if (data) {
+                    options.body = JSON.stringify(data);
                 }
+                
+                const response = await fetch(`${API_BASE_URL}${url}`, options);
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'API call failed');
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('API Error:', error);
+                showNotification(error.message, 'error');
+                throw error;
+            } finally {
+                showLoading(false);
             }
         }
 
-        // Go to specific page
-        function goToPage(page) {
-            currentPage = page;
-            renderCoupons();
+        async function fetchAllCoupons() {
+            try {
+                const data = await apiCall('/get-all-coupons', 'GET');
+                coupons = Array.isArray(data) ? data : [];
+                updateStatistics();
+                renderCoupons();
+                return coupons;
+            } catch (error) {
+                coupons = [];
+                renderCoupons();
+                return [];
+            }
         }
 
-        // Get status badge HTML
+        async function createCoupon(couponData) {
+            return await apiCall('/create-coupon', 'POST', couponData);
+        }
+
+        async function updateCoupon(couponId, couponData) {
+            return await apiCall(`/update-coupon/${couponId}`, 'PUT', couponData);
+        }
+
+        async function deleteCoupon(couponId) {
+            await apiCall(`/delete-coupon/${couponId}`, 'DELETE');
+        }
+
+        // ==================== HELPER FUNCTIONS ====================
+        function formatCurrency(amount) {
+            if (!amount || amount === 0) return 'No min';
+            return `₹${amount}`;
+        }
+
+        function formatDiscount(coupon) {
+            if (coupon.discountType === 'PERCENTAGE') {
+                return `${coupon.discountValue}% off`;
+            } else if (coupon.discountType === 'FLAT') {
+                return `₹${coupon.discountValue} off`;
+            }
+            return '-';
+        }
+
+        function formatDateTime(dateStr) {
+            if (!dateStr) return 'N/A';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        function formatFullDateTime(dateStr) {
+            if (!dateStr) return 'N/A';
+            const date = new Date(dateStr);
+            return date.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
         function getStatusBadge(coupon) {
             const now = new Date();
             const validFrom = new Date(coupon.validFrom);
@@ -1075,111 +702,166 @@
             }
         }
 
-        // Get expiry badge
-        function getExpiryBadge(coupon) {
+        function getValidityDisplay(coupon) {
             const now = new Date();
             const validTo = new Date(coupon.validTo);
             const daysLeft = Math.ceil((validTo - now) / (1000 * 60 * 60 * 24));
-
+            
             if (!coupon.isActive) {
-                return `<span class="text-sm" style="color: #991B1B;">${formatDateTime(coupon.validTo)}</span>`;
+                return `<span class="text-sm" style="color: #991B1B;">Expired</span>`;
             } else if (now > validTo) {
-                return `<span class="text-sm expired px-2 py-0.5 rounded">${formatDateTime(coupon.validTo)}</span>`;
-            } else if (daysLeft <= 7) {
-                return `<span class="text-sm expiry-soon px-2 py-0.5 rounded">${formatDateTime(coupon.validTo)} (${daysLeft}d left)</span>`;
+                return `<span class="text-sm expired px-2 py-0.5 rounded">Expired</span>`;
+            } else if (daysLeft <= 7 && daysLeft > 0) {
+                return `<span class="text-sm expiry-soon px-2 py-0.5 rounded">${daysLeft} days left</span>`;
             } else {
                 return `<span class="text-sm">${formatDateTime(coupon.validTo)}</span>`;
             }
         }
 
-        // Format discount
-        function formatDiscount(coupon) {
-            switch (coupon.discountType) {
-                case 'percentage':
-                    return `${coupon.discountValue}% off`;
-                case 'fixed':
-                    return `$${coupon.discountValue} off`;
-                case 'free-shipping':
-                    return 'Free Shipping';
-                default:
-                    return '-';
-            }
-        }
-
-        // Format currency
-        function formatCurrency(amount) {
-            return amount === 0 ? 'No min' : `$${amount}`;
-        }
-
-        // Format date
-        function formatDate(dateStr) {
-            return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-        }
-
-        // Format datetime
-        function formatDateTime(dateStr) {
-            return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        }
-
-        // Get usage percentage
         function getUsagePercentage(coupon) {
-            if (!coupon.usageLimit) return 0;
+            if (!coupon.usageLimit || coupon.usageLimit === 0) return 0;
             return Math.min((coupon.usedCount / coupon.usageLimit) * 100, 100);
         }
 
-        // Filter coupons by status for display
-        function filterCouponsByStatus() {
-            const now = new Date();
-
-            if (currentFilter === 'all') return coupons;
-
-            return coupons.filter(coupon => {
-                const validFrom = new Date(coupon.validFrom);
-                const validTo = new Date(coupon.validTo);
-
-                switch (currentFilter) {
-                    case 'active':
-                        return coupon.isActive && now >= validFrom && now <= validTo &&
-                            (coupon.usageLimit === 0 || coupon.usedCount < coupon.usageLimit);
-                    case 'expired':
-                        return now > validTo;
-                    case 'scheduled':
-                        return coupon.isActive && now < validFrom;
-                    default:
-                        return true;
-                }
-            });
+        function updateStatistics() {
+            const total = coupons.length;
+            const active = coupons.filter(c => c.isActive === true).length;
+            const inactive = coupons.filter(c => c.isActive === false).length;
+            const totalUsed = coupons.reduce((sum, c) => sum + (c.usedCount || 0), 0);
+            
+            document.getElementById('totalCoupons').textContent = total;
+            document.getElementById('activeCoupons').textContent = active;
+            document.getElementById('inactiveCoupons').textContent = inactive;
+            document.getElementById('totalUsedCount').textContent = totalUsed;
         }
 
-        // Apply advanced filters
-        function applyAdvancedFilters(couponsArray) {
-            const type = document.getElementById('filterType')?.value || 'all';
-            const minDiscount = parseFloat(document.getElementById('minDiscount')?.value) || 0;
-            const maxDiscount = parseFloat(document.getElementById('maxDiscount')?.value) || Infinity;
-            const usageLimit = document.getElementById('usageLimit')?.value || 'all';
-
-            return couponsArray.filter(coupon => {
-                if (type !== 'all' && coupon.discountType !== type) return false;
-                if (minDiscount > 0 && coupon.discountValue < minDiscount) return false;
-                if (maxDiscount !== Infinity && coupon.discountValue > maxDiscount) return false;
-
-                if (usageLimit === 'unlimited' && coupon.usageLimit > 0) return false;
-                if (usageLimit === 'limited' && coupon.usageLimit === 0) return false;
-
-                return true;
-            });
+        // ==================== RENDER FUNCTIONS ====================
+        function renderCoupons() {
+            let filteredCoupons = [...coupons];
+            
+            // Apply filter
+            if (currentFilter === 'active') {
+                filteredCoupons = filteredCoupons.filter(c => c.isActive === true);
+            } else if (currentFilter === 'inactive') {
+                filteredCoupons = filteredCoupons.filter(c => c.isActive === false);
+            } else if (currentFilter === 'expired') {
+                const now = new Date();
+                filteredCoupons = filteredCoupons.filter(c => new Date(c.validTo) < now);
+            }
+            
+            // Apply search
+            const searchTerm = document.getElementById('searchCoupon')?.value.toLowerCase() || '';
+            if (searchTerm) {
+                filteredCoupons = filteredCoupons.filter(coupon =>
+                    coupon.couponCode?.toLowerCase().includes(searchTerm) ||
+                    coupon.description?.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            // Apply sorting
+            const sortBy = document.getElementById('sortCoupons')?.value || 'newest';
+            filteredCoupons = sortCouponsData(filteredCoupons, sortBy);
+            
+            // Pagination
+            const totalPages = Math.ceil(filteredCoupons.length / itemsPerPage);
+            if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+            
+            const start = (currentPage - 1) * itemsPerPage;
+            const paginatedCoupons = filteredCoupons.slice(start, start + itemsPerPage);
+            
+            // Update showing info
+            document.getElementById('showingInfo').textContent = 
+                `Showing ${start + 1}-${Math.min(start + itemsPerPage, filteredCoupons.length)} of ${filteredCoupons.length} coupons`;
+            
+            // Render table
+            const tbody = document.getElementById('couponsTableBody');
+            if (!tbody) return;
+            
+            if (paginatedCoupons.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" class="text-center py-8 text-gray-500">No coupons found</td></tr>`;
+            } else {
+                tbody.innerHTML = paginatedCoupons.map(coupon => `
+                    <tr class="border-b border-gray-100 coupon-row">
+                        <td class="py-2 px-4">
+                            <input type="checkbox" class="coupon-checkbox" value="${coupon.couponId}" onchange="updateSelection(this)">
+                        </td>
+                        <td class="py-2 px-4">
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm font-mono font-medium" style="color: #133F53;">${coupon.couponCode}</span>
+                                <i class="fa-regular fa-copy copy-btn text-[#957A54]" onclick="copyToClipboard('${coupon.couponCode}')" title="Copy code"></i>
+                            </div>
+                        </td>
+                        <td class="py-2 px-4">
+                            <div>
+                                <p class="text-sm" style="color: #133F53;">${coupon.description || '-'}</p>
+                                <p class="text-xs" style="color: #957A54;">Type: ${coupon.couponType || 'GENERAL'}</p>
+                            </div>
+                        </td>
+                        <td class="py-2 px-4">
+                            <span class="text-sm font-medium" style="color: #133F53;">${formatDiscount(coupon)}</span>
+                        </td>
+                        <td class="py-2 px-4 text-sm">${formatCurrency(coupon.minOrderAmount)}</td>
+                        <td class="py-2 px-4 text-sm">${getValidityDisplay(coupon)}</td>
+                        <td class="py-2 px-4">
+                            <div>
+                                <p class="text-sm">${coupon.usedCount || 0}/${coupon.usageLimit || '∞'}</p>
+                                <div class="w-16 h-1 bg-gray-200 rounded-full mt-1">
+                                    <div class="h-1 rounded-full bg-[#D89F34]" style="width: ${getUsagePercentage(coupon)}%"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-2 px-4">${getStatusBadge(coupon)}</td>
+                        <td class="py-2 px-4">
+                            <div class="flex gap-2">
+                                <button onclick="viewCoupon(${coupon.couponId})" class="text-[#957A54] hover:text-[#133F53]" title="View">
+                                    <i class="fa-regular fa-eye"></i>
+                                </button>
+                                <button onclick="editCoupon(${coupon.couponId})" class="text-[#957A54] hover:text-[#D89F34]" title="Edit">
+                                    <i class="fa-regular fa-pen-to-square"></i>
+                                </button>
+                                <button onclick="openDeleteModal(${coupon.couponId})" class="text-[#957A54] hover:text-red-600" title="Delete">
+                                    <i class="fa-regular fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+            
+            // Update pagination buttons
+            renderPaginationButtons(totalPages);
+            updateSelectAll();
         }
-
-        // Clear advanced filters
-        function clearAdvancedFilters() {
-            document.getElementById('filterType').value = 'all';
-            document.getElementById('minDiscount').value = '';
-            document.getElementById('maxDiscount').value = '';
-            document.getElementById('usageLimit').value = 'all';
-            renderCoupons();
+        
+        function renderPaginationButtons(totalPages) {
+            const container = document.getElementById('paginationButtons');
+            if (!container) return;
+            
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            let buttons = '';
+            buttons += `<button class="w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA]" onclick="changePage('prev')" ${currentPage === 1 ? 'disabled' : ''}>
+                            <i class="fa-solid fa-chevron-left text-xs"></i>
+                        </button>`;
+            
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, startPage + 4);
+            
+            for (let i = startPage; i <= endPage; i++) {
+                buttons += `<button class="w-8 h-8 rounded ${i === currentPage ? 'bg-[#133F53] text-white' : 'border border-gray-200 hover:bg-[#F8F8EA]'}" onclick="goToPage(${i})">${i}</button>`;
+            }
+            
+            buttons += `<button class="w-8 h-8 rounded border border-gray-200 hover:bg-[#F8F8EA]" onclick="changePage('next')" ${currentPage === totalPages ? 'disabled' : ''}>
+                            <i class="fa-solid fa-chevron-right text-xs"></i>
+                        </button>`;
+            
+            container.innerHTML = buttons;
         }
-
-        // Sort coupons data
+        
         function sortCouponsData(couponsArray, sortBy) {
             const sorted = [...couponsArray];
             switch (sortBy) {
@@ -1192,178 +874,177 @@
                 case 'discount-low':
                     return sorted.sort((a, b) => a.discountValue - b.discountValue);
                 case 'usage-high':
-                    return sorted.sort((a, b) => b.usedCount - a.usedCount);
+                    return sorted.sort((a, b) => (b.usedCount || 0) - (a.usedCount || 0));
                 default:
                     return sorted;
             }
         }
-
-        // Sort coupons
+        
+        // ==================== EVENT HANDLERS ====================
         function sortCoupons() {
+            currentPage = 1;
             renderCoupons();
         }
-
-        // Toggle advanced filters
-        function toggleAdvancedFilters() {
-            const filter = document.getElementById('advancedFilters');
-            filter.classList.toggle('hidden');
+        
+        function goToPage(page) {
+            currentPage = page;
+            renderCoupons();
         }
-
-        // Generate random coupon code
-        function generateRandomCode() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-            let code = '';
-            for (let i = 0; i < 8; i++) {
-                code += chars.charAt(Math.floor(Math.random() * chars.length));
+        
+        function changePage(direction) {
+            if (direction === 'prev' && currentPage > 1) {
+                currentPage--;
+                renderCoupons();
+            } else if (direction === 'next') {
+                currentPage++;
+                renderCoupons();
             }
-            document.getElementById('couponCode').value = code;
         }
-
-        // Toggle discount fields based on type
-        function toggleDiscountFields() {
-            const type = document.getElementById('discountType').value;
-            const discountField = document.getElementById('discountValueField');
-            const discountLabel = document.getElementById('discountLabel');
-
-            if (type === 'free-shipping') {
-                discountField.style.display = 'none';
+        
+        function debounceSearch() {
+            const loadingIndicator = document.getElementById('searchLoading');
+            if (loadingIndicator) loadingIndicator.classList.remove('hidden');
+            
+            if (searchTimeout) clearTimeout(searchTimeout);
+            
+            searchTimeout = setTimeout(() => {
+                if (loadingIndicator) loadingIndicator.classList.add('hidden');
+                currentPage = 1;
+                renderCoupons();
+            }, DEBOUNCE_DELAY);
+        }
+        
+        function toggleFilterDropdown() {
+            const dropdown = document.getElementById('filterDropdown');
+            const arrow = document.getElementById('filterDropdownArrow');
+            isFilterDropdownOpen = !isFilterDropdownOpen;
+            
+            if (isFilterDropdownOpen) {
+                dropdown.classList.remove('hidden');
+                arrow.style.transform = 'rotate(180deg)';
             } else {
-                discountField.style.display = 'block';
-                discountLabel.textContent = type === 'percentage' ? 'Discount Value (%)' : 'Discount Value ($)';
+                dropdown.classList.add('hidden');
+                arrow.style.transform = 'rotate(0deg)';
             }
         }
-
-        // Copy to clipboard
-        function copyToClipboard(code) {
-            navigator.clipboard.writeText(code).then(() => {
-                showNotification(`Coupon code "${code}" copied to clipboard!`, 'success');
-            });
+        
+        function selectFilter(filterValue, filterText) {
+            currentFilter = filterValue;
+            document.getElementById('selectedFilterText').textContent = filterText;
+            toggleFilterDropdown();
+            currentPage = 1;
+            renderCoupons();
         }
-
-        // Open create coupon modal
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('filterDropdown');
+            const button = document.getElementById('filterDropdownButton');
+            const arrow = document.getElementById('filterDropdownArrow');
+            
+            if (isFilterDropdownOpen && dropdown && button && !button.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.add('hidden');
+                arrow.style.transform = 'rotate(0deg)';
+                isFilterDropdownOpen = false;
+            }
+        });
+        
+        // ==================== COUPON CRUD OPERATIONS ====================
         function openCreateCouponModal() {
-            currentEditId = null;
             document.getElementById('modalTitle').textContent = 'Create New Coupon';
             document.getElementById('couponId').value = '';
             document.getElementById('couponForm').reset();
-
-            // Set default dates
+            
             const now = new Date();
             const nextYear = new Date();
             nextYear.setFullYear(nextYear.getFullYear() + 1);
-
+            
             document.getElementById('validFrom').value = formatDateTimeLocal(now);
             document.getElementById('validTo').value = formatDateTimeLocal(nextYear);
-            document.getElementById('isActive').checked = true;
-
+            document.getElementById('discountType').value = 'PERCENTAGE';
+            document.getElementById('couponType').value = 'GENERAL';
+            
             document.getElementById('couponModal').classList.remove('hidden');
             document.getElementById('couponModal').classList.add('flex');
         }
-
-        // Edit coupon
-        function editCoupon(id) {
-            const coupon = coupons.find(c => c.id === id);
+        
+        async function editCoupon(couponId) {
+            const coupon = coupons.find(c => c.couponId === couponId);
             if (!coupon) return;
-
-            currentEditId = id;
+            
             document.getElementById('modalTitle').textContent = 'Edit Coupon';
-            document.getElementById('couponId').value = coupon.id;
-            document.getElementById('couponCode').value = coupon.code;
-            document.getElementById('couponDescription').value = coupon.description;
+            document.getElementById('couponId').value = coupon.couponId;
+            document.getElementById('couponCode').value = coupon.couponCode;
+            document.getElementById('couponDescription').value = coupon.description || '';
             document.getElementById('discountType').value = coupon.discountType;
             document.getElementById('discountValue').value = coupon.discountValue;
-            document.getElementById('minOrderAmount').value = coupon.minOrderAmount;
-            document.getElementById('maxDiscountAmount').value = coupon.maxDiscountAmount;
-            document.getElementById('usageLimitPerCoupon').value = coupon.usageLimit;
-            document.getElementById('usageLimitPerCustomer').value = coupon.usagePerCustomer;
+            document.getElementById('minOrderAmount').value = coupon.minOrderAmount || 0;
+            document.getElementById('maxDiscountAmount').value = coupon.maxDiscountAmount || 0;
+            document.getElementById('usageLimit').value = coupon.usageLimit || 0;
+            document.getElementById('usagePerCustomer').value = coupon.usagePerCustomer || 1;
             document.getElementById('validFrom').value = formatDateTimeLocal(coupon.validFrom);
             document.getElementById('validTo').value = formatDateTimeLocal(coupon.validTo);
-            document.getElementById('isActive').checked = coupon.isActive;
-            document.getElementById('excludeSaleItems').checked = coupon.excludeSaleItems;
-            document.getElementById('freeShipping').checked = coupon.freeShipping;
-
-            toggleDiscountFields();
-
+            document.getElementById('couponType').value = coupon.couponType || 'GENERAL';
+            document.getElementById('categoryName').value = coupon.categoryName || '';
+            document.getElementById('productIds').value = coupon.productIds ? coupon.productIds.join(',') : '';
+            document.getElementById('userIds').value = coupon.userIds ? coupon.userIds.join(',') : '';
+            
             document.getElementById('couponModal').classList.remove('hidden');
             document.getElementById('couponModal').classList.add('flex');
         }
-
-        // Format datetime-local
-        function formatDateTimeLocal(dateStr) {
-            const date = new Date(dateStr);
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-            return `${year}-${month}-${day}T${hours}:${minutes}`;
-        }
-
-        // Close coupon modal
-        function closeCouponModal() {
-            document.getElementById('couponModal').classList.add('hidden');
-            document.getElementById('couponModal').classList.remove('flex');
-        }
-
-        // Save coupon
-        function saveCoupon(event) {
+        
+        async function saveCoupon(event) {
             event.preventDefault();
-
+            
+            const couponId = document.getElementById('couponId').value;
             const couponData = {
-                id: currentEditId || String(Date.now()),
-                code: document.getElementById('couponCode').value.toUpperCase(),
+                couponCode: document.getElementById('couponCode').value.toUpperCase(),
                 description: document.getElementById('couponDescription').value,
                 discountType: document.getElementById('discountType').value,
                 discountValue: parseFloat(document.getElementById('discountValue').value) || 0,
                 minOrderAmount: parseFloat(document.getElementById('minOrderAmount').value) || 0,
                 maxDiscountAmount: parseFloat(document.getElementById('maxDiscountAmount').value) || 0,
-                usageLimit: parseInt(document.getElementById('usageLimitPerCoupon').value) || 0,
-                usagePerCustomer: parseInt(document.getElementById('usageLimitPerCustomer').value) || 1,
+                usageLimit: parseInt(document.getElementById('usageLimit').value) || 0,
+                usagePerCustomer: parseInt(document.getElementById('usagePerCustomer').value) || 1,
                 validFrom: document.getElementById('validFrom').value,
                 validTo: document.getElementById('validTo').value,
-                isActive: document.getElementById('isActive').checked,
-                excludeSaleItems: document.getElementById('excludeSaleItems').checked,
-                freeShipping: document.getElementById('freeShipping').checked,
-                usedCount: 0,
-                createdAt: new Date().toISOString().split('T')[0]
+                isActive: true,
+                couponType: document.getElementById('couponType').value,
+                categoryName: document.getElementById('categoryName').value,
+                productIds: document.getElementById('productIds').value ? document.getElementById('productIds').value.split(',').map(id => parseInt(id.trim())) : [],
+                userIds: document.getElementById('userIds').value ? document.getElementById('userIds').value.split(',').map(id => parseInt(id.trim())) : []
             };
-
-            if (currentEditId) {
-                // Update existing coupon
-                const index = coupons.findIndex(c => c.id === currentEditId);
-                if (index !== -1) {
-                    coupons[index] = { ...coupons[index], ...couponData };
+            
+            try {
+                if (couponId) {
+                    await updateCoupon(couponId, couponData);
+                    showNotification('Coupon updated successfully!', 'success');
+                } else {
+                    await createCoupon(couponData);
+                    showNotification('Coupon created successfully!', 'success');
                 }
-                showNotification('Coupon updated successfully!', 'success');
-            } else {
-                // Add new coupon
-                coupons.push(couponData);
-                showNotification('Coupon created successfully!', 'success');
+                closeCouponModal();
+                await fetchAllCoupons();
+            } catch (error) {
+                showNotification(error.message, 'error');
             }
-
-            closeCouponModal();
-            renderCoupons();
         }
-
-        // View coupon details
-        function viewCoupon(id) {
-            const coupon = coupons.find(c => c.id === id);
+        
+        async function viewCoupon(couponId) {
+            const coupon = coupons.find(c => c.couponId === couponId);
             if (!coupon) return;
-
-            const modal = document.getElementById('viewCouponModal');
+            
             const details = document.getElementById('couponDetails');
-
             details.innerHTML = `
                 <div class="space-y-3">
                     <div class="flex justify-between items-center pb-2 border-b">
                         <span class="text-sm font-medium" style="color: #133F53;">Coupon Details</span>
                         ${getStatusBadge(coupon)}
                     </div>
-                    
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <p class="text-xs" style="color: #957A54;">Coupon Code</p>
-                            <p class="text-sm font-mono font-medium" style="color: #133F53;">${coupon.code}</p>
+                            <p class="text-sm font-mono font-medium" style="color: #133F53;">${coupon.couponCode}</p>
                         </div>
                         <div>
                             <p class="text-xs" style="color: #957A54;">Discount</p>
@@ -1371,7 +1052,7 @@
                         </div>
                         <div class="col-span-2">
                             <p class="text-xs" style="color: #957A54;">Description</p>
-                            <p class="text-sm">${coupon.description}</p>
+                            <p class="text-sm">${coupon.description || '-'}</p>
                         </div>
                         <div>
                             <p class="text-xs" style="color: #957A54;">Min Order Amount</p>
@@ -1379,15 +1060,15 @@
                         </div>
                         <div>
                             <p class="text-xs" style="color: #957A54;">Max Discount</p>
-                            <p class="text-sm">${coupon.maxDiscountAmount ? '$' + coupon.maxDiscountAmount : 'No max'}</p>
+                            <p class="text-sm">${coupon.maxDiscountAmount ? '₹' + coupon.maxDiscountAmount : 'No max'}</p>
                         </div>
                         <div>
                             <p class="text-xs" style="color: #957A54;">Valid From</p>
-                            <p class="text-sm">${formatDateTime(coupon.validFrom)}</p>
+                            <p class="text-sm">${formatFullDateTime(coupon.validFrom)}</p>
                         </div>
                         <div>
                             <p class="text-xs" style="color: #957A54;">Valid To</p>
-                            <p class="text-sm">${formatDateTime(coupon.validTo)}</p>
+                            <p class="text-sm">${formatFullDateTime(coupon.validTo)}</p>
                         </div>
                         <div>
                             <p class="text-xs" style="color: #957A54;">Usage Limit</p>
@@ -1395,70 +1076,48 @@
                         </div>
                         <div>
                             <p class="text-xs" style="color: #957A54;">Per Customer</p>
-                            <p class="text-sm">${coupon.usagePerCustomer} time${coupon.usagePerCustomer > 1 ? 's' : ''}</p>
+                            <p class="text-sm">${coupon.usagePerCustomer || 'Unlimited'} time(s)</p>
                         </div>
                         <div>
                             <p class="text-xs" style="color: #957A54;">Times Used</p>
-                            <p class="text-sm">${coupon.usedCount}</p>
+                            <p class="text-sm">${coupon.usedCount || 0}</p>
                         </div>
                         <div>
-                            <p class="text-xs" style="color: #957A54;">Created On</p>
-                            <p class="text-sm">${formatDate(coupon.createdAt)}</p>
-                        </div>
-                    </div>
-                    
-                    <div class="flex gap-4 pt-2 border-t">
-                        <div>
-                            <p class="text-xs" style="color: #957A54;">Exclude Sale Items</p>
-                            <p class="text-sm">${coupon.excludeSaleItems ? 'Yes' : 'No'}</p>
-                        </div>
-                        <div>
-                            <p class="text-xs" style="color: #957A54;">Free Shipping</p>
-                            <p class="text-sm">${coupon.freeShipping ? 'Yes' : 'No'}</p>
+                            <p class="text-xs" style="color: #957A54;">Coupon Type</p>
+                            <p class="text-sm">${coupon.couponType || 'GENERAL'}</p>
                         </div>
                     </div>
                 </div>
             `;
-
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+            
+            document.getElementById('viewCouponModal').classList.remove('hidden');
+            document.getElementById('viewCouponModal').classList.add('flex');
         }
-
-        // Close view coupon modal
-        function closeViewCouponModal() {
-            document.getElementById('viewCouponModal').classList.add('hidden');
-            document.getElementById('viewCouponModal').classList.remove('flex');
-        }
-
-        // Open delete modal
-        function openDeleteModal(id) {
-            deleteId = id;
+        
+        function openDeleteModal(couponId) {
+            deleteId = couponId;
             document.getElementById('deleteModal').classList.remove('hidden');
             document.getElementById('deleteModal').classList.add('flex');
         }
-
-        // Close delete modal
-        function closeDeleteModal() {
-            deleteId = null;
-            document.getElementById('deleteModal').classList.add('hidden');
-            document.getElementById('deleteModal').classList.remove('flex');
-        }
-
-        // Confirm delete
-        function confirmDelete() {
+        
+        async function confirmDelete() {
             if (deleteId) {
-                coupons = coupons.filter(c => c.id !== deleteId);
-                renderCoupons();
-                showNotification('Coupon deleted successfully', 'success');
+                try {
+                    await deleteCoupon(deleteId);
+                    showNotification('Coupon deleted successfully', 'success');
+                    await fetchAllCoupons();
+                } catch (error) {
+                    showNotification(error.message, 'error');
+                }
             }
             closeDeleteModal();
         }
-
-        // Toggle all checkboxes
+        
+        // ==================== BULK OPERATIONS ====================
         function toggleAll() {
             const selectAll = document.getElementById('selectAll');
             const checkboxes = document.querySelectorAll('.coupon-checkbox');
-
+            
             checkboxes.forEach(cb => {
                 cb.checked = selectAll.checked;
                 if (selectAll.checked) {
@@ -1467,41 +1126,32 @@
                     selectedCoupons.delete(cb.value);
                 }
             });
-
             updateBulkActions();
-            updateSelectAll();
         }
-
-        // Update selection
+        
         function updateSelection(checkbox) {
             if (checkbox.checked) {
                 selectedCoupons.add(checkbox.value);
             } else {
                 selectedCoupons.delete(checkbox.value);
             }
-
             updateSelectAll();
             updateBulkActions();
         }
-
-        // Update select all checkbox
+        
         function updateSelectAll() {
             const selectAll = document.getElementById('selectAll');
             const checkboxes = document.querySelectorAll('.coupon-checkbox');
-
-            if (selectAll) {
-                selectAll.checked = checkboxes.length > 0 &&
-                    Array.from(checkboxes).every(cb => cb.checked);
-                selectAll.indeterminate = !selectAll.checked &&
-                    Array.from(checkboxes).some(cb => cb.checked);
+            if (selectAll && checkboxes.length > 0) {
+                selectAll.checked = Array.from(checkboxes).every(cb => cb.checked);
+                selectAll.indeterminate = !selectAll.checked && Array.from(checkboxes).some(cb => cb.checked);
             }
         }
-
-        // Update bulk actions visibility
+        
         function updateBulkActions() {
             const bulkActions = document.getElementById('bulkActions');
             const selectedCount = document.getElementById('selectedCount');
-
+            
             if (selectedCoupons.size > 0) {
                 bulkActions.classList.remove('hidden');
                 selectedCount.textContent = `${selectedCoupons.size} selected`;
@@ -1509,194 +1159,160 @@
                 bulkActions.classList.add('hidden');
             }
         }
-
-        // Clear selection
+        
         function clearSelection() {
             selectedCoupons.clear();
             document.querySelectorAll('.coupon-checkbox').forEach(cb => cb.checked = false);
-            document.getElementById('selectAll').checked = false;
+            if (document.getElementById('selectAll')) {
+                document.getElementById('selectAll').checked = false;
+            }
             updateBulkActions();
         }
-
-        // Bulk delete
-        function bulkDelete() {
+        
+        async function bulkDelete() {
             if (selectedCoupons.size === 0) return;
-
+            
             if (confirm(`Delete ${selectedCoupons.size} selected coupons?`)) {
-                coupons = coupons.filter(coupon => !selectedCoupons.has(coupon.id));
-                clearSelection();
-                renderCoupons();
-                showNotification('Coupons deleted successfully', 'success');
+                showLoading(true);
+                try {
+                    for (const couponId of selectedCoupons) {
+                        await deleteCoupon(parseInt(couponId));
+                    }
+                    clearSelection();
+                    await fetchAllCoupons();
+                    showNotification('Coupons deleted successfully', 'success');
+                } catch (error) {
+                    showNotification(error.message, 'error');
+                } finally {
+                    showLoading(false);
+                }
             }
         }
-
-        // Export coupons
+        
+        // ==================== UTILITY FUNCTIONS ====================
+        function formatDateTimeLocal(date) {
+            const d = new Date(date);
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const hours = String(d.getHours()).padStart(2, '0');
+            const minutes = String(d.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+        
+        function generateRandomCode() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let code = '';
+            for (let i = 0; i < 8; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            document.getElementById('couponCode').value = code;
+        }
+        
+        function copyToClipboard(code) {
+            navigator.clipboard.writeText(code).then(() => {
+                showNotification(`Coupon code "${code}" copied to clipboard!`, 'success');
+            });
+        }
+        
         function exportCoupons() {
-            // Create CSV
-            const headers = ['Code', 'Description', 'Discount Type', 'Discount Value', 'Min Order', 'Valid From', 'Valid To', 'Usage', 'Status'];
-            const csvRows = [];
-
-            csvRows.push(headers.join(','));
-
+            const headers = ['ID', 'Code', 'Description', 'Discount Type', 'Discount Value', 'Min Order', 'Max Discount', 'Valid From', 'Valid To', 'Usage Limit', 'Used Count', 'Status'];
+            const csvRows = [headers.join(',')];
+            
             coupons.forEach(coupon => {
                 const row = [
-                    coupon.code,
-                    `"${coupon.description}"`,
+                    coupon.couponId,
+                    coupon.couponCode,
+                    `"${coupon.description || ''}"`,
                     coupon.discountType,
                     coupon.discountValue,
                     coupon.minOrderAmount,
+                    coupon.maxDiscountAmount || '',
                     coupon.validFrom,
                     coupon.validTo,
-                    `${coupon.usedCount}/${coupon.usageLimit || '∞'}`,
+                    coupon.usageLimit || 'Unlimited',
+                    coupon.usedCount || 0,
                     coupon.isActive ? 'Active' : 'Inactive'
                 ];
                 csvRows.push(row.join(','));
             });
-
-            const csv = csvRows.join('\n');
-            const blob = new Blob([csv], { type: 'text/csv' });
+            
+            const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
             a.download = `coupons_${new Date().toISOString().split('T')[0]}.csv`;
             a.click();
-
+            window.URL.revokeObjectURL(url);
             showNotification('Coupons exported successfully', 'success');
         }
-
-        // Change page
-        function changePage(direction) {
-            const filteredCoupons = filterCouponsByStatus();
-            const totalPages = Math.ceil(filteredCoupons.length / itemsPerPage);
-
-            if (direction === 'prev' && currentPage > 1) {
-                currentPage--;
-            } else if (direction === 'next' && currentPage < totalPages) {
-                currentPage++;
-            }
-            renderCoupons();
+        
+        function closeCouponModal() {
+            document.getElementById('couponModal').classList.add('hidden');
+            document.getElementById('couponModal').classList.remove('flex');
         }
-
-        // ==================== DEBOUNCE SEARCH FUNCTIONS ====================
-        function debounceSearch() {
-            const loadingIndicator = document.getElementById('searchLoading');
-            if (loadingIndicator) {
-                loadingIndicator.classList.remove('hidden');
-            }
-
-            if (searchTimeout) {
-                clearTimeout(searchTimeout);
-            }
-
-            searchTimeout = setTimeout(() => {
-                performSearch();
-            }, DEBOUNCE_DELAY);
+        
+        function closeViewCouponModal() {
+            document.getElementById('viewCouponModal').classList.add('hidden');
+            document.getElementById('viewCouponModal').classList.remove('flex');
         }
-
-        function performSearch() {
-            const loadingIndicator = document.getElementById('searchLoading');
-            if (loadingIndicator) {
-                loadingIndicator.classList.add('hidden');
-            }
-
-            currentPage = 1;
-            renderCoupons();
+        
+        function closeDeleteModal() {
+            deleteId = null;
+            document.getElementById('deleteModal').classList.add('hidden');
+            document.getElementById('deleteModal').classList.remove('flex');
         }
-
-        // ==================== DROPDOWN FUNCTIONS ====================
-        function toggleFilterDropdown() {
-            const dropdown = document.getElementById('filterDropdown');
-            const arrow = document.getElementById('filterDropdownArrow');
-
-            isFilterDropdownOpen = !isFilterDropdownOpen;
-
-            if (isFilterDropdownOpen) {
-                dropdown.classList.remove('hidden');
-                arrow.style.transform = 'rotate(180deg)';
-                updateDropdownCheckmarks();
-            } else {
-                dropdown.classList.add('hidden');
-                arrow.style.transform = 'rotate(0deg)';
-            }
-        }
-
-        function selectFilter(filterValue, filterText) {
-            currentFilter = filterValue;
-            document.getElementById('selectedFilterText').textContent = filterText;
-            toggleFilterDropdown();
-            updateDropdownCheckmarks();
-            filterCoupons(filterValue);
-        }
-
-        function updateDropdownCheckmarks() {
-            document.querySelectorAll('.filter-dropdown-item i').forEach(icon => {
-                icon.style.display = 'none';
-            });
-
-            const checkId = `check-${currentFilter}`;
-            const checkIcon = document.getElementById(checkId);
-            if (checkIcon) {
-                checkIcon.style.display = 'inline-block';
-            }
-        }
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function (e) {
-            const dropdown = document.getElementById('filterDropdown');
-            const button = document.getElementById('filterDropdownButton');
-            const arrow = document.getElementById('filterDropdownArrow');
-
-            if (isFilterDropdownOpen && dropdown && button &&
-                !button.contains(e.target) && !dropdown.contains(e.target)) {
-                dropdown.classList.add('hidden');
-                arrow.style.transform = 'rotate(0deg)';
-                isFilterDropdownOpen = false;
-            }
-        });
-
-        // ==================== FILTER FUNCTIONS ====================
-        function filterCoupons(status) {
-            if (status) {
-                currentFilter = status;
-
-                const filterTexts = {
-                    'all': 'All Coupons',
-                    'active': 'Active',
-                    'expired': 'Expired',
-                    'scheduled': 'Scheduled'
-                };
-                document.getElementById('selectedFilterText').textContent = filterTexts[status] || 'All Coupons';
-                updateDropdownCheckmarks();
-            }
-
-            currentPage = 1;
-            renderCoupons();
-        }
-
-        // ==================== NOTIFICATION FUNCTION ====================
+        
         function showNotification(message, type = 'info') {
             const notification = document.getElementById('notification');
             const icon = document.getElementById('notificationIcon');
             const messageEl = document.getElementById('notificationMessage');
-
-            // Set colors and icon based on type
+            
             const colors = {
                 success: { bg: '#10B981', icon: 'fa-regular fa-circle-check' },
                 error: { bg: '#EF4444', icon: 'fa-solid fa-circle-exclamation' },
                 info: { bg: '#3B82F6', icon: 'fa-solid fa-circle-info' }
             };
-
+            
             notification.style.backgroundColor = colors[type].bg;
             notification.style.color = 'white';
             icon.className = colors[type].icon;
             messageEl.textContent = message;
-
             notification.classList.remove('hidden');
-
+            
             setTimeout(() => {
                 notification.classList.add('hidden');
             }, 3000);
         }
+        
+        function showLoading(show) {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                if (show) {
+                    overlay.classList.remove('hidden');
+                } else {
+                    overlay.classList.add('hidden');
+                }
+            }
+        }
+        
+        // ==================== PAGE LOAD ====================
+        document.addEventListener('DOMContentLoaded', async function() {
+            document.getElementById('skeletonLoader').classList.remove('content-hidden');
+            document.getElementById('skeletonLoader').classList.add('content-visible');
+            document.getElementById('actualContent').classList.remove('content-visible');
+            document.getElementById('actualContent').classList.add('content-hidden');
+            
+            currentFilter = 'all';
+            document.getElementById('selectedFilterText').textContent = 'All Coupons';
+            
+            await fetchAllCoupons();
+            
+            document.getElementById('skeletonLoader').classList.remove('content-visible');
+            document.getElementById('skeletonLoader').classList.add('content-hidden');
+            document.getElementById('actualContent').classList.remove('content-hidden');
+            document.getElementById('actualContent').classList.add('content-visible');
+        });
     </script>
 </body>
 </html>
