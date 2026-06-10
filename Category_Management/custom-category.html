@@ -19,6 +19,13 @@
             50%{ transform:scaleY(1.4); opacity:1; background:linear-gradient(180deg,#D89F34 0%,#133F53 70%,#957A54 100%); }
         } */
 
+
+         * { box-sizing: border-box; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #F2F2E8; }
+        ::-webkit-scrollbar-thumb { background: #D89F34; border-radius: 10px; }
+
+
         /* ── Google / MS-style form inputs ── */
         .field-wrap { position:relative; margin-bottom:1.1rem; }
         .field-wrap input {
@@ -161,7 +168,7 @@
         .btn-disabled { background:#9ca3af !important; cursor:not-allowed !important; }
 
         /* subtle scrollbar */
-        ::-webkit-scrollbar { width:5px; } ::-webkit-scrollbar-thumb { background:#c7c7b8; border-radius:4px; }
+        /* ::-webkit-scrollbar { width:5px; } ::-webkit-scrollbar-thumb { background:#c7c7b8; border-radius:4px; } */
 
         /* smooth spin */
         .spin { animation:spin 1s linear infinite; }
@@ -658,12 +665,57 @@ function openEditModal(id) {
 }
 
 /* ── FORM SUBMIT ── */
+// async function handleFormSubmit(e) {
+//     e && e.preventDefault();
+//     if (!validateForm()) return;
+
+//     const isEdit = !!document.getElementById('editCategoryId').value;
+//     const id     = document.getElementById('editCategoryId').value;
+
+//     const categoryPath = [
+//         document.getElementById('subCat1').value.trim(),
+//         document.getElementById('subCat2').value.trim(),
+//         document.getElementById('subCat3').value.trim(),
+//     ].filter(Boolean);
+
+//     const payload = {
+//         productCategory:         document.getElementById('productCategory').value.trim(),
+//         categoryPath,
+//         productCategoryRedirect: document.getElementById('productCategoryRedirect').value.trim(),
+//         categoryPathRedirect:    document.getElementById('categoryPathRedirect').value.trim(),
+//         approved:                document.getElementById('approvedVal').value === 'true',
+//         trendingMark:            document.getElementById('trendingVal').value === 'true',
+//     };
+
+//     const btn  = document.getElementById('formSubmitBtn');
+//     const lbl  = document.getElementById('formSubmitLabel');
+//     btn.disabled = true;
+//     lbl.innerHTML = '<i class="fas fa-circle-notch spin text-xs"></i> Saving…';
+
+//     try {
+//         const url = isEdit ? `${BASE}/patch-category/${id}` : `${BASE}/adhoc/create`;
+//         const method = isEdit ? 'PATCH' : 'POST';
+//         const res = await fetch(url, {
+//             method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+//         });
+//         if (!res.ok) throw new Error(isEdit ? 'Update failed' : 'Create failed');
+//         closeModal('formOverlay');
+//         showToast('success', isEdit ? 'Category updated successfully!' : 'Category created successfully!');
+//         await fetchCategories();
+//     } catch (err) {
+//         showToast('error', err.message || 'Something went wrong');
+//     } finally {
+//         btn.disabled = false;
+//         lbl.textContent = isEdit ? 'Save Changes' : 'Create Category';
+//     }
+// }
+
 async function handleFormSubmit(e) {
     e && e.preventDefault();
     if (!validateForm()) return;
 
     const isEdit = !!document.getElementById('editCategoryId').value;
-    const id     = document.getElementById('editCategoryId').value;
+    const id = document.getElementById('editCategoryId').value;
 
     const categoryPath = [
         document.getElementById('subCat1').value.trim(),
@@ -680,23 +732,44 @@ async function handleFormSubmit(e) {
         trendingMark:            document.getElementById('trendingVal').value === 'true',
     };
 
-    const btn  = document.getElementById('formSubmitBtn');
-    const lbl  = document.getElementById('formSubmitLabel');
+    const btn = document.getElementById('formSubmitBtn');
+    const lbl = document.getElementById('formSubmitLabel');
     btn.disabled = true;
     lbl.innerHTML = '<i class="fas fa-circle-notch spin text-xs"></i> Saving…';
 
     try {
         const url = isEdit ? `${BASE}/patch-category/${id}` : `${BASE}/adhoc/create`;
         const method = isEdit ? 'PATCH' : 'POST';
+
         const res = await fetch(url, {
-            method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
         });
-        if (!res.ok) throw new Error(isEdit ? 'Update failed' : 'Create failed');
+
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({})); // Safe parse
+
+            let errorMessage = errorData.message || 
+                             errorData.error || 
+                             (isEdit ? 'Update failed' : 'Create failed');
+
+            // Special handling for duplicate category
+            if (res.status === 409 || errorData.errorCode === 'DUPLICATE_CATEGORY') {
+                errorMessage = errorData.message || "Category with this name already exists!";
+            }
+
+            throw new Error(errorMessage);
+        }
+
+        // Success
         closeModal('formOverlay');
         showToast('success', isEdit ? 'Category updated successfully!' : 'Category created successfully!');
         await fetchCategories();
+
     } catch (err) {
-        showToast('error', err.message || 'Something went wrong');
+        console.error(err);
+        showToast('error', err.message || 'Something went wrong. Please try again.');
     } finally {
         btn.disabled = false;
         lbl.textContent = isEdit ? 'Save Changes' : 'Create Category';

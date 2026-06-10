@@ -6,11 +6,20 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon_io/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon_io/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png">
+    <link rel="stylesheet" href="/css/components.css">
 
     <title>Coupon Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <style>
+
+        * { box-sizing: border-box; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #F2F2E8; }
+        ::-webkit-scrollbar-thumb { background: #D89F34; border-radius: 10px; }
+
         .coupon-card { transition: all 0.2s ease; }
         .coupon-card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
         .status-badge { padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; display: inline-flex; align-items: center; gap: 0.25rem; }
@@ -52,6 +61,7 @@
         .picker-list { max-height:300px;overflow-y:auto; }
         .load-more-btn { width:100%;padding:8px;text-align:center;font-size:12px;color:#133F53;border:1px dashed #D89F34;border-radius:8px;cursor:pointer;margin-top:6px;background:none; }
         .load-more-btn:hover { background:#F8F8EA; }
+        
     </style>
 </head>
 
@@ -161,6 +171,14 @@
                                     <option value="discount-low">Discount: Low to High</option>
                                     <option value="usage-high">Most Used</option>
                                 </select>
+
+                                <!-- Reset Button -->
+                                <button onclick="resetFilters()" 
+                                        class="px-4 py-2 text-sm border border-gray-300 hover:bg-[#F8F8EA] hover:border-[#D89F34] transition-all rounded-lg flex items-center gap-2 whitespace-nowrap"
+                                        style="color: #133F53;">
+                                    <i class="fa-solid fa-rotate-right"></i>
+                                    Reset
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1158,6 +1176,31 @@
             }
         }
 
+        function resetFilters() {
+    // Reset search
+    const searchInput = document.getElementById('searchCoupon');
+    if (searchInput) searchInput.value = '';
+
+    // Reset filter to All
+    currentFilter = 'all';
+    document.getElementById('selectedFilterText').textContent = 'All Coupons';
+
+    // Reset sort to newest
+    document.getElementById('sortCoupons').value = 'newest';
+
+    // Close dropdown if open
+    const dropdown = document.getElementById('filterDropdown');
+    if (dropdown) dropdown.classList.add('hidden');
+
+    // Reset arrow
+    const arrow = document.getElementById('filterDropdownArrow');
+    if (arrow) arrow.style.transform = 'rotate(0deg)';
+
+    // Refresh table
+    currentPage = 1;
+    renderCoupons();
+}
+
         // ==================== HELPERS ====================
         function formatCurrency(amount) { return (!amount || amount===0) ? 'No min' : `₹${amount}`; }
         function formatDiscount(coupon) {
@@ -1321,6 +1364,8 @@
 
         // ==================== INIT ====================
         document.addEventListener('DOMContentLoaded', async function() {
+
+        
             document.getElementById('skeletonLoader').className='content-visible';
             document.getElementById('actualContent').className='content-hidden';
 
