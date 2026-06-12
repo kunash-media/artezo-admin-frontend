@@ -413,6 +413,7 @@ thead th {
                                         <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">CUSTOMER</th>
                                         <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">PRODUCT</th>
                                         <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">DATE</th>
+                                        <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">Payment Mode</th>
                                         <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">AMOUNT</th>
                                         <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">STATUS</th>
                                         <th class="text-left py-3 px-4 text-xs font-semibold" style="color: #133F53;">PAYMENT</th>
@@ -724,6 +725,7 @@ thead th {
                         <span title="${productSummary}" class="block truncate">${productSummary || '-'}</span>
                     </td>
                     <td class="py-2 px-4 text-sm" style="color: #957A54;">${formatDate(order.orderDate)}</td>
+                    <td class="py-2 px-4 text-sm" style="color: #957A54;"><span class="bg-amber-100 rounded-lg border border-amber-300 p-1">${order.paymentMode}</span></td>
                     <td class="py-2 px-4 text-sm font-medium" style="color: #133F53;">${formatINR(order.finalAmount)}</td>
                     <td class="py-2 px-4">${getStatusBadge(order.orderStatus)}</td>
                     <td class="py-2 px-4">${getPaymentBadge(order.paymentStatus)}</td>
