@@ -17,9 +17,9 @@
     <style>
 
          * { box-sizing: border-box; }
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: #F2F2E8; }
-::-webkit-scrollbar-thumb { background: #D89F34; border-radius: 10px; }
+            ::-webkit-scrollbar { width: 5px; height: 5px; }
+            ::-webkit-scrollbar-track { background: #F2F2E8; }
+            ::-webkit-scrollbar-thumb { background: #D89F34; border-radius: 10px; }
 
 
 
@@ -287,7 +287,7 @@ thead th {
                         <div class="bg-white p-4 rounded-lg border border-[#D89F34] order-card">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <p class="text-xs text-gray-500">Placed / Confirmed</p>
+                                    <p class="text-xs text-gray-500">Placed</p>
                                     <p class="text-xl font-bold" id="statPlaced" style="color: #133F53;">0</p>
                                 </div>
                                 <div class="w-10 h-10 rounded-full border border-[#D89F34] bg-[#F8F8EA] flex items-center justify-center">
@@ -330,39 +330,43 @@ thead th {
 
                             <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
                                 <!-- Status Filter Dropdown -->
-                                <div class="relative w-full sm:w-44">
-                                    <button id="statusDropdownButton"
-                                        class="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm flex items-center justify-between bg-white hover:bg-[#F8F8EA] transition-colors"
-                                        style="color: #133F53;" onclick="toggleStatusDropdown()">
-                                        <span id="selectedStatusText">All Orders</span>
-                                        <i class="fa-solid fa-chevron-down text-xs transition-transform duration-200"
-                                            id="statusDropdownArrow" style="color: #957A54;"></i>
-                                    </button>
-                                    <div id="statusDropdown"
-                                        class="absolute right-0 mt-1 w-full z-50 bg-white rounded-lg shadow-lg py-1 hidden border border-gray-100">
-                                        <button class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between" onclick="selectStatus('all', 'All Orders')">
-                                            <span style="color: #133F53;">All Orders</span>
-                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;" id="check-status-all"></i>
-                                        </button>
-                                        <button class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between" onclick="selectStatus('PLACED', 'Placed')">
-                                            <span style="color: #133F53;">Placed</span>
-                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;" id="check-status-PLACED"></i>
-                                        </button>
-                                        
-                                        <button class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between" onclick="selectStatus('SHIPPED', 'Shipped')">
-                                            <span style="color: #133F53;">Shipped</span>
-                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;" id="check-status-SHIPPED"></i>
-                                        </button>
-                                        <button class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between" onclick="selectStatus('DELIVERED', 'Delivered')">
-                                            <span style="color: #133F53;">Delivered</span>
-                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;" id="check-status-DELIVERED"></i>
-                                        </button>
-                                        <button class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between" onclick="selectStatus('CANCELLED', 'Cancelled')">
-                                            <span style="color: #133F53;">Cancelled</span>
-                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;" id="check-status-CANCELLED"></i>
-                                        </button>
-                                    </div>
-                                </div>
+                                <!-- Payment Status Filter -->
+<div class="relative w-full sm:w-40">
+    <button id="paymentDropdownButton"
+        class="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm flex items-center justify-between bg-white hover:bg-[#F8F8EA] transition-colors"
+        style="color: #133F53;" onclick="togglePaymentDropdown()">
+        <span id="selectedPaymentText">All Payments</span>
+        <i class="fa-solid fa-chevron-down text-xs transition-transform duration-200"
+            id="paymentDropdownArrow" style="color: #957A54;"></i>
+    </button>
+    <div id="paymentDropdown"
+        class="absolute right-0 mt-1 w-full z-50 bg-white rounded-lg shadow-lg py-1 hidden border border-gray-100">
+        <button class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] flex items-center justify-between" onclick="selectPaymentFilter('all','All Payments')">
+            <span style="color:#133F53;">All Payments</span>
+            <i class="fa-regular fa-circle-check" style="color:#133F53;display:none;" id="check-pay-all"></i>
+        </button>
+        <button class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] flex items-center justify-between" onclick="selectPaymentFilter('PAID','Paid')">
+            <span style="color:#133F53;">Paid</span>
+            <i class="fa-regular fa-circle-check" style="color:#133F53;display:none;" id="check-pay-PAID"></i>
+        </button>
+        <button class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] flex items-center justify-between" onclick="selectPaymentFilter('UNPAID','Unpaid')">
+            <span style="color:#133F53;">Unpaid</span>
+            <i class="fa-regular fa-circle-check" style="color:#133F53;display:none;" id="check-pay-UNPAID"></i>
+        </button>
+        <button class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] flex items-center justify-between" onclick="selectPaymentFilter('PENDING','Pending')">
+            <span style="color:#133F53;">Pending</span>
+            <i class="fa-regular fa-circle-check" style="color:#133F53;display:none;" id="check-pay-PENDING"></i>
+        </button>
+        <button class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] flex items-center justify-between" onclick="selectPaymentFilter('FAILED','Failed')">
+            <span style="color:#133F53;">Failed</span>
+            <i class="fa-regular fa-circle-check" style="color:#133F53;display:none;" id="check-pay-FAILED"></i>
+        </button>
+        <button class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] flex items-center justify-between" onclick="selectPaymentFilter('REFUNDED','Refunded')">
+            <span style="color:#133F53;">Refunded</span>
+            <i class="fa-regular fa-circle-check" style="color:#133F53;display:none;" id="check-pay-REFUNDED"></i>
+        </button>
+    </div>
+</div>
 
                                 <!-- Date Filter Button -->
                                 <button
@@ -401,8 +405,18 @@ thead th {
                     </div>
 
                     <!-- Orders Table -->
+                    <!-- Orders Table -->
                     <div class="bg-white rounded-lg overflow-hidden border border-gray-400">
-                        <div class="overflow-x-auto h-[400px] ">
+                        <!-- Table toolbar -->
+                        <div class="flex justify-end items-center px-4 py-2 border-b border-gray-100 bg-[#F8F8EA]">
+                            <button id="refreshOrdersBtn" onclick="refreshOrders()" title="Refresh orders"
+                                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs hover:bg-white transition-colors"
+                                style="color:#133F53;">
+                                <i class="fa-solid fa-arrows-rotate" id="refreshIcon"></i>
+                                <span>Refresh</span>
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto h-[400px]">
                             <table class="w-full" id="ordersTable">
                                 <thead class="sticky z-40 top-0">
                                     <tr class="border-b border-gray-300 ">
@@ -473,7 +487,11 @@ thead th {
                         <i class="fa-solid fa-file-invoice"></i>
                         Invoice
                     </button>
-                    <button onclick="closeViewOrderModal()" class="text-gray-500 hover:text-gray-700 ml-2">
+                    <!-- <button onclick="closeViewOrderModal()" class="text-gray-500 hover:text-gray-700 ml-2">
+                        <i class="fa-solid fa-times text-lg"></i>
+                    </button> -->
+                    
+                    <button onclick="closeViewOrderModal()" class="text-gray-500 hover:text-gray-700 ml-2" title="Close">
                         <i class="fa-solid fa-times text-lg"></i>
                     </button>
                 </div>
@@ -487,6 +505,15 @@ thead th {
 
             <div id="orderDetails" class="p-6 space-y-5">
                 <!-- Populated dynamically -->
+            </div>
+
+            <!-- View Modal Footer -->
+            <div class="sticky bottom-0 bg-white border-t border-gray-100 px-6 py-3 flex justify-end">
+                <button onclick="closeViewOrderModal()"
+                    class="px-5 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+                    style="color:#133F53;">
+                    <i class="fa-solid fa-times mr-1"></i> Close
+                </button>
             </div>
         </div>
     </div>
@@ -518,6 +545,57 @@ thead th {
             <span id="notificationMessage" class="text-sm"></span>
         </div>
     </div>
+
+    <!-- Edit Order Status & Payment Modal -->
+<div id="editOrderModal" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-6 max-w-sm w-full mx-4 modal-enter shadow-2xl">
+        <div class="flex justify-between items-center mb-5">
+            <h3 class="text-base font-bold" style="color:#133F53;">Edit Order</h3>
+            <button onclick="closeEditOrderModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </div>
+
+        <div class="space-y-4">
+            <!-- Order Status -->
+            <div>
+                <label class="text-xs font-semibold mb-1 block" style="color:#133F53;">Order Status</label>
+                <select id="editOrderStatusSelect"
+                    class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#D89F34]"
+                    style="color:#133F53;">
+                    <option value="PLACED">Placed</option>
+                    <option value="SHIPPED">Shipped</option>
+                    <option value="DELIVERED">Delivered</option>
+                    <option value="CANCELLED">Cancelled</option>
+                    <option value="RETURN_REQUESTED">Return Requested</option>
+                </select>
+            </div>
+
+            <!-- Payment Status -->
+            <div>
+                <label class="text-xs font-semibold mb-1 block" style="color:#133F53;">Payment Status</label>
+                <select id="editPaymentStatusSelect"
+                    class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#D89F34]"
+                    style="color:#133F53;">
+                    <option value="PAID">Paid</option>
+                    <option value="UNPAID">Unpaid</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="FAILED">Failed</option>
+                    <option value="REFUNDED">Refunded</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="flex gap-3 mt-6">
+            <button onclick="closeEditOrderModal()"
+                class="flex-1 py-2 px-4 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+                style="color:#133F53;">Cancel</button>
+            <button onclick="confirmEditOrder()"
+                class="flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+                style="background-color:#133F53; color:white;">Save Changes</button>
+        </div>
+    </div>
+</div>
 
     <script>
         // ==================== API CONFIG ====================
@@ -564,6 +642,38 @@ thead th {
                 + ' ' + d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
         }
 
+
+        // ==================== REFRESH ORDERS ====================
+async function refreshOrders() {
+    const btn  = document.getElementById('refreshOrdersBtn');
+    const icon = document.getElementById('refreshIcon');
+    if (btn) btn.disabled = true;
+    if (icon) icon.style.animation = 'spin 0.8s linear infinite';
+
+    try {
+        const probe = await fetch(`${GET_ALL_ORDERS_URL}?page=0&size=1`);
+        if (!probe.ok) throw new Error(`HTTP ${probe.status}`);
+        const probeJson = await probe.json();
+        const total = probeJson?.data?.page?.totalElements || 1;
+
+        const response = await fetch(`${GET_ALL_ORDERS_URL}?page=0&size=${total}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const json = await response.json();
+
+        orders = (json.data && json.data.content) ? json.data.content : [];
+        if (typeof OrderBadge !== 'undefined') OrderBadge.setTotal(orders.length);
+
+        updateStats();
+        applyFiltersAndRender();
+        showNotification('Orders refreshed', 'success');
+    } catch (err) {
+        showNotification('Refresh failed: ' + err.message, 'error');
+    } finally {
+        if (icon) icon.style.animation = '';
+        if (btn)  btn.disabled = false;
+    }
+}
+
         // ==================== STATUS HELPERS ====================
         function getStatusBadge(status) {
             const s = (status || '').toUpperCase();
@@ -573,6 +683,9 @@ thead th {
                 DELIVERED:   { bg: '#D1FAE5', color: '#065F46', icon: 'fa-solid fa-circle-check',   label: 'Delivered' },
                 CANCELLED:   { bg: '#FEE2E2', color: '#991B1B', icon: 'fa-solid fa-circle-xmark',   label: 'Cancelled' },
                 PENDING:     { bg: '#FEF3C7', color: '#92400E', icon: 'fa-regular fa-clock',         label: 'Pending' },
+                RETURN_REQUESTED : { bg: '#FEE2E2', color: '#800020', icon: 'fa-solid fa-circle-xmark',   label: 'RETURN_REQUESTED' },
+                EXCHANGE_REQUESTED : { bg: '#FEE2E2', color: '#991B1B', icon: 'fa-solid fa-circle-xmark',   label: 'EXCHANGE_REQUESTED' },
+
             };
             const cfg = map[s] || { bg: '#F3F4F6', color: '#374151', icon: 'fa-solid fa-circle', label: status || 'Unknown' };
             return `<span class="status-badge" style="background-color:${cfg.bg};color:${cfg.color};">
@@ -584,6 +697,7 @@ thead th {
             const s = (status || '').toUpperCase();
             const map = {
                 PAID:     { bg: '#D1FAE5', color: '#065F46', icon: 'fa-regular fa-circle-check', label: 'Paid' },
+                UNPAID:   { bg: '#FFEDD5', color: '#9A3412', icon: 'fa-regular fa-circle-check', label: 'Unpaid' },
                 PENDING:  { bg: '#FEF3C7', color: '#92400E', icon: 'fa-regular fa-clock',        label: 'Pending' },
                 FAILED:   { bg: '#FEE2E2', color: '#991B1B', icon: 'fa-solid fa-circle-xmark',   label: 'Failed' },
                 REFUNDED: { bg: '#FEE2E2', color: '#991B1B', icon: 'fa-solid fa-rotate-left',    label: 'Refunded' },
@@ -596,12 +710,27 @@ thead th {
         }
 
         // ==================== PAGE LOAD ====================
+        // document.addEventListener('DOMContentLoaded', function () {
+        //     currentFilter = 'all';
+        //     document.getElementById('selectedStatusText').textContent = 'All Orders';
+        //     updateStatusCheckmarks();
+        //     loadData();
+        // });
+
         document.addEventListener('DOMContentLoaded', function () {
-            currentFilter = 'all';
-            document.getElementById('selectedStatusText').textContent = 'All Orders';
-            updateStatusCheckmarks();
-            loadData();
-        });
+    currentFilter = 'all';
+    currentPaymentFilter = 'all';
+
+    const statusText = document.getElementById('selectedStatusText');
+    if (statusText) statusText.textContent = 'All Orders';
+
+    const paymentText = document.getElementById('selectedPaymentText');
+    if (paymentText) paymentText.textContent = 'All Payments';
+
+    updateStatusCheckmarks();
+    updatePaymentCheckmarks();
+    loadData();
+});
 
     
 
@@ -674,6 +803,10 @@ thead th {
                 });
             }
 
+            if (currentPaymentFilter !== 'all') {
+                result = result.filter(o => (o.paymentStatus||'').toUpperCase() === currentPaymentFilter.toUpperCase());
+            }
+
             filteredOrders = result;
             renderOrders();
             updateResetBtn();
@@ -685,6 +818,11 @@ thead th {
 
             const total = filteredOrders.length;
             const totalPages = Math.max(1, Math.ceil(total / itemsPerPage));
+
+            currentPaymentFilter = 'all';
+            document.getElementById('selectedPaymentText').textContent = 'All Payments';
+            updatePaymentCheckmarks();
+
             if (currentPage > totalPages) currentPage = 1;
 
             const start = (currentPage - 1) * itemsPerPage;
@@ -827,73 +965,78 @@ thead th {
             renderOrders();
         }
 
-        function toggleEditDropdown(key, currentStatus) {
-            if (openEditDropId && openEditDropId !== key) {
-                const prev = document.getElementById('editDrop_' + openEditDropId);
-                if (prev) prev.classList.add('hidden');
-            }
-            const drop = document.getElementById('editDrop_' + key);
-            if (!drop) return;
+        // ==================== EDIT ORDER OVERLAY ====================
+let editingOrderKey = null;
 
-            if (!drop.classList.contains('hidden')) {
-                drop.classList.add('hidden');
-                openEditDropId = null;
-                return;
-            }
+function toggleEditDropdown(key, currentStatus) {
+    // Close any open inline dropdown remnants (safety)
+    if (openEditDropId && openEditDropId !== key) {
+        const prev = document.getElementById('editDrop_' + openEditDropId);
+        if (prev) prev.classList.add('hidden');
+    }
+    openEditDropId = null;
 
-            drop.innerHTML = ORDER_STATUSES.map(s => {
-                const cur = s.value === (currentStatus||'').toUpperCase();
-                return `<button onclick="patchOrderStatus('${key}','${s.value}')"
-                    class="w-full text-left px-4 py-2 text-sm hover:bg-[#F8F8EA] flex items-center justify-between"
-                    style="color:#133F53;${cur ? 'font-weight:700;' : ''}">
-                    <span>${s.label}</span>
-                    ${cur ? '<i class="fa-solid fa-check text-xs" style="color:#D89F34;"></i>' : ''}
-                </button>`;
-            }).join('');
+    const order = orders.find(o => String(o.orderId) === String(key));
+    if (!order) return;
 
-            drop.classList.remove('hidden');
-            openEditDropId = key;
-        }
+    editingOrderKey = key;
 
-    
+    // Pre-select current values
+    const osEl = document.getElementById('editOrderStatusSelect');
+    const psEl = document.getElementById('editPaymentStatusSelect');
+    if (osEl) osEl.value = (order.orderStatus || 'PLACED').toUpperCase();
+    if (psEl) psEl.value = (order.paymentStatus || 'PENDING').toUpperCase();
 
-       async function patchOrderStatus(key, newStatus) {
-            const drop = document.getElementById('editDrop_' + key);
-            if (drop) drop.classList.add('hidden');
-            openEditDropId = null;
-        
-            const order = orders.find(o => String(o.orderId) === String(key));
-            if (!order) { showNotification('Order not found locally', 'error'); return; }
-        
-            try {
-                const res = await fetch(PATCH_ORDER_URL(order.orderId), {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ orderStatus: newStatus })
-                });
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        
-                const idx = orders.findIndex(o => String(o.orderId) === String(key));
-                if (idx !== -1) orders[idx] = { ...orders[idx], orderStatus: newStatus };
-        
-                updateStats();
-                applyFiltersAndRender();
-                showNotification(`Status updated to ${newStatus}`, 'success');
-            } catch (err) {
-                console.error('PATCH failed:', err);
-                showNotification('Failed to update status: ' + err.message, 'error');
-            }
-        }
+    const modal = document.getElementById('editOrderModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
 
-        document.addEventListener('click', function (e) {
-            if (!openEditDropId) return;
-            const wrap = document.getElementById('editWrap_' + openEditDropId);
-            if (wrap && !wrap.contains(e.target)) {
-                const drop = document.getElementById('editDrop_' + openEditDropId);
-                if (drop) drop.classList.add('hidden');
-                openEditDropId = null;
-            }
+function closeEditOrderModal() {
+    document.getElementById('editOrderModal').classList.add('hidden');
+    document.getElementById('editOrderModal').classList.remove('flex');
+    editingOrderKey = null;
+}
+
+async function confirmEditOrder() {
+    const key = editingOrderKey;
+    if (!key) return;
+
+    const newOrderStatus   = document.getElementById('editOrderStatusSelect').value;
+    const newPaymentStatus = document.getElementById('editPaymentStatusSelect').value;
+
+    const order = orders.find(o => String(o.orderId) === String(key));
+    if (!order) { showNotification('Order not found', 'error'); return; }
+
+    try {
+        const res = await fetch(PATCH_ORDER_URL(order.orderId), {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderStatus: newOrderStatus, paymentStatus: newPaymentStatus })
         });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const idx = orders.findIndex(o => String(o.orderId) === String(key));
+        if (idx !== -1) orders[idx] = { ...orders[idx], orderStatus: newOrderStatus, paymentStatus: newPaymentStatus };
+
+        updateStats();
+        applyFiltersAndRender();
+        closeEditOrderModal();
+        showNotification(`Order updated successfully`, 'success');
+    } catch (err) {
+        console.error('PATCH failed:', err);
+        showNotification('Failed to update order: ' + err.message, 'error');
+    }
+}
+        // document.addEventListener('click', function (e) {
+        //     if (!openEditDropId) return;
+        //     const wrap = document.getElementById('editWrap_' + openEditDropId);
+        //     if (wrap && !wrap.contains(e.target)) {
+        //         const drop = document.getElementById('editDrop_' + openEditDropId);
+        //         if (drop) drop.classList.add('hidden');
+        //         openEditDropId = null;
+        //     }
+        // });
 
 
         // ==================== VIEW ORDER (fetch detail API) ====================
@@ -1057,10 +1200,18 @@ thead th {
                     </div>
                 </div>
 
-                ${order.orderNotes ? `
-                <div class="bg-yellow-50  border border-[#D89F34] rounded-lg p-3 text-sm" style="color:#92400E;">
-                    <i class="fa-solid fa-note-sticky mr-2"></i><strong>Note:</strong> ${order.orderNotes}
-                </div>` : ''}
+               ${(order.orderStatus || '').toUpperCase() === 'RETURN_REQUESTED' ? `
+<div class="bg-red-50 border border-red-300 rounded-lg p-4 text-sm">
+    <p class="text-xs font-semibold mb-2 flex items-center gap-1" style="color:#991B1B;">
+        <i class="fa-solid fa-rotate-left"></i> RETURN REQUEST
+    </p>
+    <p style="color:#7f1d1d;"><strong>Reason:</strong> ${order.returnReason || 'No reason provided'}</p>
+    ${order.returnRequestedAt ? `<p class="text-xs mt-1" style="color:#991B1B;">Requested on: ${formatDateTime(order.returnRequestedAt)}</p>` : ''}
+</div>` : ''}
+${order.orderNotes ? `
+<div class="bg-yellow-50 border border-[#D89F34] rounded-lg p-3 text-sm" style="color:#92400E;">
+    <i class="fa-solid fa-note-sticky mr-2"></i><strong>Note:</strong> ${order.orderNotes}
+</div>` : ''}
             `;
         }
 
@@ -1473,30 +1624,30 @@ thead th {
 
         // ==================== SELECTION ====================
         function toggleAll() {
-    const selectAll  = document.getElementById('selectAll');
-    const checkboxes = document.querySelectorAll('.order-checkbox');
-    checkboxes.forEach(cb => {
-        cb.checked = selectAll.checked;
-        selectAll.checked
-            ? selectedOrders.add(cb.value)
-            : selectedOrders.delete(cb.value);
-    });
-}
+            const selectAll  = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.order-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = selectAll.checked;
+                selectAll.checked
+                    ? selectedOrders.add(cb.value)
+                    : selectedOrders.delete(cb.value);
+            });
+        }
 
         function updateSelection(checkbox) {
-    checkbox.checked
-        ? selectedOrders.add(checkbox.value)
-        : selectedOrders.delete(checkbox.value);
-    updateSelectAll();
-}
+            checkbox.checked
+                ? selectedOrders.add(checkbox.value)
+                : selectedOrders.delete(checkbox.value);
+            updateSelectAll();
+        }
 
         function updateSelectAll() {
-    const selectAll  = document.getElementById('selectAll');
-    const checkboxes = document.querySelectorAll('.order-checkbox');
-    if (!selectAll) return;
-    selectAll.checked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
-    selectAll.indeterminate = !selectAll.checked && Array.from(checkboxes).some(cb => cb.checked);
-}
+            const selectAll  = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.order-checkbox');
+            if (!selectAll) return;
+            selectAll.checked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
+            selectAll.indeterminate = !selectAll.checked && Array.from(checkboxes).some(cb => cb.checked);
+        }
 
         function updateBulkActions() {
             const ba = document.getElementById('bulkActions');
@@ -1538,7 +1689,8 @@ thead th {
             const b = currentFilter !== 'all';
             const c = (document.getElementById('dateFrom')?.value||'') !== '';
             const d = (document.getElementById('dateTo')?.value||'') !== '';
-            (a||b||c||d) ? btn.classList.remove('hidden') : btn.classList.add('hidden');
+            const e2 = currentPaymentFilter !== 'all';
+            (a||b||c||d||e2) ? btn.classList.remove('hidden') : btn.classList.add('hidden');
         }
 
 
@@ -1571,6 +1723,50 @@ thead th {
             const checkIcon = document.getElementById(checkId);
             if (checkIcon) checkIcon.style.display = 'inline-block';
         }
+
+        // ==================== PATCH PAYMENT FILTER ====================
+        let currentPaymentFilter = 'all';
+        let isPaymentDropdownOpen = false;
+
+        function togglePaymentDropdown() {
+            const dropdown = document.getElementById('paymentDropdown');
+            const arrow    = document.getElementById('paymentDropdownArrow');
+            isPaymentDropdownOpen = !isPaymentDropdownOpen;
+            if (isPaymentDropdownOpen) {
+                dropdown.classList.remove('hidden');
+                arrow.style.transform = 'rotate(180deg)';
+                updatePaymentCheckmarks();
+            } else {
+                dropdown.classList.add('hidden');
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function selectPaymentFilter(val, label) {
+            currentPaymentFilter = val;
+            document.getElementById('selectedPaymentText').textContent = label;
+            togglePaymentDropdown();
+            updatePaymentCheckmarks();
+            currentPage = 1;
+            applyFiltersAndRender();
+        }
+
+        function updatePaymentCheckmarks() {
+            document.querySelectorAll('[id^="check-pay-"]').forEach(el => el.style.display = 'none');
+            const el = document.getElementById(`check-pay-${currentPaymentFilter}`);
+            if (el) el.style.display = 'inline-block';
+        }
+
+        // Close payment dropdown on outside click
+        document.addEventListener('click', function(e) {
+            const dd  = document.getElementById('paymentDropdown');
+            const btn = document.getElementById('paymentDropdownButton');
+            if (isPaymentDropdownOpen && dd && btn && !btn.contains(e.target) && !dd.contains(e.target)) {
+                dd.classList.add('hidden');
+                document.getElementById('paymentDropdownArrow').style.transform = 'rotate(0deg)';
+                isPaymentDropdownOpen = false;
+            }
+        });
 
         document.addEventListener('click', function (e) {
             const dropdown = document.getElementById('statusDropdown');
