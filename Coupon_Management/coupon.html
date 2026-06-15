@@ -1078,8 +1078,8 @@
                 validFrom:         toBackendDateTime(document.getElementById('validFrom').value),
                 validTo:           toBackendDateTime(document.getElementById('validTo').value),
                 isActive:          true,
-                freeShipping:      document.getElementById('freeShipping').checked,
-                excludeSaleItems:  document.getElementById('excludeSaleItems').checked,
+                // freeShipping:      document.getElementById('freeShipping').checked,
+                // excludeSaleItems:  document.getElementById('excludeSaleItems').checked,
                 couponType:        document.getElementById('couponType').value,
                 categoryName:      document.getElementById('categoryName').value || null,
                 // FIX: use picker state sets — not text field split()
@@ -1141,8 +1141,8 @@
             document.getElementById('validTo').value            = formatDateTimeLocal(coupon.validTo);
             document.getElementById('couponType').value         = coupon.couponType || 'GLOBAL';
             document.getElementById('categoryName').value       = coupon.categoryName || '';
-            document.getElementById('freeShipping').checked     = !!coupon.freeShipping;
-            document.getElementById('excludeSaleItems').checked = !!coupon.excludeSaleItems;
+            // document.getElementById('freeShipping').checked     = !!coupon.freeShipping;
+            // document.getElementById('excludeSaleItems').checked = !!coupon.excludeSaleItems;
 
             // FIX: restore picker state from coupon response
            // FIX: restore picker state from coupon response
@@ -1633,7 +1633,6 @@
         // ==================== INIT ====================
         document.addEventListener('DOMContentLoaded', async function() {
 
-        
             document.getElementById('skeletonLoader').className='content-visible';
             document.getElementById('actualContent').className='content-hidden';
 
