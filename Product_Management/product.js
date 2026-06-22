@@ -21,6 +21,56 @@ function showToast(message, type = 'success') {
     }).showToast();
 }
 
+// ── Media removal tracker ─────────────────────────────────────────────────
+// Tracks which existing media the admin wants to remove on save
+// Backend should check these flags and clear the respective fields
+const mediaToRemove = {
+    mainImage:    false,
+    productVideo: false,
+    mockupImages: []    // indices of mockup images to remove
+};
+ 
+function resetMediaToRemove() {
+    mediaToRemove.mainImage    = false;
+    mediaToRemove.productVideo = false;
+    mediaToRemove.mockupImages = [];
+}
+ 
+// ── Helper: build media preview with remove button ───────────────────────
+// previewContainer : DOM element where preview is shown
+// type             : "image" | "video"
+// src              : URL string (BASE_URL + path)
+// onRemove         : callback when ✕ clicked
+
+function buildMediaPreviewWithRemove(previewContainer, type, src, onRemove, readOnly = false) {
+    previewContainer.innerHTML = '';
+    const wrapper = document.createElement('div');
+    wrapper.className = 'relative inline-block mt-2';
+ 
+    if (type === 'image') {
+        wrapper.innerHTML = `<img src="${src}" class="max-h-20 rounded border border-gray-200" onerror="this.style.opacity='0.3'">`;
+    } else if (type === 'video') {
+        wrapper.innerHTML = `<video src="${src}" class="max-h-20 rounded border border-gray-200" preload="metadata" controls></video>`;
+    }
+ 
+    // Only inject remove button in edit mode
+    if (!readOnly && onRemove) {
+        const removeBtn = document.createElement('button');
+        removeBtn.type      = 'button';
+        removeBtn.className = 'media-remove-btn absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center hover:bg-red-600 shadow-sm';
+        removeBtn.title     = 'Remove';
+        removeBtn.textContent = '✕';
+        removeBtn.addEventListener('click', () => {
+            wrapper.remove();
+            onRemove();
+        });
+        wrapper.appendChild(removeBtn);
+    }
+ 
+    previewContainer.appendChild(wrapper);
+}
+ 
+
 // Safe clear
 function safeClear(id) {
     const el = document.getElementById(id);
@@ -28,299 +78,332 @@ function safeClear(id) {
 }
 
 // Reset form
+
 function resetForm() {
     currentProductId = null;
-    isReadOnlyMode = false;
-
-    document.getElementById('form-title').textContent = 'Add New Product';
-    document.getElementById('btn-submit-product').textContent = 'Save Product';
-    document.getElementById('btn-submit-product').disabled = false;
+    isReadOnlyMode   = false;
+ 
+    document.getElementById('view-mode-badge')?.remove();
+ 
+    document.getElementById('form-title').textContent           = 'Add New Product';
+    document.getElementById('btn-submit-product').textContent   = 'Save Product';
+    document.getElementById('btn-submit-product').disabled      = false;
     document.getElementById('btn-submit-product').style.display = 'inline-flex';
-
+ 
     document.getElementById('product-form').reset();
-
+ 
     safeClear('variants-container');
     safeClear('hero-banners-container');
     safeClear('installation-steps-container');
     ['main-image-preview', 'mockup-preview', 'product-video-preview'].forEach(safeClear);
-
-    variantCounter = 0;
-    bannerCounter = 0;
-    stepCounter = 0;
-
-    //custom fields patch
+ 
+    variantCounter     = 0;
+    bannerCounter      = 0;
+    stepCounter        = 0;
     customFieldCounter = 0;
     safeClear('custom-fields-container');
+ 
     document.getElementById('custom-fields-section').classList.add('hidden');
-
-
     document.getElementById('variants-section').classList.add('hidden');
     document.getElementById('has-variants').checked = false;
-
-    // Remove read-only
-    document.querySelectorAll('#product-form input, #product-form textarea, #product-form select').forEach(el => {
-        el.removeAttribute('readonly');
-        el.removeAttribute('disabled');
-    });
-    document.querySelectorAll('#product-form button:not(#btn-close-form):not(#btn-cancel-form)').forEach(btn => {
-        btn.style.display = 'inline-flex';
-    });
+ 
+    // Reset wire frame config card
+    document.getElementById('wire-frame-config-card')?.classList.add('hidden');
+    document.getElementById('add-wire-frame-btn') && (document.getElementById('add-wire-frame-btn').style.display = '');
+    if (document.getElementById('wire-frame-count'))     document.getElementById('wire-frame-count').value     = '0';
+    if (document.getElementById('wire-frame-structure')) document.getElementById('wire-frame-structure').value = '';
+ 
+    resetMediaToRemove();
+    _setFormEditable(true);
 }
 
+
+
+function _setFormEditable(editable) {
+    const form = document.getElementById('product-form');
+    if (!form) return;
+ 
+    // Text, textarea, select
+    form.querySelectorAll(
+        'input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), textarea, select'
+    ).forEach(el => {
+        el.disabled = !editable;
+        editable ? el.removeAttribute('readonly') : el.setAttribute('readonly', 'readonly');
+    });
+ 
+    // File inputs
+    form.querySelectorAll('input[type="file"]')
+        .forEach(el => { el.disabled = !editable; });
+ 
+    // Checkboxes + radios
+    form.querySelectorAll('input[type="checkbox"], input[type="radio"]')
+        .forEach(el => { el.disabled = !editable; });
+ 
+    // Toggle labels
+    form.querySelectorAll('label.relative.inline-flex').forEach(label => {
+        label.style.pointerEvents = editable ? '' : 'none';
+        label.style.opacity       = editable ? '' : '0.65';
+        label.style.cursor        = editable ? '' : 'not-allowed';
+    });
+ 
+    // All action buttons inside form
+    form.querySelectorAll(
+        'button:not(#btn-close-form):not(#btn-cancel-form):not(#btn-submit-product)'
+    ).forEach(btn => { btn.style.display = editable ? '' : 'none'; });
+ 
+    // Submit button
+    const submitBtn = document.getElementById('btn-submit-product');
+    if (submitBtn) submitBtn.style.display = editable ? 'inline-flex' : 'none';
+ 
+    // Remove any media remove buttons already injected (view mode safety net)
+    if (!editable) {
+        form.querySelectorAll('.media-remove-btn')
+            .forEach(btn => btn.remove());
+    }
+}
+ 
+
 // Open form (create / edit / view)
+
 async function openForm(mode = 'create', product = null, readOnly = false) {
     resetForm();
     isReadOnlyMode = readOnly;
-
-    const titleEl = document.getElementById('form-title');
+ 
+    const titleEl   = document.getElementById('form-title');
     const submitBtn = document.getElementById('btn-submit-product');
-
+ 
+    // Set title only — DO NOT lock/unlock here yet
     if (readOnly) {
         titleEl.textContent = 'View Product';
-        submitBtn.style.display = 'none';
-        document.querySelectorAll('#product-form button:not(#btn-close-form):not(#btn-cancel-form)').forEach(btn => {
-            btn.style.display = 'none';
-        });
-        document.querySelectorAll('#product-form input, #product-form textarea, #product-form select').forEach(el => {
-            el.setAttribute('readonly', 'readonly');
-            if (el.type !== 'checkbox') el.disabled = true;
-        });
+ 
+        // Add badge once (resetForm already removed previous one)
+        const headerRow = document.querySelector('#product-form-overlay .flex.justify-between');
+        if (headerRow && !document.getElementById('view-mode-badge')) {
+            const badge = document.createElement('span');
+            badge.id        = 'view-mode-badge';
+            badge.className = 'text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full flex items-center gap-1.5';
+            badge.innerHTML = '<i class="fas fa-eye text-xs"></i> View Only';
+            headerRow.insertBefore(badge, document.getElementById('btn-close-form'));
+        }
+ 
     } else {
-        titleEl.textContent = mode === 'edit' ? 'Edit Product' : 'Add New Product';
-        submitBtn.textContent = mode === 'edit' ? 'Update Product' : 'Save Product';
-    }
-
-    if (!readOnly) {
-        document.getElementById('add-variant-btn')?.addEventListener('click', addVariant);
+        titleEl.textContent     = mode === 'edit' ? 'Edit Product' : 'Add New Product';
+        submitBtn.textContent   = mode === 'edit' ? 'Update Product' : 'Save Product';
+        submitBtn.style.display = 'inline-flex';
+        submitBtn.disabled      = false;
+ 
+        // Wire add-buttons only in create/edit
+        document.getElementById('add-variant-btn')    ?.addEventListener('click', addVariant);
         document.getElementById('add-hero-banner-btn')?.addEventListener('click', addHeroBanner);
-        document.getElementById('add-step-btn')?.addEventListener('click', addInstallationStep);
+        document.getElementById('add-step-btn')       ?.addEventListener('click', addInstallationStep);
     }
-
+ 
     if (product) {
         currentProductId = product.productPrimeId;
-
+ 
         // Basic fields
-        document.getElementById('product-name').value = product.productName || '';
-        document.getElementById('brand-name').value = product.brandName || '';
-        document.getElementById('product-category').value = product.productCategory || '';
-        document.getElementById('product-subcategory').value = product.productSubCategory || '';
-        document.getElementById('selected-color').value = product.selectedColor || '';
-         
-        document.getElementById('description').value = '';
-        document.getElementById('product-size').value = '';
-
-        document.getElementById('product-size').value = product.productSize || '';
-        document.getElementById('current-sku').value = product.currentSku || '';
-        document.getElementById('current-selling-price').value = product.currentSellingPrice || '';
-        document.getElementById('current-mrp-price').value = product.currentMrpPrice || '';
-        document.getElementById('current-stock').value = product.currentStock || 0;
-        document.getElementById('category-path').value = (product.categoryPath || []).join(', ');
-
-        // document.getElementById('hsn-code').value = product.hsnCode || '';
-
-        document.getElementById('product-weight').value = product.weight || '';
-        document.getElementById('product-height').value = product.height || '';
-        document.getElementById('product-length').value = product.length || '';
-        document.getElementById('product-breadth').value = product.breadth || '';
-
-        document.getElementById('has-variants').checked = !!product.hasVariants;
-        document.getElementById('is-exchange').checked = product.isExchange ?? true;
-        document.getElementById('return-available').checked = product.returnAvailable ?? true;
-        document.getElementById('is-customizable').checked = !!product.isCustomizable;
-        document.getElementById('trending-category').checked = !!product.underTrendCategory;
-
-        // document.getElementById('description').value = (product.description || []).join('\n');
-
-
+        document.getElementById('product-name').value           = product.productName || '';
+        document.getElementById('brand-name').value             = product.brandName || '';
+        document.getElementById('product-category').value       = product.productCategory || '';
+        document.getElementById('product-subcategory').value    = product.productSubCategory || '';
+        document.getElementById('selected-color').value         = product.selectedColor || '';
+        document.getElementById('product-size').value           = product.productSize || '';
+        document.getElementById('current-sku').value            = product.currentSku || '';
+        document.getElementById('current-selling-price').value  = product.currentSellingPrice || '';
+        document.getElementById('current-mrp-price').value      = product.currentMrpPrice || '';
+        document.getElementById('current-stock').value          = product.currentStock || 0;
+        document.getElementById('category-path').value          = (product.categoryPath || []).join(', ');
+        document.getElementById('product-weight').value         = product.weight || '';
+        document.getElementById('product-height').value         = product.height || '';
+        document.getElementById('product-length').value         = product.length || '';
+        document.getElementById('product-breadth').value        = product.breadth || '';
+ 
+        document.getElementById('has-variants').checked         = !!product.hasVariants;
+        document.getElementById('is-exchange').checked          = product.isExchange ?? true;
+        document.getElementById('return-available').checked     = product.returnAvailable ?? true;
+        document.getElementById('is-customizable').checked      = !!product.isCustomizable;
+        document.getElementById('trending-category').checked    = !!product.underTrendCategory;
+ 
         if (product.hasVariants) {
             document.getElementById('variants-section').classList.remove('hidden');
         }
-
+ 
         try {
             const res = await fetch(`${BASE_URL}/api/products/admin/get-by-productPrimeId/${product.productPrimeId}`);
             if (!res.ok) throw new Error(await res.text());
             const full = await res.json();
-
-            document.getElementById('hsn-code').value = full.hsnCode || '';
-            
-            document.getElementById('product-size').value = full.productSize || product.productSize || '';
-            
-            document.getElementById('description').value = (full.description || product.description || []).join('\n');
-            document.getElementById('about-item').value = (full.aboutItem || []).join('\n');
-            document.getElementById('specifications').value = Object.entries(full.specifications || {})
-                .map(([k, v]) => `${k}: ${v}`).join('\n');
-            document.getElementById('faq').value = Object.entries(full.faq || {})
-                .map(([k, v]) => `${k}: ${v}`).join('\n');
-
+ 
+            document.getElementById('hsn-code').value              = full.hsnCode || '';
+            document.getElementById('product-size').value          = full.productSize || product.productSize || '';
+            document.getElementById('description').value           = (full.description || []).join('\n');
+            document.getElementById('about-item').value            = (full.aboutItem || []).join('\n');
+            document.getElementById('specifications').value        = Object.entries(full.specifications || {}).map(([k,v]) => `${k}: ${v}`).join('\n');
+            document.getElementById('faq').value                   = Object.entries(full.faq || {}).map(([k,v]) => `${k}: ${v}`).join('\n');
+            document.getElementById('global-tags').value           = (full.globalTags || []).join(', ');
+            document.getElementById('addon-keys').value            = (full.addonKeys || []).join(', ');
+            document.getElementById('youtube-url').value           = full.youtubeUrl || '';
+ 
             const info = full.additionalInfo || {};
-            document.getElementById('seller-name').value = info.sellerName || '';
-            document.getElementById('seller-address').value = info.sellerAddress || '';
+            document.getElementById('seller-name').value          = info.sellerName || '';
+            document.getElementById('seller-address').value       = info.sellerAddress || '';
             document.getElementById('manufacturer-details').value = info.manufacturerDetails || '';
-            document.getElementById('package-details').value = info.packageDetails || '';
-            document.getElementById('country').value = info.country || 'india';
-
-            document.getElementById('global-tags').value = (full.globalTags || []).join(', ');
-            document.getElementById('addon-keys').value = (full.addonKeys || []).join(', ');
-            document.getElementById('youtube-url').value = full.youtubeUrl || '';
-
-            // PATCH: Populate custom fields on edit/view
-            if (full.customFields) {
-                let fields = full.customFields;
-                // Handle if stored as JSON string in DB
-                if (typeof fields === 'string') {
-                    try { fields = JSON.parse(fields); } catch { fields = []; }
+            document.getElementById('package-details').value      = info.packageDetails || '';
+            document.getElementById('country').value              = info.country || 'india';
+ 
+            // Media previews — pass readOnly so remove btn is skipped in view
+            if (full.mainImage) {
+                buildMediaPreviewWithRemove(
+                    document.getElementById('main-image-preview'),
+                    'image',
+                    `${BASE_URL}${full.mainImage}`,
+                    () => { mediaToRemove.mainImage = true; },
+                    readOnly   // ← key: no remove btn in view mode
+                );
+            }
+ 
+            if (full.productVideoUrl) {
+                buildMediaPreviewWithRemove(
+                    document.getElementById('product-video-preview'),
+                    'video',
+                    `${BASE_URL}${full.productVideoUrl}`,
+                    () => { mediaToRemove.productVideo = true; },
+                    readOnly
+                );
+            }
+ 
+            if (full.mockupImages?.length) {
+                const cont = document.getElementById('mockup-preview');
+                if (cont) {
+                    cont.innerHTML = '';
+                    full.mockupImages.forEach((url, idx) => {
+                        buildMediaPreviewWithRemove(
+                            cont,
+                            'image',
+                            `${BASE_URL}${url}`,
+                            () => { mediaToRemove.mockupImages.push(idx); },
+                            readOnly
+                        );
+                    });
                 }
-                if (Array.isArray(fields) && fields.length > 0) {
+            }
+ 
+            // Custom fields
+            if (full.customFields) {
+                let parsed = full.customFields;
+                if (typeof parsed === 'string') {
+                    try { parsed = JSON.parse(parsed); } catch { parsed = null; }
+                }
+                let fieldArray = [], frameCount = 0, frameStructure = '';
+                if (Array.isArray(parsed)) {
+                    fieldArray = parsed;
+                } else if (parsed && typeof parsed === 'object') {
+                    fieldArray     = parsed.fields         || [];
+                    frameCount     = parsed.frameCount     || 0;
+                    frameStructure = parsed.frameStructure || '';
+                }
+                if (fieldArray.length > 0) {
                     document.getElementById('is-customizable').checked = true;
                     document.getElementById('custom-fields-section').classList.remove('hidden');
-                    fields.forEach(f => {
+                    fieldArray.forEach(f => {
                         addCustomField();
                         const blocks = document.querySelectorAll('.custom-field-block');
-                        const last = blocks[blocks.length - 1];
-
+                        const last   = blocks[blocks.length - 1];
                         last.querySelector('.cf-fieldname').value = f.fieldName || '';
                         const typeEl = last.querySelector('.cf-fieldtype');
                         typeEl.value = f.fieldInputType || 'text';
                         last.querySelector('.cf-note').value = f.note || '';
-
-                        // PATCH: restore dropdown options if type is dropdown
+                        typeEl.dispatchEvent(new Event('change'));
                         if (f.fieldInputType === 'dropdown') {
-                            last.querySelector('.cf-dropdown-options').classList.remove('hidden');
-                            const opts = Array.isArray(f.dropdownOptions) ? f.dropdownOptions : [];
-                            opts.forEach(opt => last._addDropdownOption && last._addDropdownOption(opt));
+                            (f.dropdownOptions || []).forEach(opt => last._addDropdownOption?.(opt));
                         }
                     });
                 }
-            }
-            // END PATCH populate
-
-            // Previews
-            if (full.mainImage) {
-                document.getElementById('main-image-preview').innerHTML = `<img src="${BASE_URL}${full.mainImage}" class="max-h-20 rounded">`;
-            }
-            
-            // if (full.mockupImages?.length) {
-            //     const cont = document.getElementById('mockup-preview');
-            //     full.mockupImages.forEach(url => {
-            //         cont.innerHTML += `<img src="${BASE_URL}${url}" class="max-h-20 rounded ml-2">`;
-            //     });
-            // }
-
-            if (full.mockupImages?.length) {
-                // ✅ FIX: use correct container ID — 'mockup-preview' (no trailing s) matches your HTML
-                const cont = document.getElementById('mockup-preview');
-                if (cont) {
-                    cont.innerHTML = ''; // clear stale previews first
-                    full.mockupImages.forEach(url => {
-                        cont.innerHTML += `<img src="${BASE_URL}${url}" class="max-h-20 rounded ml-2" onerror="this.style.opacity='0.3'">`;
-                    });
+                if (frameCount > 0 || frameStructure) {
+                    document.getElementById('wire-frame-config-card').classList.remove('hidden');
+                    document.getElementById('add-wire-frame-btn').style.display = 'none';
+                    document.getElementById('wire-frame-count').value     = frameCount;
+                    document.getElementById('wire-frame-structure').value = frameStructure;
                 }
             }
-            // if (full.productVideoUrl) {
-            //     document.getElementById('product-video-preview').innerHTML = 'Video available';
-            // }
-
-            if (full.productVideoUrl) {
-                // ✅ FIX: render actual video element with poster fallback for thumbnail
-                document.getElementById('product-video-preview').innerHTML = `
-                    <video 
-                        src="${BASE_URL}${full.productVideoUrl}" 
-                        class="max-h-32 rounded mt-1" 
-                        preload="metadata"
-                        controls
-                        playsinline
-                        onerror="this.outerHTML='<p class=\'text-xs text-gray-400 mt-1\'>Video available (preview unsupported)</p>'"
-                    ></video>`;
-            }
-
+ 
             // Variants
             if (full.availableVariants?.length) {
                 full.availableVariants.forEach(v => {
                     addVariant();
                     const blocks = document.querySelectorAll('.variant-block');
-                    const last = blocks[blocks.length - 1];
-
-
-                    last.querySelector('.variant-title').value = v.titleName || '';
-                    last.querySelector('.variant-color').value = v.color || '';
-                    last.querySelector('.variant-sku').value = v.sku || '';
-                    last.querySelector('.variant-price').value = v.price || '';
-                    last.querySelector('.variant-mrp').value = v.mrp || '';
-                    last.querySelector('.variant-stock').value = v.stock || '';
+                    const last   = blocks[blocks.length - 1];
+                    last.querySelector('.variant-title').value   = v.titleName || '';
+                    last.querySelector('.variant-color').value   = v.color || '';
+                    last.querySelector('.variant-sku').value     = v.sku || '';
+                    last.querySelector('.variant-price').value   = v.price || '';
+                    last.querySelector('.variant-mrp').value     = v.mrp || '';
+                    last.querySelector('.variant-stock').value   = v.stock || '';
                     last.querySelector('.variant-mfgdate').value = v.mfgDate || '';
                     last.querySelector('.variant-expdate').value = v.expDate || '';
-                    last.querySelector('.variant-size').value = v.size || '';
-
-                    last.querySelector('.variant-weight').value = v.weight || '';
-                    last.querySelector('.variant-height').value = v.height || '';
-                    last.querySelector('.variant-length').value = v.length || '';
+                    last.querySelector('.variant-size').value    = v.size || '';
+                    last.querySelector('.variant-weight').value  = v.weight || '';
+                    last.querySelector('.variant-height').value  = v.height || '';
+                    last.querySelector('.variant-length').value  = v.length || '';
                     last.querySelector('.variant-breadth').value = v.breadth || '';
                     if (v.mainImage) {
-                        last.querySelector('.variant-preview').innerHTML = `<img src="${BASE_URL}${v.mainImage}" class="max-h-20 rounded">`;
+                        last.querySelector('.variant-preview').innerHTML =
+                            `<img src="${BASE_URL}${v.mainImage}" class="max-h-20 rounded">`;
                     }
-                    // if (v.mockupImages?.length) {
-                    //     const mcont = last.querySelector('.variant-mockup-preview');
-                    //     v.mockupImages.forEach(url => {
-                    //         mcont.innerHTML += `<img src="${url}" class="max-h-20 rounded ml-2">`;
-                    //     });
-                    // }
-
                     if (v.mockupImages?.length) {
                         const mcont = last.querySelector('.variant-mockup-preview');
-                        // ✅ FIX: prefix BASE_URL so relative API path resolves correctly
                         v.mockupImages.forEach(url => {
                             mcont.innerHTML += `<img src="${BASE_URL}${url}" class="max-h-20 rounded ml-2" onerror="this.style.opacity='0.3'">`;
                         });
                     }
                 });
             }
-
-            // Hero Banners
-           // Hero Banners — fix bannerId
-if (full.heroBanners?.length) {
-    full.heroBanners.forEach(b => {
-        addHeroBanner();
-        const blocks = document.querySelectorAll('.hero-banner-block');
-        const last = blocks[blocks.length - 1];
-
-        // ✅ Fix: use b.bannerId not s.step
-        last.dataset.bannerId = b.bannerId;
-
-        last.querySelector('.banner-description').value = b.imgDescription || '';
-        if (b.bannerImg) {
-            last.querySelector('.banner-preview').innerHTML = `<img src="${BASE_URL}${b.bannerImg}" class="max-h-20 rounded">`;
-        }
-    });
-}
-
-// Installation Steps — fix stepNum
-if (full.installationSteps?.length) {
-    full.installationSteps.forEach(s => {
-        addInstallationStep();
-        const blocks = document.querySelectorAll('.step-block');
-        const last = blocks[blocks.length - 1];
-
-        // ✅ Already correct: s.step
-        last.dataset.step = s.step;
-
-        last.querySelector('.step-title').value = s.title || '';
-        last.querySelector('.step-shortdesc').value = s.shortDescription || '';
-        last.querySelector('.step-shortnote').value = s.shortNote || '';
-        if (s.stepImage) {
-            last.querySelector('.step-image-preview').innerHTML = `<img src="${BASE_URL}${s.stepImage}" class="max-h-20 rounded">`;
-        }
-        if (s.videoUrl) {
-            last.querySelector('.step-video-preview').innerHTML = `<video src="${BASE_URL}${s.videoUrl}" class="max-h-20 rounded">`;
-        }
-    });
-}
-
+ 
+            // Hero banners
+            if (full.heroBanners?.length) {
+                full.heroBanners.forEach((b, i) => {
+                    addHeroBanner();
+                    const blocks = document.querySelectorAll('.hero-banner-block');
+                    const last   = blocks[blocks.length - 1];
+                    last.dataset.bannerId = b.bannerId;
+                    last.querySelector('.banner-description').value = b.imgDescription || '';
+                    if (b.bannerImg) {
+                        last.querySelector('.banner-preview').innerHTML =
+                            `<img src="${BASE_URL}${b.bannerImg}" class="max-h-20 rounded">`;
+                    }
+                });
+            }
+ 
+            // Installation steps
+            if (full.installationSteps?.length) {
+                full.installationSteps.forEach(s => {
+                    addInstallationStep();
+                    const blocks = document.querySelectorAll('.step-block');
+                    const last   = blocks[blocks.length - 1];
+                    last.dataset.step = s.step;
+                    last.querySelector('.step-title').value     = s.title || '';
+                    last.querySelector('.step-shortdesc').value = s.shortDescription || '';
+                    last.querySelector('.step-shortnote').value = s.shortNote || '';
+                    if (s.stepImage) {
+                        last.querySelector('.step-image-preview').innerHTML =
+                            `<img src="${BASE_URL}${s.stepImage}" class="max-h-20 rounded">`;
+                    }
+                    if (s.videoUrl) {
+                        last.querySelector('.step-video-preview').innerHTML =
+                            `<video src="${BASE_URL}${s.videoUrl}" class="max-h-20 rounded">`;
+                    }
+                });
+            }
+ 
         } catch (err) {
             showToast('Could not load full product details', 'error');
             console.error(err);
         }
     }
-
+ 
+    // ── APPLY LOCK/UNLOCK HERE — after ALL dynamic DOM is populated ───────
+    // This is the root cause fix: _setFormEditable runs last, not first
+    _setFormEditable(!readOnly);
+ 
     document.getElementById('product-form-overlay').style.display = 'flex';
 }
 
@@ -418,8 +501,10 @@ const installationStepTemplate = `
 </div>`;
 
 // PATCH: Custom field template
+
+
 const customFieldTemplate = `
-<div class="custom-field-block p-4 border border border-[#D89F34] rounded-lg space-y-3 bg-gray-50">
+<div class="custom-field-block p-4 border border-[#D89F34] rounded-lg space-y-3 bg-gray-50">
     <div class="flex justify-between items-center">
         <h4 class="font-medium text-gray-900 text-sm">Field <span class="field-index"></span></h4>
         <button type="button" class="remove-custom-field text-red-500 hover:text-red-700 text-sm">Remove</button>
@@ -427,7 +512,7 @@ const customFieldTemplate = `
     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">Field Name <span class="text-red-400">*</span></label>
-            <input type="text" class="cf-fieldname w-full px-3 py-2 border border-gray-400 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#D89F34]/30 focus:border-[#957A54]" placeholder="e.g. Size, Color, upload Imgae">
+            <input type="text" class="cf-fieldname w-full px-3 py-2 border border-gray-400 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#D89F34]/30 focus:border-[#957A54]" placeholder="e.g. Size, upload image">
         </div>
         <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">Input Type</label>
@@ -444,12 +529,13 @@ const customFieldTemplate = `
             <label class="block text-xs font-medium text-gray-600 mb-1">Note (optional)</label>
             <input type="text" class="cf-note w-full px-3 py-2 border border-gray-400 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#D89F34]/30 focus:border-[#957A54]" placeholder="e.g. in cm">
         </div>
-        <div class="cf-dropdown-options hidden space-y-2 pt-1">
+        <div class="cf-dropdown-options hidden space-y-2 pt-1 md:col-span-3">
             <label class="block text-xs font-medium text-gray-600 mb-1">Dropdown Options</label>
             <div class="cf-options-list space-y-2"></div>
             <button type="button" class="cf-add-option mt-1 px-3 py-1.5 text-xs border border-[#D89F34] bg-[#957A54]/10 text-[#957A54] rounded-lg hover:bg-[#957A54]/20">+ Add Option</button>
         </div>
-    </div>`;
+    </div>
+</div>`;
 // END PATCH template
 
 // Add functions
@@ -501,44 +587,60 @@ function addCustomField() {
     const block = temp.firstElementChild;
     block.querySelector('.field-index').textContent = customFieldCounter;
     container.appendChild(block);
-   block.querySelector('.remove-custom-field').addEventListener('click', () => {
+ 
+    // ── Remove button: re-number remaining fields after remove ────────────
+    block.querySelector('.remove-custom-field').addEventListener('click', () => {
         block.remove();
-        document.querySelectorAll('.custom-field-block .field-index').forEach((el, i) => {
-            el.textContent = i + 1;
-        });
+        document.querySelectorAll('.custom-field-block .field-index')
+            .forEach((el, i) => { el.textContent = i + 1; });
     });
-
-    // PATCH: show/hide dropdown options panel based on selected type
-    const typeSelect = block.querySelector('.cf-fieldtype');
-    const optionsPanel = block.querySelector('.cf-dropdown-options');
-    const optionsList = block.querySelector('.cf-options-list');
-    const addOptionBtn = block.querySelector('.cf-add-option');
-
+ 
+    // ── Get panel references ───────────────────────────────────────────────
+    const typeSelect      = block.querySelector('.cf-fieldtype');
+    const optionsPanel    = block.querySelector('.cf-dropdown-options');  // dropdown opts
+    const imageConfigPanel= block.querySelector('.cf-image-config');       // wire frame config
+    const optionsList     = block.querySelector('.cf-options-list');
+    const addOptionBtn    = block.querySelector('.cf-add-option');
+ 
+    // ── Dropdown option row builder ────────────────────────────────────────
     function addDropdownOption(value = '') {
         const row = document.createElement('div');
         row.className = 'flex items-center gap-2';
         row.innerHTML = `
-            <input type="text" class="cf-option-value flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#D89F34]/30 focus:border-[#957A54]" placeholder="e.g. Small">
-            <button type="button" class="cf-remove-option text-red-400 hover:text-red-600 text-xs px-2 py-1.5 border border-red-200 rounded-lg hover:bg-red-50">✕</button>`;
+            <input type="text"
+                   class="cf-option-value flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#D89F34]/30 focus:border-[#957A54]"
+                   placeholder="e.g. Small">
+            <button type="button"
+                    class="cf-remove-option text-red-400 hover:text-red-600 text-xs px-2 py-1.5 border border-red-200 rounded-lg hover:bg-red-50">✕</button>`;
         row.querySelector('.cf-remove-option').addEventListener('click', () => row.remove());
         if (value) row.querySelector('.cf-option-value').value = value;
         optionsList.appendChild(row);
     }
-
+ 
+    // ── Type change handler ────────────────────────────────────────────────
     typeSelect.addEventListener('change', () => {
-        const isDropdown = typeSelect.value === 'dropdown';
+        const selectedType = typeSelect.value;
+ 
+        // Show dropdown options panel ONLY for dropdown type
+        const isDropdown = selectedType === 'dropdown';
         optionsPanel.classList.toggle('hidden', !isDropdown);
         if (isDropdown && optionsList.children.length === 0) {
-            addDropdownOption();
+            addDropdownOption(); // add 2 default rows
             addDropdownOption();
         }
+ 
+        // Show wire frame config panel ONLY for image type
+        const isImage = selectedType === 'image';
+        imageConfigPanel.classList.toggle('hidden', !isImage);
     });
-
+ 
+    // ── Add option button ──────────────────────────────────────────────────
     addOptionBtn.addEventListener('click', () => addDropdownOption());
-
-    // expose helper on block for populate use
-    block._addDropdownOption = addDropdownOption;
+ 
+    // ── Expose helpers on block for populate use (openForm edit/view) ──────
+    block._addDropdownOption  = addDropdownOption;
 }
+ 
 // END PATCH addCustomField
 
 // Variants toggle
@@ -552,6 +654,24 @@ document.getElementById('is-customizable').addEventListener('change', e => {
     document.getElementById('custom-fields-section').classList.toggle('hidden', !e.target.checked);
     if (e.target.checked && customFieldCounter === 0) addCustomField();
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  FIX 1 JS — Wire frame config button handlers
+//  ADD these event listeners near other button listeners in product.js
+// ═══════════════════════════════════════════════════════════════════════════
+ 
+document.getElementById('add-wire-frame-btn')?.addEventListener('click', () => {
+    document.getElementById('wire-frame-config-card').classList.remove('hidden');
+    document.getElementById('add-wire-frame-btn').style.display = 'none';
+});
+ 
+document.getElementById('remove-wire-frame-btn')?.addEventListener('click', () => {
+    document.getElementById('wire-frame-count').value     = '0';
+    document.getElementById('wire-frame-structure').value = '';
+    document.getElementById('wire-frame-config-card').classList.add('hidden');
+    document.getElementById('add-wire-frame-btn').style.display = '';
+});
+ 
 
 document.getElementById('add-custom-field-btn').addEventListener('click', addCustomField);
 // END PATCH toggle
@@ -827,7 +947,8 @@ function renderTable(data, state = 'empty') {
             <td class="px-4 py-3" style="white-space:nowrap;">${p.productSubCategory || 'Sub Category'}</td>
             <td class="px-4 py-3" style="white-space:nowrap;text-align:right;">₹${(p.currentSellingPrice || 0).toFixed(2)}</td>
             <td class="px-4 py-3" style="white-space:nowrap;text-align:right;">₹${(p.currentMrpPrice || 0).toFixed(2)}</td>
-            <td class="px-4 py-3" style="white-space:nowrap;text-align:center;">
+            <td class="px-4 py-3 sticky z-10 right-0 bg-white shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.08)]"
+                style="white-space:nowrap;text-align:center;">
                 <div style="display:flex;gap:10px;justify-content:center;align-items:center;">
                     <button onclick="viewProduct(${p.productPrimeId})" class="text-[#D89F33] hover:text-[#133F53]"><i class="fas fa-eye"></i></button>
                     <button onclick="editProduct(${p.productPrimeId})" class="text-green-600 hover:text-green-800"><i class="fas fa-edit"></i></button>
@@ -961,29 +1082,35 @@ document.getElementById('product-form').addEventListener('submit', async e => {
 
         // PATCH: Collect custom fields
         customFields: (() => {
-            const fields = [];
-            document.querySelectorAll('.custom-field-block').forEach((b, i) => {
-                const name = b.querySelector('.cf-fieldname').value.trim();
-                if (!name) return; // skip empty
-                const fieldType = b.querySelector('.cf-fieldtype').value;
-                const entry = {
-                    fieldId: i + 1,
-                    fieldName: name,
-                    fieldInputType: fieldType,
-                    note: b.querySelector('.cf-note').value.trim()
-                };
-
-                // PATCH: collect dropdown options only when type is dropdown
-                if (fieldType === 'dropdown') {
-                    entry.dropdownOptions = Array.from(
-                        b.querySelectorAll('.cf-option-value')
-                    ).map(el => el.value.trim()).filter(Boolean);
-                }
-
-                fields.push(entry);
-            });
-            return fields;
-        })()
+    const fields = [];
+    document.querySelectorAll('.custom-field-block').forEach((b, i) => {
+        const name = b.querySelector('.cf-fieldname').value.trim();
+        if (!name) return;
+        const fieldType = b.querySelector('.cf-fieldtype').value;
+        const entry = {
+            fieldId:        i + 1,
+            fieldName:      name,
+            fieldInputType: fieldType,
+            note:           b.querySelector('.cf-note').value.trim()
+        };
+        if (fieldType === 'dropdown') {
+            entry.dropdownOptions = Array.from(
+                b.querySelectorAll('.cf-option-value')
+            ).map(el => el.value.trim()).filter(Boolean);
+        }
+        fields.push(entry);
+    });
+ 
+    // Read wire frame config from the single product-level card
+    const frameCount     = parseInt(document.getElementById('wire-frame-count')?.value) || 0;
+    const frameStructure = document.getElementById('wire-frame-structure')?.value?.trim() || '';
+ 
+    const result = { fields };
+    if (frameCount > 0)  result.frameCount     = frameCount;
+    if (frameStructure)  result.frameStructure = frameStructure;
+ 
+    return result;
+})()
         // END PATCH collect        
     };
 
@@ -1132,6 +1259,19 @@ allStepBlocks.forEach((b, i) => {
             showToast('Network error during upload', 'error');
         };
 
+        // ── ADD mediaToRemove to submit payload ───────────────────────────────────
+        // Inside the form submit handler, add to formData BEFORE xhr.send():
+        if (mediaToRemove.mainImage) {
+            formData.append('removeMainImage', 'true');
+        }
+        if (mediaToRemove.productVideo) {
+            formData.append('removeProductVideo', 'true');
+        }
+        if (mediaToRemove.mockupImages.length > 0) {
+            formData.append('removeMockupIndices',
+                JSON.stringify(mediaToRemove.mockupImages));
+        }
+        
         xhr.send(formData);
 
     } finally {

@@ -386,6 +386,11 @@
                                             <span style="color: #133F53;">Return Requested</span>
                                             <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;" id="check-status-RETURN_REQUESTED"></i>
                                         </button>
+
+                                         <button class="status-item w-full text-left px-4 py-2.5 text-sm hover:bg-[#F8F8EA] transition-colors flex items-center justify-between" onclick="selectStatus('EXCHANGE_REQUESTED', 'Exchnage Requested')">
+                                            <span style="color: #133F53;">Exchange Requested</span>
+                                            <i class="fa-regular fa-circle-check" style="color: #133F53; display: none;" id="check-status-EXCHANGE_REQUESTED"></i>
+                                        </button>
                                     </div>
                                 </div>
                                 <!-- ✅ END ORDER STATUS -->
@@ -657,6 +662,7 @@
                     <option value="DELIVERED">Delivered</option>
                     <option value="CANCELLED">Cancelled</option>
                     <option value="RETURN_REQUESTED">Return Requested</option>
+                    <option value="EXCHANGE_REQUESTED">Exchange Requested</option>
                 </select>
             </div>
 
@@ -1170,7 +1176,8 @@ async function confirmEditOrder() {
                                 alt="${item.productName}">
                             <div>
                                 <p class="text-sm font-medium" style="color:#133F53;">${item.productName || '-'}</p>
-                                <p class="text-xs" style="color:#957A54;">SKU: ${item.sku || '-'} &bull; Color: ${item.color || '-'}</p>
+                                <p class="text-xs" style="color:#957A54;">SKU: ${item.sku || '-'} | Color: ${item.color || ''}  </p>
+                                <p class="text-xs text-purple-100"> ${item.isCustomizable ? '<span class="bg-purple-600 font-semibold px-1 rounded-lg">Customized</span>' : ''} </p>
                             </div>
                         </div>
                     </td>
@@ -1554,6 +1561,7 @@ ${order.orderNotes ? `
                 item.productName || '-',
                 item.sku || '-',
                 item.color || '-',
+                item.isCustomizable,
                 String(item.quantity),
                 formatINR(item.sellingPrice),
                 formatINR(item.itemTotal)
